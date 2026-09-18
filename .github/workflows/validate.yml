@@ -1,0 +1,19 @@
+name: Validate network bootstrap
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-yaml
+      - name: Unit tests
+        run: /usr/bin/python3 -m unittest discover -s tests -v
+      - name: Shell syntax
+        run: bash -n bootstrap/codynick-setup.sh
+      - name: Pinned helper checksum
+        run: |
+          expected=$(sed -n 's/^HELPER_SHA256="\([a-f0-9]*\)"/\1/p' bootstrap/codynick-setup.sh)
+          printf '%s  bootstrap/network_setup.py\n' "$expected" | sha256sum -c -
