@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 STATE = Path('/var/lib/codynick/network-setup.json')
 BASE = Path('/etc/codynick')
 SELF = '/usr/local/lib/codynick/network_setup.py'
@@ -112,6 +112,45 @@ def internet(interface):
             '--output', '/dev/null', 'https://github.com/Sohaware/rpi',
             check=False, capture=True)
     return r.returncode == 0
+
+def prepare_dongle(state, docs):
+    usb = state['usb']
+    if not usb:
+        return
+    name = usb[0]
+    definitions = [doc.get('network', {}).get('wifis', {}).get(name)
+                   for doc in docs.values()]
+    definitions = [cfg for cfg in definitions if cfg is not None]
+    desired = dongle_config(state['country'])
+    if definitions == [desired] and internet(name):
+        print('USB Wi-Fi already configured and online; leaving its connection intact.', flush=True)
+        return
+    yaml = yaml_module()
+    for p, doc in docs.items():
+        new = remove_wifi(doc, usb)
+        if new != doc:
+            managed_write(state, p, yaml.safe_dump(new, sort_keys=False))
+    managed_write(state, '/etc/netplan/90-codynick-usb.yaml', yaml.safe_dump(
+        {'network': {'version': 2, 'wifis': {name: desired}}}, sort_keys=False))
+    run('netplan', 'generate')
+    # A global netplan apply can drop the SSH-bearing built-in Wi-Fi. Only reload
+    # generated definitions and restart the detected USB adapter's supplicant.
+    run('systemctl', 'daemon-reload')
+    run('systemctl', 'restart', f'netplan-wpa-{name}.service')
+    run('networkctl', 'reload')
+    run('networkctl', 'reconfigure', name)
+
+def arm_rollback():
+    write('/etc/systemd/system/codynick-rollback.service',
+          '[Unit]\nDescription=Restore unconfirmed CodyNick network\nAfter=network.target\n'
+          f'[Service]\nType=oneshot\nExecStart=/usr/bin/python3 {SELF} --rollback\n', 0o644)
+    write('/etc/systemd/system/codynick-rollback.timer',
+          '[Unit]\nDescription=Rollback CodyNick hotspot unless confirmed\n'
+          '[Timer]\nOnActiveSec=15min\nOnUnitInactiveSec=1min\nAccuracySec=1s\n'
+          '[Install]\nWantedBy=timers.target\n', 0o644)
+    run('systemctl', 'daemon-reload')
+    run('systemctl', 'enable', 'codynick-rollback.timer')
+    run('systemctl', 'restart', 'codynick-rollback.timer')
 
 def show(state):
     print(f'CodyNick network bootstrap {VERSION}', flush=True)
@@ -247,7 +286,6 @@ def prepare():
     run('apt-get', 'update')
     run('apt-get', 'install', '-y', 'python3-yaml', 'curl', 'hostapd', 'dnsmasq-base',
         'nftables', 'openssh-server', 'iw', 'net-tools')
-    yaml = yaml_module()
     docs = configs()
     country = None
     for doc in docs.values():
@@ -295,16 +333,8 @@ def prepare():
                  previous_forwarding=Path('/proc/sys/net/ipv4/ip_forward').read_text().strip())
     save(state)
     try:
-        if usb:
-            # Replace only definitions for this detected dongle, avoiding duplicate AP credentials.
-            for p, doc in docs.items():
-                new = remove_wifi(doc, usb)
-                if new != doc:
-                    managed_write(state, p, yaml.safe_dump(new, sort_keys=False))
-            managed_write(state, '/etc/netplan/90-codynick-usb.yaml', yaml.safe_dump(
-                {'network': {'version': 2, 'wifis': {usb[0]: dongle_config(country)}}}, sort_keys=False))
-            run('netplan', 'generate')
-            run('netplan', 'apply')
+        arm_rollback()
+        prepare_dongle(state, docs)
         uplinks = []
         for attempt in range(3):
             uplinks = [n for n in wired + usb if internet(n)]
@@ -326,8 +356,7 @@ def prepare():
             return
         state['stage'] = 'pending'
         save(state)
-        run('systemctl', 'daemon-reload')
-        run('systemctl', 'enable', '--now', 'codynick-rollback.timer')
+        arm_rollback()
         run('systemd-run', '--unit=codynick-network-handover', '--collect', '--on-active=10s',
             '/usr/bin/python3', SELF, '--apply')
         print('Switch scheduled in 10 seconds. Join the hotspot, then confirm. No reboot required.', flush=True)
@@ -378,14 +407,6 @@ def configure_services(state):
                       '[Unit]\nDescription=CodyNick network bootstrap\nAfter=systemd-networkd.service\n'
                       f'\n[Service]\nType={"oneshot" if nat else "simple"}\nExecStart={cmd}\n{extra}'
                       '\n[Install]\nWantedBy=multi-user.target\n', 0o644)
-    # Persistent timer also restores access if the Pi reboots before confirmation.
-    write('/etc/systemd/system/codynick-rollback.service',
-          '[Unit]\nDescription=Restore unconfirmed CodyNick network\nAfter=network.target\n'
-          f'[Service]\nType=oneshot\nExecStart=/usr/bin/python3 {SELF} --rollback\n', 0o644)
-    write('/etc/systemd/system/codynick-rollback.timer',
-          '[Unit]\nDescription=Rollback CodyNick hotspot unless confirmed\n'
-          '[Timer]\nOnActiveSec=15min\nAccuracySec=1s\n'
-          '[Install]\nWantedBy=timers.target\n', 0o644)
     run('dnsmasq', '--test', '--conf-file=' + str(BASE / 'dnsmasq.conf'))
 
 def main():

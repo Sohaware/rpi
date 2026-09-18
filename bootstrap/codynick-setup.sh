@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="0.1.0"
-REF="v0.1.0-network"
-HELPER_SHA256="a1e2164ca85580dcb48ad4334344f8bb7b4426484bbca7c5f0d8338c25a399e1"
+VERSION="0.1.1"
+REF="v0.1.1-network"
+HELPER_SHA256="9b4988dd0b5bbd203191d182cd09a73a0a20e239ccc008e44e3995bc9f02dbec"
 BASE_URL="https://raw.githubusercontent.com/Sohaware/rpi/$REF"
 
 echo "CodyNick setup $VERSION - network trial (phase 1)"

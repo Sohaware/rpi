@@ -1,6 +1,6 @@
 # CodyNick Raspberry Pi deployment
 
-## Current release: 0.1.0 network trial
+## Current release: 0.1.1 network trial
 
 This first release prepares network access on a fresh Ubuntu 26.04 ARM64 Raspberry Pi 5.
 It is NOT yet the complete CodyNick IDE/AI installer or an updater for existing installations.
@@ -13,7 +13,7 @@ Connect the USB Wi-Fi adapter and/or Ethernet.
 Download the versioned bootstrap:
 
 ```bash
-wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.1.0-network/bootstrap/codynick-setup.sh
+wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.1.1-network/bootstrap/codynick-setup.sh
 ```
 
 Run it:
@@ -27,6 +27,12 @@ adapter, and tests HTTPS through each alternative internet interface. It will no
 the built-in Wi-Fi without working alternative internet and your explicit confirmation.
 Two prompts separate preparation from the actual handover. Country is taken from the
 existing Wi-Fi configuration or requested; set it for the physical device location.
+
+Version 0.1.0 could drop SSH before the switch prompt because dongle preparation used
+global `netplan apply`. Do not retry that version. From the local terminal first run
+`sudo codynick-setup --rollback`, then reconnect and download 0.1.1. The new version reuses
+a correct working dongle profile and otherwise reconfigures only that adapter. Recovery
+is armed before dongle changes as well as before the final hotspot switch.
 
 Record the hotspot name shown on screen (`codynick-` followed by the last eight hardware
 serial digits). Password: `CodyNick12345`. After accepting the switch, join this hotspot.

@@ -47,6 +47,37 @@ class NetworkTests(unittest.TestCase):
             run.return_value.returncode = 7
             self.assertFalse(m.internet('wlx123'))
 
+    def test_working_dongle_is_not_reconfigured(self):
+        state = dict(usb=['wlx123'], country='AE')
+        docs = {Path('/etc/netplan/90-codynick-usb.yaml'):
+                {'network': {'wifis': {'wlx123': m.dongle_config('AE')}}}}
+        with patch.object(m, 'internet', return_value=True), patch.object(m, 'run') as run, \
+             patch.object(m, 'managed_write') as write:
+            m.prepare_dongle(state, docs)
+            run.assert_not_called()
+            write.assert_not_called()
+
+    def test_new_dongle_does_not_apply_global_netplan(self):
+        state = dict(usb=['wlx123'], country='AE')
+        docs = {Path('/etc/netplan/50-cloud-init.yaml'):
+                {'network': {'wifis': {'wlan0': {'dhcp4': True}}}}}
+        with patch.object(m, 'run') as run, patch.object(m, 'managed_write') as write:
+            m.prepare_dongle(state, docs)
+            calls = [call.args for call in run.call_args_list]
+            self.assertNotIn(('netplan', 'apply'), calls)
+            self.assertIn(('systemctl', 'restart', 'netplan-wpa-wlx123.service'), calls)
+            self.assertIn(('networkctl', 'reconfigure', 'wlx123'), calls)
+            self.assertEqual(write.call_count, 1)
+            self.assertEqual(write.call_args.args[1], '/etc/netplan/90-codynick-usb.yaml')
+
+    def test_rollback_timer_retries_after_contention(self):
+        with patch.object(m, 'write') as write, patch.object(m, 'run') as run:
+            m.arm_rollback()
+            timer = write.call_args_list[1].args[1]
+            self.assertIn('OnUnitInactiveSec=1min', timer)
+            self.assertIn(('systemctl', 'restart', 'codynick-rollback.timer'),
+                          [call.args for call in run.call_args_list])
+
     def test_failed_services_cannot_confirm(self):
         with patch.object(m, 'load', return_value={'stage': 'applying'}), \
              patch.object(m, 'active', return_value=False), patch.object(m, 'save') as save:
