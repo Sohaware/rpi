@@ -1,0 +1,1370 @@
+{
+  "id": "codynick_core",
+  "name": "CodyNick Core Blocks",
+  "version": "1.0.0",
+  "categories": [
+    {
+      "name": "System",
+      "colour": "#64748b"
+    },
+    {
+      "name": "Joystick",
+      "colour": "#14b8a6"
+    },
+    {
+      "name": "LED Matrix",
+      "colour": "#7c3aed"
+    },
+    {
+      "name": "RGB Matrix",
+      "colour": "#ef4444"
+    },
+    {
+      "name": "Sound",
+      "colour": "#f59e0b"
+    },
+    {
+      "name": "Sensors",
+      "colour": "#22c55e"
+    },
+    {
+      "name": "Seven Segment",
+      "colour": "#06b6d4"
+    },
+    {
+      "name": "WiFi / IoT",
+      "colour": "#0ea5e9"
+    },
+    {
+      "name": "Legacy / Other",
+      "colour": "#94a3b8"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "cn_log",
+      "label": "log %1",
+      "category": "System",
+      "python": "log({message})",
+      "args": [
+        {
+          "name": "message",
+          "label": "message",
+          "kind": "text",
+          "default": "Hello"
+        }
+      ],
+      "output": null,
+      "colour": "#64748b",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_update_lib",
+      "label": "update CodyNick library and exit",
+      "category": "System",
+      "python": "UpdateLib()",
+      "args": [],
+      "output": null,
+      "colour": "#64748b",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_joystick_position",
+      "label": "joystick %1 is %2",
+      "category": "Joystick",
+      "python": "Joystick.position(cody, {device}, {pos})",
+      "args": [
+        {
+          "name": "device",
+          "label": "device",
+          "kind": "dropdown",
+          "default": "'CJP'",
+          "options": [
+            [
+              "CodyJoy Pro",
+              "'CJP'"
+            ],
+            [
+              "Standalone",
+              "'STANDALONE'"
+            ],
+            [
+              "0",
+              "0"
+            ],
+            [
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2"
+            ],
+            [
+              "3",
+              "3"
+            ],
+            [
+              "4",
+              "4"
+            ],
+            [
+              "5",
+              "5"
+            ]
+          ]
+        },
+        {
+          "name": "pos",
+          "label": "position",
+          "kind": "dropdown",
+          "default": "'up'",
+          "options": [
+            [
+              "up",
+              "'up'"
+            ],
+            [
+              "down",
+              "'down'"
+            ],
+            [
+              "left",
+              "'left'"
+            ],
+            [
+              "right",
+              "'right'"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#14b8a6",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_joystick_states",
+      "label": "joystick %1 states",
+      "category": "Joystick",
+      "python": "Joystick.states(cody, {device})",
+      "args": [
+        {
+          "name": "device",
+          "label": "device",
+          "kind": "dropdown",
+          "default": "'CJP'",
+          "options": [
+            [
+              "CodyJoy Pro",
+              "'CJP'"
+            ],
+            [
+              "Standalone",
+              "'STANDALONE'"
+            ],
+            [
+              "0",
+              "0"
+            ],
+            [
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2"
+            ],
+            [
+              "3",
+              "3"
+            ],
+            [
+              "4",
+              "4"
+            ],
+            [
+              "5",
+              "5"
+            ]
+          ]
+        }
+      ],
+      "output": "Array",
+      "colour": "#14b8a6",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_joystick_click",
+      "label": "joystick %1 clicked",
+      "category": "Joystick",
+      "python": "Joystick.click(cody, {device})",
+      "args": [
+        {
+          "name": "device",
+          "label": "device",
+          "kind": "dropdown",
+          "default": "'CJP'",
+          "options": [
+            [
+              "CodyJoy Pro",
+              "'CJP'"
+            ],
+            [
+              "Standalone",
+              "'STANDALONE'"
+            ],
+            [
+              "0",
+              "0"
+            ],
+            [
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2"
+            ],
+            [
+              "3",
+              "3"
+            ],
+            [
+              "4",
+              "4"
+            ],
+            [
+              "5",
+              "5"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#14b8a6",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_led_matrix_display_text",
+      "label": "LED matrix display text %1 speed %2",
+      "category": "LED Matrix",
+      "python": "LED_Matrix.display_text(cody, {text}, {speed})",
+      "args": [
+        {
+          "name": "text",
+          "label": "text",
+          "kind": "text",
+          "default": "HELLO"
+        },
+        {
+          "name": "speed",
+          "label": "speed",
+          "kind": "dropdown",
+          "default": "'medium'",
+          "options": [
+            [
+              "slow",
+              "'slow'"
+            ],
+            [
+              "medium",
+              "'medium'"
+            ],
+            [
+              "fast",
+              "'fast'"
+            ],
+            [
+              "0",
+              "0"
+            ],
+            [
+              "1",
+              "1"
+            ],
+            [
+              "2",
+              "2"
+            ]
+          ]
+        }
+      ],
+      "output": null,
+      "colour": "#7c3aed",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_led_matrix_set_pixel",
+      "label": "LED matrix set x %1 y %2 state %3",
+      "category": "LED Matrix",
+      "python": "LED_Matrix.set_pixel(cody, {x}, {y}, {state})",
+      "args": [
+        {
+          "name": "x",
+          "label": "x",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "y",
+          "label": "y",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "state",
+          "label": "state",
+          "kind": "dropdown",
+          "default": "True",
+          "options": [
+            [
+              "on",
+              "True"
+            ],
+            [
+              "off",
+              "False"
+            ]
+          ]
+        }
+      ],
+      "output": null,
+      "colour": "#7c3aed",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_led_matrix_on",
+      "label": "LED matrix turn on x %1 y %2",
+      "category": "LED Matrix",
+      "python": "LED_Matrix.on(cody, {x}, {y})",
+      "args": [
+        {
+          "name": "x",
+          "label": "x",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "y",
+          "label": "y",
+          "kind": "number",
+          "default": "0"
+        }
+      ],
+      "output": null,
+      "colour": "#7c3aed",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_led_matrix_off",
+      "label": "LED matrix turn off x %1 y %2",
+      "category": "LED Matrix",
+      "python": "LED_Matrix.off(cody, {x}, {y})",
+      "args": [
+        {
+          "name": "x",
+          "label": "x",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "y",
+          "label": "y",
+          "kind": "number",
+          "default": "0"
+        }
+      ],
+      "output": null,
+      "colour": "#7c3aed",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_led_matrix_clear",
+      "label": "LED matrix clear",
+      "category": "LED Matrix",
+      "python": "LED_Matrix.clear(cody)",
+      "args": [],
+      "output": null,
+      "colour": "#7c3aed",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_rgb_matrix_set",
+      "label": "RGB matrix LED %1 color %2",
+      "category": "RGB Matrix",
+      "python": "RGB_Matrix.set(cody, {led}, {color})",
+      "args": [
+        {
+          "name": "led",
+          "label": "LED",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "color",
+          "label": "color",
+          "kind": "colour",
+          "default": "#FF0000"
+        }
+      ],
+      "output": null,
+      "colour": "#ef4444",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_rgb_matrix_set_xy",
+      "label": "RGB matrix x %1 y %2 color %3",
+      "category": "RGB Matrix",
+      "python": "RGB_Matrix.set_xy(cody, {x}, {y}, {color})",
+      "args": [
+        {
+          "name": "x",
+          "label": "x",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "y",
+          "label": "y",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "color",
+          "label": "color",
+          "kind": "colour",
+          "default": "#00FF00"
+        }
+      ],
+      "output": null,
+      "colour": "#ef4444",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_rgb_matrix_clear",
+      "label": "RGB matrix clear",
+      "category": "RGB Matrix",
+      "python": "RGB_Matrix.clear(cody)",
+      "args": [],
+      "output": null,
+      "colour": "#ef4444",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sound_play",
+      "label": "play note %1 for %2 ms",
+      "category": "Sound",
+      "python": "CJP_Sound_Maker.play(cody, {note}, {duration_ms})",
+      "args": [
+        {
+          "name": "note",
+          "label": "note",
+          "kind": "text",
+          "default": "C4"
+        },
+        {
+          "name": "duration_ms",
+          "label": "duration",
+          "kind": "number",
+          "default": "500"
+        }
+      ],
+      "output": null,
+      "colour": "#f59e0b",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sound_play_until_done",
+      "label": "play note %1 for %2 ms and wait",
+      "category": "Sound",
+      "python": "CJP_Sound_Maker.play_until_done(cody, {note}, {duration_ms})",
+      "args": [
+        {
+          "name": "note",
+          "label": "note",
+          "kind": "text",
+          "default": "C4"
+        },
+        {
+          "name": "duration_ms",
+          "label": "duration",
+          "kind": "number",
+          "default": "500"
+        }
+      ],
+      "output": null,
+      "colour": "#f59e0b",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_motion_detect",
+      "label": "motion detected",
+      "category": "Sensors",
+      "python": "Motion_Detection.detect(cody)",
+      "args": [],
+      "output": "Boolean",
+      "colour": "#22c55e",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_temperature_read",
+      "label": "temperature reading",
+      "category": "Sensors",
+      "python": "Temperature_Sensor.read(cody)",
+      "args": [],
+      "output": "Number",
+      "colour": "#22c55e",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_soil_read",
+      "label": "soil moisture reading",
+      "category": "Sensors",
+      "python": "Soil_Moisture_Sensor.read(cody)",
+      "args": [],
+      "output": "Number",
+      "colour": "#22c55e",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_rfid_readuid",
+      "label": "RFID UID",
+      "category": "Sensors",
+      "python": "RFID_Reader.readuid(cody)",
+      "args": [],
+      "output": "String",
+      "colour": "#22c55e",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_ultrasonic_read",
+      "label": "ultrasonic %1 distance",
+      "category": "Sensors",
+      "python": "Ultrasonic_Sensor.read(cody, {device})",
+      "args": [
+        {
+          "name": "device",
+          "label": "device",
+          "kind": "dropdown",
+          "default": "'STANDALONE'",
+          "options": [
+            [
+              "Standalone",
+              "'STANDALONE'"
+            ],
+            [
+              "UltraSeg",
+              "'ULTRASEG'"
+            ],
+            [
+              "0",
+              "0"
+            ],
+            [
+              "1",
+              "1"
+            ]
+          ]
+        }
+      ],
+      "output": "Number",
+      "colour": "#22c55e",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_seven_segment_display",
+      "label": "seven segment %1 display %2",
+      "category": "Seven Segment",
+      "python": "Seven_Segment.display(cody, {device}, {value})",
+      "args": [
+        {
+          "name": "device",
+          "label": "device",
+          "kind": "dropdown",
+          "default": "'STANDALONE'",
+          "options": [
+            [
+              "Standalone",
+              "'STANDALONE'"
+            ],
+            [
+              "UltraSeg",
+              "'ULTRASEG'"
+            ],
+            [
+              "0",
+              "0"
+            ],
+            [
+              "2",
+              "2"
+            ]
+          ]
+        },
+        {
+          "name": "value",
+          "label": "value",
+          "kind": "number",
+          "default": "123"
+        }
+      ],
+      "output": null,
+      "colour": "#06b6d4",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_ssid",
+      "label": "WiFi set SSID %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_ssid(cody, {ssid})",
+      "args": [
+        {
+          "name": "ssid",
+          "label": "ssid",
+          "kind": "text",
+          "default": "MyWiFi"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_password",
+      "label": "WiFi set password %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_password(cody, {password})",
+      "args": [
+        {
+          "name": "password",
+          "label": "password",
+          "kind": "text",
+          "default": "password"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_cloud_mode",
+      "label": "WiFi set cloud mode %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_cloud_mode(cody, {mode})",
+      "args": [
+        {
+          "name": "mode",
+          "label": "mode",
+          "kind": "dropdown",
+          "default": "1",
+          "options": [
+            [
+              "Cloud mode 1",
+              "1"
+            ],
+            [
+              "Cloud mode 0",
+              "0"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_username",
+      "label": "IoT set username %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_username(cody, {username})",
+      "args": [
+        {
+          "name": "username",
+          "label": "username",
+          "kind": "text",
+          "default": "user"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_device_id",
+      "label": "IoT set device ID %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_device_id(cody, {device_id})",
+      "args": [
+        {
+          "name": "device_id",
+          "label": "device ID",
+          "kind": "text",
+          "default": "device"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_device_key",
+      "label": "IoT set device key %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_device_key(cody, {device_key})",
+      "args": [
+        {
+          "name": "device_key",
+          "label": "device key",
+          "kind": "text",
+          "default": "key"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_wifi",
+      "label": "WiFi set SSID %1 password %2",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_wifi(cody, {ssid}, {password})",
+      "args": [
+        {
+          "name": "ssid",
+          "label": "ssid",
+          "kind": "text",
+          "default": "MyWiFi"
+        },
+        {
+          "name": "password",
+          "label": "password",
+          "kind": "text",
+          "default": "password"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_set_iot",
+      "label": "IoT set user %1 device %2 key %3 mode %4",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.set_iot(cody, {username}, {device_id}, {device_key}, {cloud_mode})",
+      "args": [
+        {
+          "name": "username",
+          "label": "username",
+          "kind": "text",
+          "default": "user"
+        },
+        {
+          "name": "device_id",
+          "label": "device ID",
+          "kind": "text",
+          "default": "device"
+        },
+        {
+          "name": "device_key",
+          "label": "key",
+          "kind": "text",
+          "default": "key"
+        },
+        {
+          "name": "cloud_mode",
+          "label": "mode",
+          "kind": "dropdown",
+          "default": "1",
+          "options": [
+            [
+              "Cloud mode 1",
+              "1"
+            ],
+            [
+              "Cloud mode 0",
+              "0"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_restart",
+      "label": "WiFi / IoT restart",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.restart(cody)",
+      "args": [],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_reset_wifi",
+      "label": "reset WiFi",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.reset_wifi(cody)",
+      "args": [],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_reset_iot",
+      "label": "reset IoT",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.reset_iot(cody)",
+      "args": [],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_retry_wifi",
+      "label": "retry WiFi SSID %1 password %2",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.retry_wifi(cody, {ssid}, {password})",
+      "args": [
+        {
+          "name": "ssid",
+          "label": "ssid",
+          "kind": "text",
+          "default": "MyWiFi"
+        },
+        {
+          "name": "password",
+          "label": "password",
+          "kind": "text",
+          "default": "password"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_retry_iot",
+      "label": "retry IoT user %1 device %2 key %3 mode %4",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.retry_iot(cody, {username}, {device_id}, {device_key}, {cloud_mode})",
+      "args": [
+        {
+          "name": "username",
+          "label": "username",
+          "kind": "text",
+          "default": "user"
+        },
+        {
+          "name": "device_id",
+          "label": "device ID",
+          "kind": "text",
+          "default": "device"
+        },
+        {
+          "name": "device_key",
+          "label": "key",
+          "kind": "text",
+          "default": "key"
+        },
+        {
+          "name": "cloud_mode",
+          "label": "mode",
+          "kind": "dropdown",
+          "default": "1",
+          "options": [
+            [
+              "Cloud mode 1",
+              "1"
+            ],
+            [
+              "Cloud mode 0",
+              "0"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_status",
+      "label": "WiFi / IoT status object",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.status(cody)",
+      "args": [],
+      "output": "Object",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_wifi_status",
+      "label": "WiFi status code",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.wifi_status(cody)",
+      "args": [],
+      "output": "Number",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_iot_status",
+      "label": "IoT status code",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.iot_status(cody)",
+      "args": [],
+      "output": "Number",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_connected",
+      "label": "WiFi connected",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.wifi_connected(cody)",
+      "args": [],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_connected",
+      "label": "IoT connected",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.iot_connected(cody)",
+      "args": [],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_wifi_credential_state",
+      "label": "credential step %1 state",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.credential_state(cody, {step})",
+      "args": [
+        {
+          "name": "step",
+          "label": "step",
+          "kind": "number",
+          "default": "0"
+        }
+      ],
+      "output": "String",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_write",
+      "label": "IoT write index %1 type %2 value %3 verify %4",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.write(cody, {index}, {value_type}, {value}, verify={verify})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "value_type",
+          "label": "type",
+          "kind": "dropdown",
+          "default": "'int'",
+          "options": [
+            [
+              "int",
+              "'int'"
+            ],
+            [
+              "float",
+              "'float'"
+            ],
+            [
+              "bool",
+              "'bool'"
+            ],
+            [
+              "string",
+              "'string'"
+            ]
+          ]
+        },
+        {
+          "name": "value",
+          "label": "value",
+          "kind": "text",
+          "default": "0"
+        },
+        {
+          "name": "verify",
+          "label": "verify",
+          "kind": "dropdown",
+          "default": "False",
+          "options": [
+            [
+              "no verify",
+              "False"
+            ],
+            [
+              "verify",
+              "True"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_read",
+      "label": "IoT read index %1 type %2",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.read(cody, {index}, {value_type})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "value_type",
+          "label": "type",
+          "kind": "dropdown",
+          "default": "'int'",
+          "options": [
+            [
+              "int",
+              "'int'"
+            ],
+            [
+              "float",
+              "'float'"
+            ],
+            [
+              "bool",
+              "'bool'"
+            ],
+            [
+              "string",
+              "'string'"
+            ]
+          ]
+        }
+      ],
+      "output": "Object",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_write_int",
+      "label": "IoT write int index %1 value %2 verify %3",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.write_int(cody, {index}, {value}, verify={verify})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "value",
+          "label": "value",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "verify",
+          "label": "verify",
+          "kind": "dropdown",
+          "default": "False",
+          "options": [
+            [
+              "no verify",
+              "False"
+            ],
+            [
+              "verify",
+              "True"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_write_float",
+      "label": "IoT write float index %1 value %2 verify %3",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.write_float(cody, {index}, {value}, verify={verify})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "value",
+          "label": "value",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "verify",
+          "label": "verify",
+          "kind": "dropdown",
+          "default": "False",
+          "options": [
+            [
+              "no verify",
+              "False"
+            ],
+            [
+              "verify",
+              "True"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_write_bool",
+      "label": "IoT write bool index %1 value %2 verify %3",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.write_bool(cody, {index}, {value}, verify={verify})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "value",
+          "label": "value",
+          "kind": "dropdown",
+          "default": "True",
+          "options": [
+            [
+              "true",
+              "True"
+            ],
+            [
+              "false",
+              "False"
+            ]
+          ]
+        },
+        {
+          "name": "verify",
+          "label": "verify",
+          "kind": "dropdown",
+          "default": "False",
+          "options": [
+            [
+              "no verify",
+              "False"
+            ],
+            [
+              "verify",
+              "True"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_write_string",
+      "label": "IoT write string index %1 value %2 verify %3",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.write_string(cody, {index}, {value}, verify={verify})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        },
+        {
+          "name": "value",
+          "label": "value",
+          "kind": "text",
+          "default": "hello"
+        },
+        {
+          "name": "verify",
+          "label": "verify",
+          "kind": "dropdown",
+          "default": "False",
+          "options": [
+            [
+              "no verify",
+              "False"
+            ],
+            [
+              "verify",
+              "True"
+            ]
+          ]
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_read_int",
+      "label": "IoT read int index %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.read_int(cody, {index})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        }
+      ],
+      "output": "Number",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_read_float",
+      "label": "IoT read float index %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.read_float(cody, {index})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        }
+      ],
+      "output": "Number",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_read_bool",
+      "label": "IoT read bool index %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.read_bool(cody, {index})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        }
+      ],
+      "output": "Boolean",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_iot_read_string",
+      "label": "IoT read string index %1",
+      "category": "WiFi / IoT",
+      "python": "WiFi_IoT.read_string(cody, {index})",
+      "args": [
+        {
+          "name": "index",
+          "label": "index",
+          "kind": "number",
+          "default": "0"
+        }
+      ],
+      "output": "String",
+      "colour": "#0ea5e9",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_keypad_get",
+      "label": "keypad key",
+      "category": "Legacy / Other",
+      "python": "Keypad.get()",
+      "args": [],
+      "output": "String",
+      "colour": "#94a3b8",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sensors_temp",
+      "label": "legacy temp sensor reading",
+      "category": "Legacy / Other",
+      "python": "Sensors.temp_sensor_reading()",
+      "args": [],
+      "output": "Number",
+      "colour": "#94a3b8",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sensors_light",
+      "label": "legacy light sensor reading",
+      "category": "Legacy / Other",
+      "python": "Sensors.light_sensor_reading()",
+      "args": [],
+      "output": "Number",
+      "colour": "#94a3b8",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sensors_gas",
+      "label": "legacy gas sensor reading",
+      "category": "Legacy / Other",
+      "python": "Sensors.gas_sensor_reading()",
+      "args": [],
+      "output": "Number",
+      "colour": "#94a3b8",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sensors_soilhumidity",
+      "label": "legacy soil humidity reading",
+      "category": "Legacy / Other",
+      "python": "Sensors.soilhumidity_reading()",
+      "args": [],
+      "output": "Number",
+      "colour": "#94a3b8",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sensors_flow",
+      "label": "legacy flow sensor reading",
+      "category": "Legacy / Other",
+      "python": "Sensors.flow_sensor_reading()",
+      "args": [],
+      "output": "Number",
+      "colour": "#94a3b8",
+      "tooltip": ""
+    },
+    {
+      "type": "cn_sensors_ultrasonic",
+      "label": "legacy ultrasonic distance reading",
+      "category": "Legacy / Other",
+      "python": "Sensors.ultrasonic_distance_reading()",
+      "args": [],
+      "output": "Number",
+      "colour": "#94a3b8",
+      "tooltip": ""
+    }
+  ]
+}

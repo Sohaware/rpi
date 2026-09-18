@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.0-core - First core application trial
+
+- Installs the Python IDE/live terminal, Blockly, dashboard, documentation,
+  CodyNick.py 1.20.1, Dashboard.py, Apache/PHP/MariaDB, and script/watchdog services.
+- Keeps verified network setup 0.1.2 untouched and runs installation independently
+  of the administrator's SSH session.
+- Pins source-file checksums and uses a private Python virtual environment, avoiding
+  changes to Ubuntu's externally managed Python packages.
+- Sets up client hardware/media permissions and limits the database grant to codynick.*.
+- Preserves student data/configuration/passwords on repeats of the same version;
+  rejects unreviewed legacy/version migrations and reports installation failures.
+- Corrects Blockly's active-script path and adds a unique marker for repeat runs.
+- Core manifest and installer versions are separate from the network version.
+- Application source is based on the supplied Rev.B2 IDE package and July 11 image.
+  AI environments/models and unfinished chapter 8 are not deployed in this release.
+- Automated tests cover checksums, repeat-install preservation, path rejection,
+  network prerequisites, and actual PHP run/log/Blockly endpoints. Hardware acceptance
+  remains pending; this is not a production fleet release.
+
 ## Documentation update - 2026-09-18
 
 - Document Imager preparation, mandatory reboot after Ubuntu first boot, SSH setup,
