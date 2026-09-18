@@ -1,5 +1,14 @@
 # Changelog
 
+## Documentation update - 2026-09-18
+
+- Document Imager preparation, mandatory reboot after Ubuntu first boot, SSH setup,
+  hotspot confirmation, and post-reboot verification.
+- Require the external codynick/codynick internet network before installation.
+- Record repeated fresh-install and reboot tests on the tested Pi/dongle.
+- Add release history and mark 0.1.0 and 0.1.1 superseded in README.md.
+- Installer remains 0.1.2; no script changes or changes to published tags.
+
 ## 0.1.2 - Fix generated network configuration permissions
 
 - Reset the private download umask before invoking the setup helper.
