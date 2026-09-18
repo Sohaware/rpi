@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 STATE = Path('/var/lib/codynick/network-setup.json')
 BASE = Path('/etc/codynick')
 SELF = '/usr/local/lib/codynick/network_setup.py'
@@ -21,7 +21,9 @@ AP_ADDRESS = '10.42.0.1'
 SERVICES = ['codynick-ap.service', 'codynick-dhcp.service', 'codynick-nat.service']
 
 def run(*args, check=True, capture=False):
-    return subprocess.run(args, check=check, text=True,
+    # Netplan sets its own private/public modes. A inherited 077 umask strips
+    # networkd's group-read permission from generated .network files.
+    return subprocess.run(args, check=check, text=True, umask=0o022,
                           stdout=subprocess.PIPE if capture else None,
                           stderr=subprocess.PIPE if capture else None)
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 - Fix generated network configuration permissions
+
+- Reset the private download umask before invoking the setup helper.
+- Explicitly give subprocesses umask 022 so Netplan retains networkd group-read access.
+- Keep credential YAML, state, and backup files private using their explicit modes.
+- Add a regression test for the inherited-umask failure seen on the fresh Pi.
+
 ## 0.1.1 - Preserve SSH during USB preparation
 
 - Fix premature SSH loss caused by global `netplan apply` during dongle preparation.

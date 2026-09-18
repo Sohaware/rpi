@@ -9,6 +9,11 @@ m = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(m)
 
 class NetworkTests(unittest.TestCase):
+    def test_external_commands_do_not_inherit_private_download_umask(self):
+        with patch.object(m.subprocess, 'run') as child:
+            m.run('netplan', 'generate')
+            self.assertEqual(child.call_args.kwargs['umask'], 0o022)
+
     def test_dynamic_interfaces(self):
         records = [dict(name='wlan0', wifi=True, usb=False, physical=True),
                    dict(name='wlxOTHER', wifi=True, usb=True, physical=True),

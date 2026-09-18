@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="0.1.1"
-REF="v0.1.1-network"
-HELPER_SHA256="9b4988dd0b5bbd203191d182cd09a73a0a20e239ccc008e44e3995bc9f02dbec"
+VERSION="0.1.2"
+REF="v0.1.2-network"
+HELPER_SHA256="ccd2473739ab2edb61332cfe645ca04bd9ef17d5e3373db3c88169dd49f37f2b"
 BASE_URL="https://raw.githubusercontent.com/Sohaware/rpi/$REF"
 
 echo "CodyNick setup $VERSION - network trial (phase 1)"
@@ -36,4 +36,5 @@ cat > "$tmp/codynick-setup" <<'EOF'
 exec /usr/bin/python3 /usr/local/lib/codynick/network_setup.py "$@"
 EOF
 install -m 0755 "$tmp/codynick-setup" /usr/local/sbin/codynick-setup
+umask 022
 /usr/bin/python3 /usr/local/lib/codynick/network_setup.py "$@"
