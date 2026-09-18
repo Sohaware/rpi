@@ -8,13 +8,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install test dependencies
-        run: sudo apt-get update && sudo apt-get install -y python3-yaml php-cli
+        run: sudo apt-get update && sudo apt-get install -y python3-yaml php-cli acl
       - name: Unit tests
         run: /usr/bin/python3 -m unittest discover -s tests -v
       - name: Shell syntax
         run: |
           bash -n bootstrap/codynick-setup.sh
           bash -n bootstrap/codynick-apps.sh
+      - name: Real web-user permission regression
+        run: |
+          sudo groupadd --force codynick-media
+          sudo /usr/bin/python3 -m unittest discover -s tests -p test_web_permissions.py -v
       - name: PHP syntax
         run: find components/ide -name '*.php' -print0 | xargs -0 -n 1 php -l
       - name: Pinned helper checksum

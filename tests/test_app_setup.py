@@ -86,12 +86,31 @@ class AppTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "confirm"):
                 m.check_platform()
 
+    def test_failed_020_is_accepted_for_repair(self):
+        with patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
+             patch.object(m.platform, "machine", return_value="aarch64"), \
+             patch.object(m, "read_json", side_effect=[{"stage": "network-ready"}, {"version": "0.2.0", "stage": "failed"}]), \
+             patch.object(m, "run"), patch.object(m.shutil, "disk_usage", return_value=MagicMock(free=4 * 1024 ** 3)):
+            m.check_platform()
+
+    def test_unknown_release_is_rejected(self):
+        with patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
+             patch.object(m.platform, "machine", return_value="aarch64"), \
+             patch.object(m, "read_json", side_effect=[{"stage": "network-ready"}, {"version": "9.0"}]), patch.object(m, "run"):
+            with self.assertRaisesRegex(RuntimeError, "cannot migrate"):
+                m.check_platform()
+
+    def test_ready_clears_stale_failure(self):
+        with patch.object(m, "read_json", return_value={"error": "old failure"}), patch.object(m, "write") as write:
+            m.save_state("ready")
+            self.assertNotIn("error", json.loads(write.call_args.args[1]))
+
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.2.0.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.2.1.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.2.0.json")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.2.1.json")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
 

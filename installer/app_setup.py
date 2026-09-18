@@ -12,11 +12,12 @@ import subprocess
 import sys
 import urllib.request
 
-VERSION = "0.2.0"
-TAG = "v0.2.0-core"
+VERSION = "0.2.1"
+TAG = "v0.2.1-core"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
+# This repair keeps the existing runtime and dependency set.
 VENV = Path("/opt/codynick/core-0.2.0")
 SERVICES = ("ssh", "codynick-ap", "codynick-dhcp", "codynick-nat")
 PRESERVE = {"code/config.php", "dashboard/config.php", "docs/config.php", "blocks/data/main.json"}
@@ -51,6 +52,8 @@ def write(path, text, mode=0o644):
 
 def save_state(stage, **extra):
     data = read_json(STATE)
+    if stage in ("installing", "ready"):
+        data.pop("error", None)
     data.update(version=VERSION, stage=stage, updated_at=datetime.datetime.now(datetime.timezone.utc).isoformat(), **extra)
     write(STATE, json.dumps(data, indent=2) + "\n", 0o600)
 
@@ -110,7 +113,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") != VERSION:
+    if previous and previous.get("version") not in ("0.2.0", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -150,6 +153,36 @@ def prepare_accounts():
     run("udevadm", "control", "--reload-rules")
     run("udevadm", "trigger", "--subsystem-match=tty")
     run("udevadm", "trigger", "--subsystem-match=input")
+
+
+def repair_web_access(home=Path("/home/client")):
+    # Named ACLs also override a pre-existing restrictive www-data ACL entry.
+    # Traversal does not grant directory listing or writes to the client home.
+    for path in (home.parent, home):
+        run("setfacl", "-m", "u:www-data:--x", safe_destination(path))
+    for name in ("active_script.py", "log.log"):
+        run("setfacl", "-m", "u:www-data:rw-", safe_destination(home / name))
+    for name in ("userfiles", "images", "audio"):
+        path = safe_destination(home / name)
+        run("setfacl", "-m", "u:www-data:rwx,d:u:www-data:rwx,d:g:codynick-media:rwx", path)
+    check_web_access(home)
+
+
+def check_web_access(home=Path("/home/client")):
+    try:
+        for name in ("active_script.py", "log.log", "userfiles", "images", "audio"):
+            run("runuser", "-u", "www-data", "--", "test", "-w", home / name)
+        # Opening without truncation checks real write access without changing student code.
+        run("runuser", "-u", "www-data", "--", "/usr/bin/python3", "-c",
+            "import os,sys; [os.close(os.open(p, os.O_WRONLY)) for p in sys.argv[1:]]",
+            home / "active_script.py", home / "log.log")
+    except subprocess.CalledProcessError:
+        print("Web access failed. Identity, path permissions, and ACL diagnostics:", flush=True)
+        for command in (("runuser", "-u", "www-data", "--", "id"),
+                        ("namei", "-l", str(home / "active_script.py")),
+                        ("getfacl", "-p", str(home.parent), str(home), str(home / "active_script.py"), str(home / "log.log"))):
+            subprocess.run(command, check=False)
+        raise
 
 
 def configure_database():
@@ -221,8 +254,7 @@ def health_check():
         run("systemctl", "is-active", "--quiet", service)
     run("runuser", "-u", "client", "--", VENV / "bin/python", "-c",
         "import sys;sys.path.insert(0,'/home/client');import keyboard,serial,requests,CodyNick,Dashboard;Dashboard.ensure_table();print('Python and database OK')")
-    for name in ("active_script.py", "log.log", "userfiles", "images", "audio"):
-        run("runuser", "-u", "www-data", "--", "test", "-w", f"/home/client/{name}")
+    check_web_access()
     for url in ("/", "/code/", "/dashboard/", "/blocks/", "/docs/"):
         run("curl", "--fail", "--silent", "--show-error", "--max-time", "20", "--output", "/dev/null", "http://127.0.0.1" + url)
 
@@ -239,13 +271,14 @@ def install():
     env = dict(os.environ, DEBIAN_FRONTEND="noninteractive", NEEDRESTART_MODE="l")
     run("apt-get", "update", env=env)
     run("apt-get", "install", "-y", "apache2", "libapache2-mod-php", "php-mysql", "php-mbstring",
-        "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", env=env)
+        "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", "acl", env=env)
     run("python3", "-m", "venv", "--system-site-packages", VENV)
     run(VENV / "bin/python", "-m", "pip", "install", "--disable-pip-version-check", "keyboard==0.13.5", "mysql-connector-python==9.7.0")
     prepare_accounts()
     configure_database()
     for service in ("codynick", "script"):
         subprocess.run(["systemctl", "stop", service], check=False)
+    repair_web_access()
     for name in verify_manifest(manifest):
         relative = PurePosixPath(name)
         component = relative.parts[1]
@@ -261,7 +294,7 @@ def install():
                 run("chown", "www-data:www-data", item)
     info = Path("/device_info.json")
     if not info.exists():
-        write(info, json.dumps({"devicename": "CodyNick", "serial_number": read_json(NETWORK).get("ssid", "unknown"), "description": "CodyNick core 0.2.0 (AI installation pending)", "logo_path": "/assets/logo.png"}, indent=2))
+        write(info, json.dumps({"devicename": "CodyNick", "serial_number": read_json(NETWORK).get("ssid", "unknown"), "description": f"CodyNick core {VERSION} (AI installation pending)", "logo_path": "/assets/logo.png"}, indent=2))
     install_units()
     health_check()
     save_state("ready", completed_version=VERSION, ai_installed=False)

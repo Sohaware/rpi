@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.1-core - Web-user permission repair
+
+- Accepts incomplete/completed 0.2.0 installs for in-place repair; retains the
+  core-0.2.0 Python environment, account passwords, student files, and database.
+- Adds ACL tools and explicit www-data traversal/file/shared-folder access rather
+  than relying only on mode bits and supplementary groups. No whole-home write grant.
+- Checks actual non-truncating opens before application deployment and in final
+  health checks. Failures print identity, path-mode, and ACL diagnostics.
+- Clears stale failure text on a successful retry.
+- Adds real Linux runuser/ACL tests for denied access, restrictive parents,
+  repeat repair, content preservation, and inherited shared-file permissions.
+- The original Pi denial's exact cause is not yet established; 0.2.0 already
+  applied mode 0664. Device acceptance of this repair remains pending.
+
 ## 0.2.0-core - First core application trial
 
 - Installs the Python IDE/live terminal, Blockly, dashboard, documentation,
