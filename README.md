@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Network: v0.1.2-network. Core applications: v0.2.1-core (permission repair trial).**
+**Network: v0.1.2-network. Core applications: v0.2.2-core (permission repair trial).**
 Both stages target Ubuntu Server 26.04 ARM64. The network-only trial supports
 on Raspberry Pi 5. Repeated fresh-install tests, hotspot/SSH access, internet sharing,
 and reboot persistence passed on the tested Pi with a Realtek RTL8188EUS USB dongle.
@@ -148,7 +148,7 @@ or repeat the network handover.** Keep the external internet network available.
 Run these commands in the Pi's existing administrator SSH session at `10.42.0.1`:
 
 ```bash
-wget -O /tmp/codynick-apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.2.1-core/bootstrap/codynick-apps.sh
+wget -O /tmp/codynick-apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.2.2-core/bootstrap/codynick-apps.sh
 ```
 
 ```bash
@@ -160,7 +160,7 @@ sudo journalctl -fu codynick-install
 ```
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
-or power off until it finishes. Wait for **`CodyNick core 0.2.1: READY`**, then press
+or power off until it finishes. Wait for **`CodyNick core 0.2.2: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -203,14 +203,16 @@ validated by the import check.
 
 ### Repeating, checking, and recovering
 
-**If 0.2.0 failed at the www-data write-access check, run the three commands above.**
-No manual permission commands or SD-card rewrite are required. Version 0.2.1 accepts
-both failed and completed 0.2.0 installations and repairs web-user access with explicit
+**If 0.2.0 or 0.2.1 failed at the www-data write-access check, run the three commands above.**
+No manual permission commands or SD-card rewrite are required. Version 0.2.2 accepts
+failed and completed 0.2.0/0.2.1 installations and repairs web-user access with explicit
 ACLs. It grants traversal of `/home` and `/home/client`, writes to the active script
 and log, and shared-folder access. It does not grant writes to the whole client home.
 The core Python environment remains at its existing `/opt/codynick/core-0.2.0` path.
-Actual file opens are checked without truncating data; failures include identity,
-path, and ACL diagnostics. The exact reason for the original Pi denial is unconfirmed.
+Actual file opens are checked without truncating data, and disposable files test folder
+create/read/rename/delete operations. No external `test -w` gates those checks.
+Failures include identity, path, and ACL diagnostics. The 0.2.1 Pi log shows correct
+ACLs/group membership but a failing `test -w`; its exact cause is still unconfirmed.
 
 Repeat the same download/run commands to retry or repair **this core version**. It
 rechecks dependencies and redeploys managed application files. It preserves saved
@@ -219,7 +221,7 @@ saved Blockly arrangements/packages, and existing account passwords. The running
 student script is restarted during installation.
 
 No OS-wide upgrade, reboot, root-password reset, or network reconfiguration is
-performed. A legacy installation or a version other than 0.2.0/0.2.1 is refused
+performed. A legacy installation or a version other than 0.2.0/0.2.1/0.2.2 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -228,7 +230,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.2.1/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.2.2/app_setup.py --check
 ```
 
 To retrieve the latest installation output after reconnecting:
@@ -248,7 +250,8 @@ configuration is left untouched.
 
 | Version | Status | What is new |
 | --- | --- | --- |
-| **0.2.1-core** | Permission repair trial; Pi confirmation pending | Repairs explicit www-data file and directory access, tests actual non-truncating file opens, reports permission diagnostics, and accepts failed/completed 0.2.0 installations. Keeps the existing Python environment and student data. |
+| **0.2.2-core** | Real-I/O health-check trial; Pi confirmation pending | Replaces the external test -w gate with actual read/write opens and disposable shared-folder operations. Accepts 0.2.0/0.2.1 repairs; real access failures still stop installation. |
+| 0.2.1-core | Superseded: test -w still failed on Pi | Added explicit ACLs and diagnostics. The log confirmed correct file modes, ACLs, and group membership, but the preliminary test prevented the real-open probe from running. |
 | 0.2.0-core | Superseded: Pi health check failed on www-data write access | Introduced detached core installation, IDE/live terminal, Blockly, dashboard, dependencies, and script/watchdog services. Python/database checks passed on the Pi, but READY was not reached. |
 | **0.1.2** | Current network trial; fresh-install and reboot tests passed on the tested hardware | Corrects inherited file-creation permissions so networkd can read generated Netplan files. Fixes the fallback networking and unintended DHCP address changes caused by unreadable files. |
 | 0.1.1 | Superseded; do not install | Reuses a correct working dongle profile, targets USB preparation instead of global Netplan application, arms rollback earlier, and retries recovery. Fresh-install testing subsequently found the permissions defect fixed in 0.1.2. |
@@ -278,7 +281,7 @@ before stopping it. Backups are stored under `/var/backups/codynick/`.
 
 ## Next stage
 
-1. Validate core 0.2.1 on the network-ready Pi: permission repair, live output, rerun,
+1. Validate core 0.2.2 on the network-ready Pi: permission repair, live output, rerun,
    dashboard, hardware access, reboot, and repeat installation without data loss.
 2. Package the image's matching AI environments/models for object detection, OCR,
    speech recognition, and speech generation; retain existing on-device paths.

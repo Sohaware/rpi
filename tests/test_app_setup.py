@@ -72,6 +72,15 @@ class AppTests(unittest.TestCase):
             m.run("example")
             self.assertEqual(child.call_args.kwargs["umask"], 0o022)
 
+    def test_access_probe_uses_real_io_not_external_test(self):
+        with patch.object(m, "run") as run:
+            m.check_web_access()
+            args = run.call_args.args
+            self.assertIn("/usr/bin/python3", args)
+            self.assertNotIn("test", args)
+            self.assertIn("os.O_RDWR", args[6])
+            self.assertNotIn("O_TRUNC", args[6])
+
     def test_legacy_install_is_rejected(self):
         with patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
              patch.object(m.platform, "machine", return_value="aarch64"), \
@@ -106,11 +115,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.2.1.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.2.2.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.2.1.json")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.2.2.json")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
 

@@ -12,8 +12,8 @@ import subprocess
 import sys
 import urllib.request
 
-VERSION = "0.2.1"
-TAG = "v0.2.1-core"
+VERSION = "0.2.2"
+TAG = "v0.2.2-core"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -113,7 +113,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -170,12 +170,28 @@ def repair_web_access(home=Path("/home/client")):
 
 def check_web_access(home=Path("/home/client")):
     try:
-        for name in ("active_script.py", "log.log", "userfiles", "images", "audio"):
-            run("runuser", "-u", "www-data", "--", "test", "-w", home / name)
-        # Opening without truncation checks real write access without changing student code.
+        # Do not gate real I/O on an external `test -w` permission prediction.
+        # Existing student files are opened without truncation and never written.
         run("runuser", "-u", "www-data", "--", "/usr/bin/python3", "-c",
-            "import os,sys; [os.close(os.open(p, os.O_WRONLY)) for p in sys.argv[1:]]",
-            home / "active_script.py", home / "log.log")
+            """import os,sys,tempfile
+from pathlib import Path
+home = Path(sys.argv[1])
+for name in ('active_script.py', 'log.log'):
+    path = home / name
+    print('Checking actual read/write open:', path, flush=True)
+    os.close(os.open(path, os.O_RDWR))
+for name in ('userfiles', 'images', 'audio'):
+    path = home / name
+    print('Checking actual directory operations:', path, flush=True)
+    with os.scandir(path) as entries:
+        next(entries, None)
+    with tempfile.TemporaryDirectory(prefix='.codynick-access-', dir=path) as temp:
+        probe = Path(temp) / 'probe'
+        probe.write_bytes(b'CodyNick access check')
+        assert probe.read_bytes() == b'CodyNick access check'
+        probe.rename(Path(temp) / 'renamed')
+print('Web-user file and folder I/O OK', flush=True)
+""", home)
     except subprocess.CalledProcessError:
         print("Web access failed. Identity, path permissions, and ACL diagnostics:", flush=True)
         for command in (("runuser", "-u", "www-data", "--", "id"),

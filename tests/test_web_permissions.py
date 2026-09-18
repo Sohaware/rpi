@@ -36,6 +36,10 @@ class WebPermissionsTests(unittest.TestCase):
         for name in ("active_script.py", "log.log"):
             self.assertEqual((self.home / name).read_text(), "preserve this content\n")
 
+    def test_real_denial_still_fails_the_health_check(self):
+        with self.assertRaises(subprocess.CalledProcessError):
+            m.check_web_access(self.home)
+
     def test_home_is_not_writable_or_listable_by_web_user(self):
         m.repair_web_access(self.home)
         for access in ("-w", "-r"):

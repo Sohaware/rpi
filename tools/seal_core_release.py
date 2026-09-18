@@ -18,11 +18,11 @@ def main():
             if path.is_file() and "__pycache__" not in path.parts:
                 files[path.relative_to(ROOT).as_posix()] = sha(path)
     data = {
-        "version": "0.2.1", "tag": "v0.2.1-core", "status": "hardware-trial",
+        "version": "0.2.2", "tag": "v0.2.2-core", "status": "hardware-trial",
         "components": {"ide": "Rev.B2-core.0.2.0", "CodyNick.py": "1.20.1", "Dashboard.py": "image-20260711", "watchdog": "0.2.0"},
         "ai_installed": False, "files": files,
     }
-    manifest = ROOT / "releases/core-0.2.1.json"
+    manifest = ROOT / "releases/core-0.2.2.json"
     manifest.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8", newline="\n")
     bootstrap = ROOT / "bootstrap/codynick-apps.sh"
     text = bootstrap.read_text(encoding="utf-8")

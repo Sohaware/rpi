@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.2-core - Test real web-user I/O
+
+- Removes external `test -w` as a gate: 0.2.1 diagnostics showed correct modes,
+  ACLs, and group membership, but this preliminary check still returned failure.
+- Opens active_script.py and log.log read/write without truncating or writing their
+  contents; verifies list/create/write/read/rename/delete in disposable subfolders
+  inside the three shared directories, all running as www-data.
+- Actual I/O failures remain fatal and retain permission diagnostics. The original
+  test-command failure is not yet explained; this is not a claimed AppArmor fix.
+- Allows repair from 0.2.0 and 0.2.1, with runtime and student data unchanged.
+- Adds regression coverage for real access denial and absence of the external gate.
+  Pi confirmation is still required.
+
 ## 0.2.1-core - Web-user permission repair
 
 - Accepts incomplete/completed 0.2.0 installs for in-place repair; retains the
