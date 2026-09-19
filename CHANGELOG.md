@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.4.0-speech - Offline voice commands
+
+- Package the approved ARM64 Vosk speech environment and small English model from
+  the supplied Pi image as two SHA256-checked release assets.
+- Install ALSA recording tools and FFmpeg; verify the model without recording audio.
+  Installation reports microphones but never captures audio automatically.
+- Add voice_led_colors.py: constrained offline color commands control all 16 RGB
+  LEDs, print confidence scores, and clean up microphone/model/serial resources.
+- Include the renamed camera, per-photo counter, and same-photo model-comparison
+  demos prepared in the unpublished 0.3.1 candidate.
+- Accept upgrades from 0.3.0, preserve all existing examples and user data, reuse
+  the immutable 0.3.0 vision payload, and add speech archive/security/demo tests.
+- OCR, text-to-speech, face features, chapter 8, and swap configuration remain deferred.
+
+## 0.3.1-vision - Unpublished object demo candidate
+
+- Rename the distributed camera demo to camera_objects.py; preserve the old file
+  on upgraded devices because it may contain student edits.
+- Add finite object_counter.py and model_comparison.py demos with cleanup,
+  unique photo names, per-frame counts and same-photo sequential model timing.
+- Reuse immutable 0.3.0 runtime/model assets and cache. Accept upgrades from 0.3.0.
+- Add mock-based tests for demo results, missing cameras, failures and comparison.
+- User confirmed 0.3.0 USB capture/default-model detection on Pi. New demos await
+  hardware acceptance. Speech recognition and voice commands are the next stage.
+
 ## 0.3.0-vision - Unified entry point, USB vision, and ANSI logs
 
 - Adds setup.sh: one public download/run command selects network preparation,

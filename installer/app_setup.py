@@ -12,8 +12,8 @@ import subprocess
 import sys
 import urllib.request
 
-VERSION = "0.3.0"
-TAG = "v0.3.0-vision"
+VERSION = "0.4.0"
+TAG = "v0.4.0-speech"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -113,7 +113,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -267,18 +267,21 @@ WantedBy=multi-user.target
 
 def health_check():
     import vision_setup
+    import speech_setup
     for service in (*SERVICES, "apache2", "mariadb", "codynick"):
         run("systemctl", "is-active", "--quiet", service)
     run("runuser", "-u", "client", "--", VENV / "bin/python", "-c",
         "import sys;sys.path.insert(0,'/home/client');import keyboard,serial,requests,CodyNick,Dashboard;Dashboard.ensure_table();print('Python and database OK')")
     check_web_access()
     vision_setup.health_check(run)
+    speech_setup.health_check(run)
     for url in ("/", "/code/", "/dashboard/", "/blocks/", "/docs/"):
         run("curl", "--fail", "--silent", "--show-error", "--max-time", "20", "--output", "/dev/null", "http://127.0.0.1" + url)
 
 
 def install():
     import vision_setup
+    import speech_setup
     check_platform()
     release = Path(__file__).resolve().parent
     manifest = read_json(release / "core-manifest.json")
@@ -291,11 +294,13 @@ def install():
     run("apt-get", "update", env=env)
     run("apt-get", "install", "-y", "apache2", "libapache2-mod-php", "php-mysql", "php-mbstring",
         "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", "acl",
-        "v4l-utils", "libgomp1", "libglib2.0-0t64", "libgl1", env=env)
+        "v4l-utils", "libgomp1", "libglib2.0-0t64", "libgl1",
+        "alsa-utils", "ffmpeg", env=env)
     prepare_accounts()
     configure_database()
     repair_web_access()
     vision_setup.install(manifest, run)
+    speech_setup.install(manifest, run)
     for name in verify_manifest(manifest):
         relative = PurePosixPath(name)
         component = relative.parts[1]
@@ -318,8 +323,13 @@ def install():
         write(info, json.dumps({"devicename": "CodyNick", "serial_number": read_json(NETWORK).get("ssid", "unknown"), "description": f"CodyNick core {VERSION} (AI installation pending)", "logo_path": "/assets/logo.png"}, indent=2))
     install_units()
     health_check()
-    save_state("ready", completed_version=VERSION, ai_installed=True, ai_scope=["usb-camera", "yolo"])
-    print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/\nUSB camera and YOLO: runtime/model checks passed; camera capture test pending\nOCR, speech, chapter 8: NOT INSTALLED\nNo reboot required. Run the USB camera example in the IDE.", flush=True)
+    save_state("ready", completed_version=VERSION, ai_installed=True,
+               ai_scope=["usb-camera", "yolo", "speech-to-text", "voice-commands"])
+    print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/"
+          "\nUSB vision and offline English speech: runtime/model checks passed"
+          "\nMicrophone capture: test with voice_led_colors.py"
+          "\nOCR, text-to-speech, face features, and chapter 8: NOT INSTALLED"
+          "\nNo reboot required.", flush=True)
 
 
 def main():

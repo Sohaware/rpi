@@ -2,11 +2,13 @@
 
 ## Current version
 
-**Unified setup: 0.3.0 (USB vision trial). Network component: 0.1.2.**
+**Unified setup: 0.4.0 (offline speech trial). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
-its camera/model acceptance test on the Pi is still pending.
+USB-camera capture and default-model object detection passed the user's Pi test.
+Version 0.4.0 adds the vision demos prepared for 0.3.1 plus offline English
+speech-to-text and a microphone-to-RGB voice-command demo. Hardware tests are pending.
 
 **Use this same command for first installation, a supported upgrade, or application
 repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
@@ -16,7 +18,8 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 ```
 
 It chooses the required stage and shows the installation log. It accepts core
-0.2.0, 0.2.1, 0.2.2, and repeats of 0.3.0. Upstream stage scripts/assets are pinned
+0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, and repeats
+of 0.4.0. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -25,10 +28,12 @@ hotspot, reconnect at 10.42.0.1, and run **the same command** within 15 minutes.
 It performs the network confirmation and continues to applications. No separate
 `--confirm` command is required with this entry point. Answer its confirmation prompt.
 
-Have the USB webcam connected. Allow approximately **310 MB of runtime/model
-downloads and at least 3 GB free storage**. Downloads are cached and verified; repair
-restores managed runtime files. OCR, speech recognition/generation, and chapter 8
-are not installed yet. This remains a staged hardware trial, not a production fleet updater.
+Have the USB webcam and a USB microphone (a webcam microphone is acceptable)
+connected. A 0.3.0 upgrade adds approximately **46 MB** of speech downloads; a fresh
+installation downloads approximately **356 MB**. Allow at least 3 GB free storage.
+Downloads are cached and verified; repair restores managed runtime files. OCR,
+text-to-speech, face features, and chapter 8 are not installed yet. This remains a
+staged hardware trial, not a production fleet updater.
 
 ## 1. Prepare before installation
 
@@ -84,7 +89,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.3.0**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.4.0**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -120,7 +125,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.3.0: READY`
+same entry point starts application installation. Wait for `CodyNick 0.4.0: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -169,7 +174,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.3.0: READY`**, then press
+Wait for **`CodyNick 0.4.0: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -188,7 +193,7 @@ while it is running: output should restart from zero. Also open the
 [dashboard](http://10.42.0.1/dashboard/) and [block editor](http://10.42.0.1/blocks/).
 Some editor assets currently use external CDNs, so keep internet access available.
 
-**USB-camera/YOLO test:** In the IDE, open `CodyNick examples/usb_camera_objects.py`
+**USB-camera/YOLO test:** In the IDE, open `CodyNick examples/camera_objects.py`
 and click **Run this File**. The script finds USB video devices, captures an image,
 loads YOLO nano, and prints object detections. Point the webcam at ordinary objects
 such as a chair, bottle, or cup. Zero detections is a valid result for an empty or
@@ -227,7 +232,7 @@ validated by the import check.
 ### Repeating, checking, and recovering
 
 **If 0.2.0 or 0.2.1 failed at the www-data write-access check, run the three commands above.**
-No manual permission commands or SD-card rewrite are required. Version 0.3.0 accepts
+No manual permission commands or SD-card rewrite are required. Version 0.4.0 accepts
 failed and completed 0.2.0/0.2.1 installations and repairs web-user access with explicit
 ACLs. It grants traversal of `/home` and `/home/client`, writes to the active script
 and log, and shared-folder access. It does not grant writes to the whole client home.
@@ -246,7 +251,7 @@ student script is restarted during installation.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -255,7 +260,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.3.0/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.4.0/app_setup.py --check
 ```
 
 To retrieve the latest installation output after reconnecting:
@@ -282,7 +287,9 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
-| **0.3.0-vision** | USB vision trial; Pi acceptance pending | Single setup entry point, in-place upgrades from core 0.2.x, bundled ARM64 controller/YOLO runtime and models, USB-camera IDE example, safe ANSI terminal colors, bounded output, and log-rotation handling. OCR/speech/chapter 8 remain deferred. |
+| **0.4.0-speech** | Speech hardware test pending | Offline English speech-to-text, constrained voice commands, microphone-to-RGB demo, and the camera/counting/model-comparison demos prepared in the unpublished 0.3.1 candidate. Reuses verified 0.3.0 vision assets. |
+| 0.3.1-vision | Unpublished candidate, folded into 0.4.0 | Renamed camera demo, per-photo object counting, and sequential nano/small/medium comparison on one photo. |
+| 0.3.0-vision | USB capture and default-model object detection passed on user's Pi | Single setup entry point, in-place upgrades from core 0.2.x, bundled ARM64 controller/YOLO runtime and models, USB-camera IDE example, safe ANSI terminal colors, bounded output, and log-rotation handling. OCR/speech/chapter 8 remain deferred. |
 | 0.2.2-core | Fresh-OS, IDE/run/live-output, and RGB hardware tests passed on user's Pi | Replaced the failing external test -w gate with actual file/folder operations. Baseline for 0.3.0 upgrade. |
 | 0.2.1-core | Superseded: test -w still failed on Pi | Added explicit ACLs and diagnostics. The log confirmed correct file modes, ACLs, and group membership, but the preliminary test prevented the real-open probe from running. |
 | 0.2.0-core | Superseded: Pi health check failed on www-data write access | Introduced detached core installation, IDE/live terminal, Blockly, dashboard, dependencies, and script/watchdog services. Python/database checks passed on the Pi, but READY was not reached. |
@@ -314,14 +321,41 @@ before stopping it. Backups are stored under `/var/backups/codynick/`.
 
 ## Next stage
 
-1. Validate the 0.3.0 upgrade: colored logs, USB photo capture, object detection,
-   repeat installation, and reboot persistence. Then test its unified fresh-OS path.
-2. Package OCR, speech recognition, and speech generation as subsequent upgrades,
-   retaining existing on-device paths and student data.
+1. Test the 0.4.0 voice LED, counting, and model-comparison demos, repeated
+   installation, reboot persistence, and the unified fresh-OS path.
+2. Package OCR next. Text-to-speech and face features follow later, retaining
+   existing on-device paths and student data.
 3. Add verified migrations and recovery for later releases, then test the complete
    clean-OS procedure before recommending fleet-wide upgrades.
 
 Chapter 8 will be a separate upgrade. Keep this SD card for the next stage.
+
+## AI demo gallery (0.4.0)
+
+Open `CodyNick examples` in the IDE and select **Run This File**:
+
+| Script | Demo |
+| --- | --- |
+| `camera_objects.py` | Capture one photo, print labels/scores, save an annotated image. |
+| `object_counter.py` | Count `bottle` in five photos. Edit TARGET to another YOLO label. Counts are per-photo, not unique tracked objects across time. |
+| `model_comparison.py` | Capture one photo, run nano/small/medium sequentially at the same threshold, and print load time and median of three detection calls. Each model saves its own annotated image. |
+| `voice_led_colors.py` | Listen offline for English color commands and set all 16 RGB LEDs. Say lights off or stop listening to finish. |
+
+Photos have unique names; find annotations under Images/results. These demos use
+the USB webcam and existing models, with no cloud credentials or extra downloads.
+Larger models may take longer and use more RAM. Comparison excludes an untimed
+detection and image saving from timed calls. It measures full controller calls,
+not pure inference; counts/scores are not accuracy measurements. Inspect the images.
+
+The voice demo uses a constrained command list: red, green, blue, yellow, white,
+purple, lights off, and stop listening. It automatically selects an ALSA USB/webcam
+microphone, prints accepted commands and model confidence scores, and turns the LEDs
+off when it exits. Recognition is offline; audio is streamed to the local worker and
+is not saved or sent to a cloud service.
+
+The old `usb_camera_objects.py` remains on upgraded devices to preserve any edits;
+new installations receive only the renamed demo. Existing student/example files
+are never overwritten. No swap configuration is added here.
 
 ## Implementation and testing
 

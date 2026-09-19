@@ -1,0 +1,25 @@
+{
+  "version": "0.4.0",
+  "tag": "v0.4.0-speech",
+  "os": "ubuntu",
+  "os_version": "26.04",
+  "arch": "aarch64",
+  "language": "en",
+  "model": "small",
+  "assets": [
+    {
+      "name": "stt-environment-0.4.0.tar.gz",
+      "kind": "runtime",
+      "size": 3668907,
+      "sha256": "05b7f624d326ccfeabd33d16e65fe53de95fa9be1c9f20b7908b3a9cccc1ee4d",
+      "expanded_size": 12126497
+    },
+    {
+      "name": "stt-english-small-model-0.4.0.tar.gz",
+      "kind": "models",
+      "size": 42061291,
+      "sha256": "02069d4b505086b31680acd31bba91c362635ca41f568f44d1faa154711826f2",
+      "expanded_size": 70898967
+    }
+  ]
+}

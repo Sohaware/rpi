@@ -1,0 +1,57 @@
+"""CodyNick Examples 0.3.1: count a chosen object in five separate photos."""
+import time
+from pathlib import Path
+from uuid import uuid4
+from codynick_ai import CodyNickAI
+
+
+def open_usb_camera():
+    nodes = sorted(Path('/sys/class/video4linux').glob('video*'))
+    candidates = [int(node.name[5:]) for node in nodes
+                  if '/usb' in str((node / 'device').resolve())]
+    if not candidates:
+        raise RuntimeError('No USB webcam found. Connect it and run again.')
+    for index in candidates:
+        ai = CodyNickAI(workspace='/home/client', camera_index=index)
+        try:
+            ai.open_camera()
+            print(f'\x1b[92mUSB camera /dev/video{index} opened\x1b[0m', flush=True)
+            return ai
+        except Exception as error:
+            print(f'/dev/video{index}: {error}', flush=True)
+            ai.close()
+    raise RuntimeError('No USB camera returned an image. Check whether it is in use.')
+
+
+TARGET = 'bottle'  # Use a YOLO label, such as person, cup, chair, or bottle.
+SAMPLES = 5
+INTERVAL_SECONDS = 2
+CONFIDENCE = 0.35
+
+
+def main():
+    ai = open_usb_camera()
+    counts = []
+    try:
+        print(f'Counting {TARGET!r} per photo, not unique objects over time.', flush=True)
+        ai.load_app('yolo', model='nano')
+        session = uuid4().hex[:12]
+        for index in range(SAMPLES):
+            name = f'count_{session}_{index + 1}'
+            ai.take_picture(name)
+            result = ai.detect_objects(name, confidence=CONFIDENCE)
+            count = sum(item['class_name'] == TARGET for item in result['detections'])
+            counts.append(count)
+            print(f'Photo {index + 1}/{SAMPLES}: {count} {TARGET}(s)', flush=True)
+            print('Annotated picture:', result['annotated_image'], flush=True)
+            if index + 1 < SAMPLES:
+                time.sleep(INTERVAL_SECONDS)
+        if counts:
+            print(f'Per-photo counts: {counts}; maximum in one photo: {max(counts)}', flush=True)
+    finally:
+        ai.close()
+
+
+if __name__ == '__main__':
+    main()
+
