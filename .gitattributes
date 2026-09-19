@@ -4,3 +4,6 @@
 *.md text eol=lf
 *.json text eol=lf
 *.php text eol=lf
+*.js text eol=lf
+*.cjs text eol=lf
+*.css text eol=lf

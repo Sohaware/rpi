@@ -13,22 +13,28 @@ def sha(path):
 
 def main():
     files = {}
-    for component in ("ide", "client", "watchdog"):
+    for component in ("ide", "client", "watchdog", "ai", "examples"):
         for path in sorted((ROOT / "components" / component).rglob("*")):
             if path.is_file() and "__pycache__" not in path.parts:
                 files[path.relative_to(ROOT).as_posix()] = sha(path)
     data = {
-        "version": "0.2.2", "tag": "v0.2.2-core", "status": "hardware-trial",
-        "components": {"ide": "Rev.B2-core.0.2.0", "CodyNick.py": "1.20.1", "Dashboard.py": "image-20260711", "watchdog": "0.2.0"},
-        "ai_installed": False, "files": files,
+        "version": "0.3.0", "tag": "v0.3.0-vision", "status": "hardware-trial",
+        "components": {"ide": "0.3.0", "CodyNick.py": "1.20.1", "Dashboard.py": "image-20260711", "watchdog": "0.2.0", "vision": "0.3.0-image-baseline"},
+        "ai_installed": True, "ai_scope": ["usb-camera", "yolo"], "files": files,
+        "vision_assets": json.loads((ROOT / "releases/vision-0.3.0.json").read_text())["assets"],
     }
-    manifest = ROOT / "releases/core-0.2.2.json"
+    manifest = ROOT / "releases/core-0.3.0.json"
     manifest.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8", newline="\n")
     bootstrap = ROOT / "bootstrap/codynick-apps.sh"
     text = bootstrap.read_text(encoding="utf-8")
-    for key, path in (("HELPER", ROOT / "installer/app_setup.py"), ("MANIFEST", manifest)):
+    for key, path in (("HELPER", ROOT / "installer/app_setup.py"), ("MANIFEST", manifest), ("VISION", ROOT / "installer/vision_setup.py")):
         text = re.sub(key + r'_SHA256="[^"]+"', key + '_SHA256="' + sha(path) + '"', text)
     bootstrap.write_text(text, encoding="utf-8", newline="\n")
+    entry = ROOT / "setup.sh"
+    text = entry.read_text()
+    for key, path in (("NETWORK", ROOT / "bootstrap/codynick-setup.sh"), ("APPS", bootstrap)):
+        text = re.sub(key + r'_SHA256="[^"]+"', key + '_SHA256="' + sha(path) + '"', text)
+    entry.write_text(text, encoding="utf-8", newline="\n")
     print(f"Sealed {len(files)} core files; do not modify a published tag.")
 
 

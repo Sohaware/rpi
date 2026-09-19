@@ -2,16 +2,33 @@
 
 ## Current version
 
-**Network: v0.1.2-network. Core applications: v0.2.2-core (permission repair trial).**
-Both stages target Ubuntu Server 26.04 ARM64. The network-only trial supports
-on Raspberry Pi 5. Repeated fresh-install tests, hotspot/SSH access, internet sharing,
-and reboot persistence passed on the tested Pi with a Realtek RTL8188EUS USB dongle.
+**Unified setup: 0.3.0 (USB vision trial). Network component: 0.1.2.**
+Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
+have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
+test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
+its camera/model acceptance test on the Pi is still pending.
 
-The network stage does not install applications. After completing it, use section 6
-to install the IDE, CodyNick library, dashboard, and script services. AI environments
-and models are a separate, not-yet-published stage; chapter 8 remains reserved for a
-later upgrade. Ethernet-only operation, other adapters, and broader failure recovery
-still need validation. Do not treat this as a production fleet updater yet.
+**Use this same command for first installation, a supported upgrade, or application
+repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
+
+```bash
+wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
+```
+
+It chooses the required stage and shows the installation log. It accepts core
+0.2.0, 0.2.1, 0.2.2, and repeats of 0.3.0. Upstream stage scripts/assets are pinned
+to immutable versions with SHA256 checks. Only the small entry point follows main;
+the application and network stages use fixed release tags.
+
+On a fresh OS, the network switch still disconnects SSH. Join the displayed Pi
+hotspot, reconnect at 10.42.0.1, and run **the same command** within 15 minutes.
+It performs the network confirmation and continues to applications. No separate
+`--confirm` command is required with this entry point. Answer its confirmation prompt.
+
+Have the USB webcam connected. Allow approximately **310 MB of runtime/model
+downloads and at least 3 GB free storage**. Downloads are cached and verified; repair
+restores managed runtime files. OCR, speech recognition/generation, and chapter 8
+are not installed yet. This remains a staged hardware trial, not a production fleet updater.
 
 ## 1. Prepare before installation
 
@@ -61,17 +78,14 @@ hostname -I
 
 This initial DHCP address can change. Do not assume it matches a previous SD card.
 
-## 3. Download and run
+## 3. Run the single setup command
 
 ```bash
-wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.1.2-network/bootstrap/codynick-setup.sh
+wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-```bash
-sudo bash /tmp/codynick-setup.sh
-```
-
-Check that the banner says **0.1.2**. Answer `y` to
+The entry banner is **0.3.0**; its pinned network component still reports **0.1.2**.
+On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
 The installer installs prerequisites, detects adapters, and verifies HTTPS internet
@@ -102,11 +116,13 @@ ssh admin@10.42.0.1
 From that SSH session, confirm within **15 minutes**:
 
 ```bash
-sudo codynick-setup --confirm
+wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-Answer `y`. Success reports `Stage: network-ready` and disables rollback.
-This release still requires explicit `--confirm`. No root password is set.
+Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
+same entry point starts application installation. Wait for `CodyNick 0.3.0: READY`
+before rebooting. No root password is set. The older internal network helper may
+still mention `--confirm`; the unified entry point invokes it for you.
 
 Without confirmation, the timer is intended to restore the previous network.
 A reboot before confirmation restarts its 15-minute interval. The original
@@ -137,10 +153,10 @@ Expected results:
 Ethernet can show `DOWN` without a cable. Changes in the dongle's DHCP address are
 normal; the hotspot address remains `10.42.0.1`.
 
-**Keep this SD card.** Network setup is complete. Rerunning this version reports
-status; it does not install the IDE or AI tools. Continue below.
+**Keep this SD card.** Use the unified command for application repair/upgrade.
+The optional network-only `--check` command above checks just the network component.
 
-## 6. Install core applications
+## 6. Applications and USB-camera acceptance test
 
 **Already connected to the verified hotspot? Start here. Do not rewrite the SD card
 or repeat the network handover.** Keep the external internet network available.
@@ -148,19 +164,12 @@ or repeat the network handover.** Keep the external internet network available.
 Run these commands in the Pi's existing administrator SSH session at `10.42.0.1`:
 
 ```bash
-wget -O /tmp/codynick-apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.2.2-core/bootstrap/codynick-apps.sh
-```
-
-```bash
-sudo bash /tmp/codynick-apps.sh
-```
-
-```bash
-sudo journalctl -fu codynick-install
+wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
-or power off until it finishes. Wait for **`CodyNick core 0.2.2: READY`**, then press
+or power off until it finishes. The command automatically follows its log.
+Wait for **`CodyNick 0.3.0: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -179,6 +188,19 @@ while it is running: output should restart from zero. Also open the
 [dashboard](http://10.42.0.1/dashboard/) and [block editor](http://10.42.0.1/blocks/).
 Some editor assets currently use external CDNs, so keep internet access available.
 
+**USB-camera/YOLO test:** In the IDE, open `CodyNick examples/usb_camera_objects.py`
+and click **Run this File**. The script finds USB video devices, captures an image,
+loads YOLO nano, and prints object detections. Point the webcam at ordinary objects
+such as a chair, bottle, or cup. Zero detections is a valid result for an empty or
+unrecognized scene, not proof of a broken installation.
+
+The camera-open message should be green, without visible escape codes. Open the
+IDE's **Images** section to inspect `usb_camera_test.jpg` and the annotated output
+under `results`. The example closes its camera/worker when finished. Installation
+itself does not capture photos: it validates the Python runtime and model warmup.
+If capture fails, send the IDE terminal output; camera hardware confirmation remains
+separate from the installer READY status. Close other programs using the webcam.
+
 ### Installed scope and credentials
 
 | Item | Details |
@@ -187,12 +209,13 @@ Some editor assets currently use external CDNs, so keep internet access availabl
 | Python libraries and student code | `/home/client`; CodyNick.py 1.20.1 and Dashboard.py |
 | Script watcher | `/root/codynick`, `codynick.service` |
 | Student script execution | `script.service`, runs as `client`, unbuffered output to `/home/client/log.log` |
-| Isolated core Python | `/opt/codynick/core-0.2.0/bin/python`; keyboard, PySerial, requests, MySQL connector |
+| Student Python runtime | `/home/client/.codynick-ai/envs/controller/bin/python` (bundled Python 3.10); keyboard, PySerial, requests, MySQL connector, NumPy/OpenCV |
+| YOLO worker | `/home/client/.codynick-ai/envs/yolo/bin/python`; models in `/home/client/.deepface/weights`; AI source in `/home/client/vhl_object_detection` |
 | SSH administrator | Existing username/password or key, unchanged |
 | New client account | `client` / `codynick`; existing account passwords are not reset |
 | Dashboard database | Database/user/password: `codynick` / `codynick` / `codynick`; database-scoped permissions |
 | Root login/password | Unchanged; root login is not required |
-| AI environments/models | **Not installed in this core release** |
+| AI environments/models | USB-camera capture and YOLO nano/small/medium models; other AI stages not yet installed |
 
 This is a trusted-classroom-network application, not an internet-facing service.
 The IDE does not provide user authentication or isolate students from one another.
@@ -204,11 +227,12 @@ validated by the import check.
 ### Repeating, checking, and recovering
 
 **If 0.2.0 or 0.2.1 failed at the www-data write-access check, run the three commands above.**
-No manual permission commands or SD-card rewrite are required. Version 0.2.2 accepts
+No manual permission commands or SD-card rewrite are required. Version 0.3.0 accepts
 failed and completed 0.2.0/0.2.1 installations and repairs web-user access with explicit
 ACLs. It grants traversal of `/home` and `/home/client`, writes to the active script
 and log, and shared-folder access. It does not grant writes to the whole client home.
-The core Python environment remains at its existing `/opt/codynick/core-0.2.0` path.
+On upgrades, the old `/opt/codynick/core-0.2.0` environment is retained, but the
+student service now uses the bundled controller environment documented above.
 Actual file opens are checked without truncating data, and disposable files test folder
 create/read/rename/delete operations. No external `test -w` gates those checks.
 Failures include identity, path, and ACL diagnostics. The 0.2.1 Pi log shows correct
@@ -220,8 +244,9 @@ Python files, active_script.py, media, logs, dashboard records, web configuratio
 saved Blockly arrangements/packages, and existing account passwords. The running
 student script is restarted during installation.
 
-No OS-wide upgrade, reboot, root-password reset, or network reconfiguration is
-performed. A legacy installation or a version other than 0.2.0/0.2.1/0.2.2 is refused
+The application phase performs no OS-wide upgrade, reboot, root-password reset, or
+network reconfiguration. A legacy installation or a version other than
+0.2.0/0.2.1/0.2.2/0.3.0 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -230,7 +255,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.2.2/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.3.0/app_setup.py --check
 ```
 
 To retrieve the latest installation output after reconnecting:
@@ -246,11 +271,19 @@ applications; rerun this same release after addressing the reported error. Insta
 does not automatically resume after a power failure/reboot. The verified hotspot
 configuration is left untouched.
 
+**Repair limits:** the single entry point requires a bootable OS, administrator
+access, and working internet. It can start stopped existing network units, but it
+does not reconstruct arbitrary missing/corrupt network state or unsupported legacy
+installs. Runtime files are restored from the pinned snapshot; unknown conflicting
+symlinks cause a safe failure. It is not a guarantee of recovery from every kind of
+SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old installer.
+
 ## Version history
 
 | Version | Status | What is new |
 | --- | --- | --- |
-| **0.2.2-core** | Real-I/O health-check trial; Pi confirmation pending | Replaces the external test -w gate with actual read/write opens and disposable shared-folder operations. Accepts 0.2.0/0.2.1 repairs; real access failures still stop installation. |
+| **0.3.0-vision** | USB vision trial; Pi acceptance pending | Single setup entry point, in-place upgrades from core 0.2.x, bundled ARM64 controller/YOLO runtime and models, USB-camera IDE example, safe ANSI terminal colors, bounded output, and log-rotation handling. OCR/speech/chapter 8 remain deferred. |
+| 0.2.2-core | Fresh-OS, IDE/run/live-output, and RGB hardware tests passed on user's Pi | Replaced the failing external test -w gate with actual file/folder operations. Baseline for 0.3.0 upgrade. |
 | 0.2.1-core | Superseded: test -w still failed on Pi | Added explicit ACLs and diagnostics. The log confirmed correct file modes, ACLs, and group membership, but the preliminary test prevented the real-open probe from running. |
 | 0.2.0-core | Superseded: Pi health check failed on www-data write access | Introduced detached core installation, IDE/live terminal, Blockly, dashboard, dependencies, and script/watchdog services. Python/database checks passed on the Pi, but READY was not reached. |
 | **0.1.2** | Current network trial; fresh-install and reboot tests passed on the tested hardware | Corrects inherited file-creation permissions so networkd can read generated Netplan files. Fixes the fallback networking and unintended DHCP address changes caused by unreadable files. |
@@ -281,10 +314,10 @@ before stopping it. Backups are stored under `/var/backups/codynick/`.
 
 ## Next stage
 
-1. Validate core 0.2.2 on the network-ready Pi: permission repair, live output, rerun,
-   dashboard, hardware access, reboot, and repeat installation without data loss.
-2. Package the image's matching AI environments/models for object detection, OCR,
-   speech recognition, and speech generation; retain existing on-device paths.
+1. Validate the 0.3.0 upgrade: colored logs, USB photo capture, object detection,
+   repeat installation, and reboot persistence. Then test its unified fresh-OS path.
+2. Package OCR, speech recognition, and speech generation as subsequent upgrades,
+   retaining existing on-device paths and student data.
 3. Add verified migrations and recovery for later releases, then test the complete
    clean-OS procedure before recommending fleet-wide upgrades.
 

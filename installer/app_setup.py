@@ -12,13 +12,13 @@ import subprocess
 import sys
 import urllib.request
 
-VERSION = "0.2.2"
-TAG = "v0.2.2-core"
+VERSION = "0.3.0"
+TAG = "v0.3.0-vision"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
-# This repair keeps the existing runtime and dependency set.
-VENV = Path("/opt/codynick/core-0.2.0")
+# Student code uses the image-matched controller runtime; old core envs are retained.
+VENV = Path("/home/client/.codynick-ai/envs/controller")
 SERVICES = ("ssh", "codynick-ap", "codynick-dhcp", "codynick-nat")
 PRESERVE = {"code/config.php", "dashboard/config.php", "docs/config.php", "blocks/data/main.json"}
 
@@ -70,7 +70,7 @@ def verify_manifest(manifest):
             raise RuntimeError(f"Invalid release path: {name}")
         if len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
             raise RuntimeError("Invalid release checksum")
-        if path.parts[1] not in ("ide", "client", "watchdog"):
+        if path.parts[1] not in ("ide", "client", "watchdog", "ai", "examples"):
             raise RuntimeError("Unsupported component")
     return files
 
@@ -113,7 +113,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -266,16 +266,19 @@ WantedBy=multi-user.target
 
 
 def health_check():
+    import vision_setup
     for service in (*SERVICES, "apache2", "mariadb", "codynick"):
         run("systemctl", "is-active", "--quiet", service)
     run("runuser", "-u", "client", "--", VENV / "bin/python", "-c",
         "import sys;sys.path.insert(0,'/home/client');import keyboard,serial,requests,CodyNick,Dashboard;Dashboard.ensure_table();print('Python and database OK')")
     check_web_access()
+    vision_setup.health_check(run)
     for url in ("/", "/code/", "/dashboard/", "/blocks/", "/docs/"):
         run("curl", "--fail", "--silent", "--show-error", "--max-time", "20", "--output", "/dev/null", "http://127.0.0.1" + url)
 
 
 def install():
+    import vision_setup
     check_platform()
     release = Path(__file__).resolve().parent
     manifest = read_json(release / "core-manifest.json")
@@ -287,21 +290,23 @@ def install():
     env = dict(os.environ, DEBIAN_FRONTEND="noninteractive", NEEDRESTART_MODE="l")
     run("apt-get", "update", env=env)
     run("apt-get", "install", "-y", "apache2", "libapache2-mod-php", "php-mysql", "php-mbstring",
-        "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", "acl", env=env)
-    run("python3", "-m", "venv", "--system-site-packages", VENV)
-    run(VENV / "bin/python", "-m", "pip", "install", "--disable-pip-version-check", "keyboard==0.13.5", "mysql-connector-python==9.7.0")
+        "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", "acl",
+        "v4l-utils", "libgomp1", "libglib2.0-0t64", "libgl1", env=env)
     prepare_accounts()
     configure_database()
-    for service in ("codynick", "script"):
-        subprocess.run(["systemctl", "stop", service], check=False)
     repair_web_access()
+    vision_setup.install(manifest, run)
     for name in verify_manifest(manifest):
         relative = PurePosixPath(name)
         component = relative.parts[1]
         suffix = PurePosixPath(*relative.parts[2:])
-        root = {"ide": Path("/var/www/html"), "client": Path("/home/client"), "watchdog": Path("/root/codynick")}[component]
-        preserve = component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/"))
+        root = {"ide": Path("/var/www/html"), "client": Path("/home/client"), "watchdog": Path("/root/codynick"),
+                "ai": Path("/home/client/vhl_object_detection"), "examples": Path("/home/client/userfiles/CodyNick examples")}[component]
+        preserve = component == "examples" or (component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/")))
         deploy(source / name, root / str(suffix), backup, preserve)
+        if component == "examples":
+            run("chown", "client:codynick-media", root, root / str(suffix))
+            (root / str(suffix)).chmod(0o664)
     for folder in (Path("/var/www/html/blocks/data"), Path("/var/www/html/blocks/blocks")):
         run("chown", "www-data:www-data", folder)
         folder.chmod(0o775)
@@ -313,8 +318,8 @@ def install():
         write(info, json.dumps({"devicename": "CodyNick", "serial_number": read_json(NETWORK).get("ssid", "unknown"), "description": f"CodyNick core {VERSION} (AI installation pending)", "logo_path": "/assets/logo.png"}, indent=2))
     install_units()
     health_check()
-    save_state("ready", completed_version=VERSION, ai_installed=False)
-    print(f"\nCodyNick core {VERSION}: READY\nIDE: http://10.42.0.1/code/\nDashboard: http://10.42.0.1/dashboard/\nAI models/environments: NOT INSTALLED\nNo reboot required. Test Run This File and live output next.", flush=True)
+    save_state("ready", completed_version=VERSION, ai_installed=True, ai_scope=["usb-camera", "yolo"])
+    print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/\nUSB camera and YOLO: runtime/model checks passed; camera capture test pending\nOCR, speech, chapter 8: NOT INSTALLED\nNo reboot required. Run the USB camera example in the IDE.", flush=True)
 
 
 def main():

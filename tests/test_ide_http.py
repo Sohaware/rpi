@@ -77,6 +77,25 @@ class IdeHttpTests(unittest.TestCase):
         self.assertEqual(first["content"], "first\n")
         self.assertEqual(second["content"], "second\n")
 
+    def test_log_rotation_resets_offset(self):
+        log = self.home / "log.log"
+        log.write_text('original\n')
+        first = self.request('/code/?action=logs&offset=0')
+        log.rename(self.home / 'old.log')
+        log.write_text('new file content longer than original\n')
+        second = self.request('/code/?action=logs&offset=' + str(first['offset']) + '&fileId=' + first['fileId'])
+        self.assertTrue(second['reset'])
+        self.assertTrue(second['content'].startswith('new file'))
+
+    def test_truncation_resets_offset(self):
+        log = self.home / 'log.log'
+        log.write_text('long original output\n')
+        first = self.request('/code/?action=logs&offset=0')
+        log.write_text('short\n')
+        second = self.request('/code/?action=logs&offset=' + str(first['offset']))
+        self.assertTrue(second['reset'])
+        self.assertEqual(second['content'], 'short\n')
+
     def test_blockly_runs_without_home_directory_write_permission(self):
         if __import__("os").name != "posix":
             self.skipTest("POSIX directory permissions required")

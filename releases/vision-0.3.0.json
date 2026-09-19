@@ -1,0 +1,45 @@
+{
+  "version": "0.3.0",
+  "tag": "v0.3.0-vision",
+  "os": "ubuntu",
+  "os_version": "26.04",
+  "arch": "aarch64",
+  "components": {
+    "library": "1.20.1",
+    "ide": "Rev.B2",
+    "ai": "Rev.B2-image-20260711",
+    "watchdog": "Rev.B2-image-20260711"
+  },
+  "predecessor_versions": [],
+  "chapter8": false,
+  "assets": [
+    {
+      "name": "python-runtimes-0.3.0.tar.gz",
+      "kind": "runtime",
+      "size": 30601953,
+      "sha256": "b7307a75ffe802e523317aa5f52f06f3c5f5e447559b8719981360752d5d51ad",
+      "expanded_size": 77559086
+    },
+    {
+      "name": "controller-environment-0.3.0.tar.gz",
+      "kind": "runtime",
+      "size": 68643113,
+      "sha256": "1d9d2a64c51659748ec1c521a100ebd03566e012e7924ddfb3a8c92f775f9e36",
+      "expanded_size": 194384736
+    },
+    {
+      "name": "yolo-environment-0.3.0.tar.gz",
+      "kind": "runtime",
+      "size": 68406261,
+      "sha256": "213e329002f5d6a8f922fefe7622c821290ffafafd5869fd54d7ae211c72ae22",
+      "expanded_size": 196526198
+    },
+    {
+      "name": "vision-models-0.3.0.tar.gz",
+      "kind": "models",
+      "size": 142188768,
+      "sha256": "2d056fde56bd456fae9242487a66b8434bc1a33003e2c6ba3e184120d83e83fb",
+      "expanded_size": 161530533
+    }
+  ]
+}

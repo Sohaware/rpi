@@ -15,6 +15,9 @@ jobs:
         run: |
           bash -n bootstrap/codynick-setup.sh
           bash -n bootstrap/codynick-apps.sh
+          bash -n setup.sh
+      - name: ANSI terminal regression
+        run: node tests/test_ansi.cjs
       - name: Real web-user permission regression
         run: |
           sudo groupadd --force codynick-media

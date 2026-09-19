@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.0-vision - Unified entry point, USB vision, and ANSI logs
+
+- Adds setup.sh: one public download/run command selects network preparation,
+  hotspot confirmation, or application install/repair/upgrade. A fresh handover
+  still requires reconnecting and rerunning the same command within 15 minutes.
+- Accepts 0.2.0/0.2.1/0.2.2 and repeated 0.3.0 installs. Leaves a working hotspot
+  alone; arbitrary network/OS corruption and unknown release migrations are not supported.
+- Deploys allowlisted Python 3.10 ARM64, controller/YOLO environments, and three
+  YOLO ONNX models from the supplied image, as SHA256-checked GitHub release assets.
+  Rejects archive traversal, special files, conflicting links, and link-parent writes.
+- Runs student code through the controller environment; preserves the old core
+  environment on upgrades. Adds native USB-video/runtime libraries and model warmup.
+- Adds a preserved USB-camera/object-detection example to the IDE. Actual camera
+  capture is user-initiated; installation never captures images automatically.
+- Renders ANSI foreground colors and bold through safe DOM text nodes, including
+  split sequences across polls. Strips unsupported controls, bounds displayed output,
+  prevents overlapping polls, and resets color state on clear/truncation/rotation.
+- Adds archive-safety, ANSI rendering, and release-integrity checks. No OCR/speech/
+  chapter 8 environments are deployed. Pi USB-camera acceptance remains pending.
+- Records successful fresh-OS/core/IDE/RGB tests for the previous 0.2.2 baseline.
+
 ## 0.2.2-core - Test real web-user I/O
 
 - Removes external `test -w` as a gate: 0.2.1 diagnostics showed correct modes,

@@ -133,7 +133,8 @@ function read_log_chunk(string $file, int $offset = 0, int $max = 262144): array
     $size = filesize($file);
     if ($size === false) fail('Could not inspect log file.', 500);
 
-    if ($offset < 0 || $offset > $size) {
+    $reset = $offset < 0 || $offset > $size;
+    if ($reset) {
         $offset = max(0, $size - $max);
     }
 
@@ -143,7 +144,7 @@ function read_log_chunk(string $file, int $offset = 0, int $max = 262144): array
     $data = stream_get_contents($fh, $max);
     $next = ftell($fh);
     fclose($fh);
-    return ['content' => $data ?: '', 'offset' => $next ?: $size, 'size' => $size];
+    return ['content' => $data ?: '', 'offset' => $next ?: $size, 'size' => $size, 'reset' => $reset];
 }
 
 ensure_paths();
@@ -242,9 +243,11 @@ if ($action !== '') {
             $real = realpath($logPath);
             if ($real === false || !is_file($real) || !is_readable($real)) fail('Log file is not readable: ' . $logPath, 404);
             $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : -1;
+            $fileId = (string)fileinode($real);
+            if (isset($_GET['fileId']) && $_GET['fileId'] !== '' && $_GET['fileId'] !== $fileId) $offset = -1;
             $max = defined('LOG_TAIL_BYTES') ? (int)LOG_TAIL_BYTES : 262144;
             $chunk = read_log_chunk($real, $offset, $max);
-            j(['ok'=>true, 'content'=>$chunk['content'], 'offset'=>$chunk['offset'], 'size'=>$chunk['size'], 'name'=>basename($real), 'time'=>date('Y-m-d H:i:s')]);
+            j(['ok'=>true, 'content'=>$chunk['content'], 'offset'=>$chunk['offset'], 'size'=>$chunk['size'], 'reset'=>$chunk['reset'], 'fileId'=>$fileId, 'name'=>basename($real), 'time'=>date('Y-m-d H:i:s')]);
         case 'clear_logs':
             csrf();
             $logPath = defined('LOG_FILE') ? LOG_FILE : '';
@@ -285,6 +288,8 @@ if ($action !== '') {
 .row.media-root{color:#bfdbfe;font-weight:700}.row.media-file{color:#dbeafe}.media-glyph{width:16px;text-align:center;flex:0 0 16px}.modal{background:rgba(0,0,0,.72)}.modal-card{width:min(1040px,96vw);height:min(780px,90vh)}.modal-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.media-view{flex:1;min-height:0;overflow:auto;padding:18px;display:flex;align-items:center;justify-content:center}.media-view img{display:block;max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;background:#020617}.media-view audio{width:min(720px,90%)}.media-json{width:100%;align-self:stretch}.media-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}.media-stat{background:#111827;border:1px solid #334155;border-radius:9px;padding:10px}.media-stat strong{display:block;font-size:20px;color:#86efac}.media-table{width:100%;border-collapse:collapse;background:#111827}.media-table th,.media-table td{padding:9px;border:1px solid #334155;text-align:left}.media-table th{color:#bfdbfe}.media-raw{white-space:pre-wrap;font-family:Consolas,monospace;background:#020617;border:1px solid #334155;border-radius:8px;padding:12px;color:#d1d5db}.media-download{display:inline-flex;align-items:center;text-decoration:none;background:#1d4ed8;color:white;border:1px solid #3b82f6;border-radius:8px;padding:8px 12px;font-weight:700}
 .tree{font-size:14px}.file-time,.modal-file-time{margin-left:10px;color:var(--muted);font-size:12px;font-weight:400}.modal-heading{min-width:0;flex:1}.modal-heading .modal-title{display:block}.modal-file-time{margin:3px 0 0}
 </style>
+<link rel="stylesheet" href="ansi-terminal.css?v=0.3.0">
+<script src="ansi-terminal.js?v=0.3.0"></script>
 </head>
 <body>
 <header>
@@ -403,14 +408,15 @@ document.getElementById('refreshBtn').onclick=loadTree;
 function mediaKindFromName(name){const ext=(name.split('.').pop()||'').toLowerCase();if(['jpg','jpeg','png','webp'].includes(ext))return'image';if(['wav','mp3','ogg','flac'].includes(ext))return'audio';if(ext==='json')return'json';return'download';}
 document.getElementById('uploadBtn').onclick=()=>{const input=document.getElementById('uploadInput');input.accept=selectedScope==='media'?(selectedMediaRoot==='images'?'.jpg,.jpeg,.png,.webp,.json':'.wav,.mp3,.ogg,.flac,.json'):'.py';input.click()};
 document.getElementById('uploadInput').onchange=async e=>{const file=e.target.files[0];if(!file)return;const form=new FormData();form.append('file',file);try{if(selectedScope==='media'){if(!selectedMediaRoot)throw new Error('Select Images, Audio, or one of their folders first.');form.append('root',selectedMediaRoot);form.append('dir',selectedMediaDir||'');const out=await mediaApi('upload',form,'POST');toast('Uploaded as '+out.name+'.');await loadTree();await openMedia({scope:'media',root:out.root,path:out.path,name:out.name,kind:mediaKindFromName(out.name)})}else{form.append('csrf',CSRF);form.append('dir',selectedDir||'');const response=await fetch('?action=upload',{method:'POST',body:form});const out=await response.json();if(!response.ok||!out.ok)throw new Error(out.error||'Upload failed');toast('Uploaded as '+(out.name||file.name)+'.');await loadTree();if(out.path)await openFile(out.path,out.name||file.name)}}catch(error){toast(error.message,false)}finally{e.target.value=''}};
-let terminalOffset=-1, terminalTimer=null, terminalPaused=false;
+let terminalOffset=-1, terminalTimer=null, terminalPaused=false, terminalBusy=false, terminalFileId='';
+const terminalRenderer = new CodyNickAnsi.AnsiTerminal(document.getElementById('terminalBody'));
 const TERMINAL_POLL_MS = <?= (int)(defined('LOG_POLL_MS') ? LOG_POLL_MS : 1000) ?>;
 function terminalAtBottom(el){return el.scrollTop + el.clientHeight >= el.scrollHeight - 24;}
-async function pollTerminal(){if(terminalPaused)return;const body=document.getElementById('terminalBody');const shouldStick=terminalAtBottom(body);try{const out=await api('logs',{offset:terminalOffset},'GET');if(terminalOffset<0){body.textContent=out.content||'';}else if(out.content){body.textContent+=out.content;}terminalOffset=Number.isFinite(Number(out.offset))?Number(out.offset):terminalOffset;if(!body.textContent)body.textContent='Waiting for output...';if(shouldStick)body.scrollTop=body.scrollHeight;}catch(e){body.textContent=e.message;toast(e.message,false);}}
+async function pollTerminal(){if(terminalPaused||terminalBusy)return;terminalBusy=true;const body=document.getElementById('terminalBody');const shouldStick=terminalAtBottom(body);try{const out=await api('logs',{offset:terminalOffset,fileId:terminalFileId},'GET');if(terminalOffset<0||out.reset)terminalRenderer.reset();terminalRenderer.append(out.content||'');terminalFileId=out.fileId||'';terminalOffset=Number.isFinite(Number(out.offset))?Number(out.offset):terminalOffset;if(shouldStick)body.scrollTop=body.scrollHeight;}catch(e){toast(e.message,false);}finally{terminalBusy=false;}}
 function startTerminal(){clearInterval(terminalTimer);pollTerminal();terminalTimer=setInterval(pollTerminal,TERMINAL_POLL_MS);}
 document.getElementById('logsBtn').onclick=()=>{terminalPaused=false;document.getElementById('terminalPauseBtn').textContent='Pause';pollTerminal();document.getElementById('terminalBody').focus();};
 document.getElementById('terminalPauseBtn').onclick=()=>{terminalPaused=!terminalPaused;document.getElementById('terminalPauseBtn').textContent=terminalPaused?'Resume':'Pause';if(!terminalPaused)pollTerminal();};
-document.getElementById('terminalClearBtn').onclick=async()=>{if(!confirm('Clear terminal log?'))return;try{await api('clear_logs');terminalOffset=0;document.getElementById('terminalBody').textContent='';toast('Terminal log cleared.');}catch(e){toast(e.message,false)}};
+document.getElementById('terminalClearBtn').onclick=async()=>{if(terminalBusy||!confirm('Clear terminal log?'))return;terminalBusy=true;try{await api('clear_logs');terminalOffset=0;terminalFileId='';terminalRenderer.reset();toast('Terminal log cleared.');}catch(e){toast(e.message,false)}finally{terminalBusy=false;}};
 if(usingAce){editor.session.on('change',()=>{if(suppressEditorChange)return;const t=active();if(!t||t.readOnly)return;t.content=content();updateDirty(t);renderTabs();});}else{document.getElementById('fallback').addEventListener('input',()=>{if(suppressEditorChange)return;const t=active();if(!t||t.readOnly)return;t.content=content();updateDirty(t);renderTabs();});}
 function formatModified(value){if(!value)return'Modified time unavailable';const d=new Date(Number(value)*1000);const pad=n=>String(n).padStart(2,'0');return'Modified: '+d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+' '+pad(d.getHours())+':'+pad(d.getMinutes())+':'+pad(d.getSeconds())}
 const updateCurrentLabelBase=updateCurrentLabel;

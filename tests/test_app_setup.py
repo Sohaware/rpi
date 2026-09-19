@@ -18,7 +18,7 @@ class AppTests(unittest.TestCase):
         return dict(version=m.VERSION, tag=m.TAG, files={name: digest})
 
     def test_manifest_rejects_traversal_and_wrong_components(self):
-        for name in ("/etc/passwd", "components/../passwd", "components", "components/ai/model", "components\\client\\bad"):
+        for name in ("/etc/passwd", "components/../passwd", "components", "components/unknown/model", "components\\client\\bad"):
             with self.subTest(name=name), self.assertRaises(RuntimeError):
                 m.verify_manifest(self.manifest(name))
 
@@ -115,12 +115,16 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.2.2.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.3.0.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.2.2.json")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.3.0.json"), ("VISION", "installer/vision_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
+            self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
+        entry = (ROOT / "setup.sh").read_text()
+        for key, name in (("NETWORK", "bootstrap/codynick-setup.sh"), ("APPS", "bootstrap/codynick-apps.sh")):
+            pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', entry).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
 
     def test_no_network_configuration_commands(self):
