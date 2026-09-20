@@ -2,13 +2,15 @@
 
 ## Current version
 
-**Unified setup: 0.4.0 (offline speech trial). Network component: 0.1.2.**
+**Unified setup: 0.4.1; application: 0.4.0 (offline speech trial). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
 USB-camera capture and default-model object detection passed the user's Pi test.
 Version 0.4.0 adds the vision demos prepared for 0.3.1 plus offline English
 speech-to-text and a microphone-to-RGB voice-command demo. Hardware tests are pending.
+Version 0.4.1 fixes same-command confirmation after hotspot handover when sudo
+does not retain the SSH connection environment.
 
 **Use this same command for first installation, a supported upgrade, or application
 repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
@@ -287,6 +289,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.4.1-setup** | Clean-install retest pending | The second run recognizes the saved pending/applying network stage and opens confirmation without relying on SSH environment variables. Application payload remains 0.4.0. |
 | **0.4.0-speech** | Speech hardware test pending | Offline English speech-to-text, constrained voice commands, microphone-to-RGB demo, and the camera/counting/model-comparison demos prepared in the unpublished 0.3.1 candidate. Reuses verified 0.3.0 vision assets. |
 | 0.3.1-vision | Unpublished candidate, folded into 0.4.0 | Renamed camera demo, per-photo object counting, and sequential nano/small/medium comparison on one photo. |
 | 0.3.0-vision | USB capture and default-model object detection passed on user's Pi | Single setup entry point, in-place upgrades from core 0.2.x, bundled ARM64 controller/YOLO runtime and models, USB-camera IDE example, safe ANSI terminal colors, bounded output, and log-rotation handling. OCR/speech/chapter 8 remain deferred. |

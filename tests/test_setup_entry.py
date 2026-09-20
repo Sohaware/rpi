@@ -54,11 +54,11 @@ elif cmd=='systemctl' and os.environ.get('MISSING_SERVICE')=='1': raise SystemEx
         env=dict(os.environ, PATH=str(self.bin)+':'+os.environ['PATH'], FAKE_ROOT=str(self.root), SSH_CONNECTION=ssh, **extra)
         return subprocess.run(['bash',str(self.entry)], env=env, capture_output=True, text=True, timeout=15)
 
-    def test_fresh_then_same_command_confirms_and_installs(self):
+    def test_fresh_then_same_command_confirms_and_installs_without_ssh_environment(self):
         first=self.invoke()
         self.assertEqual(first.returncode,0,first.stderr)
         self.assertNotIn('\napps ', '\n'+self.trace.read_text())
-        second=self.invoke('10.42.0.10 1234 10.42.0.1 22')
+        second=self.invoke('')
         self.assertEqual(second.returncode,0,second.stderr)
         self.assertEqual(json.loads(self.state.read_text())['stage'],'network-ready')
         self.assertIn('codynick-setup --confirm',self.trace.read_text())

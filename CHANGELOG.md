@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1-setup - Reliable same-command hotspot confirmation
+
+- Remember the network stage seen at entry. A second run begun in pending/applying
+  invokes the existing confirmation flow even when sudo omits SSH_CONNECTION.
+- Keep the first-run handover behavior, confirmation prompt, alternative-internet
+  check, rollback timer, and pinned 0.4.0 application payload unchanged.
+- Exercise the two-run clean-install flow with an empty SSH_CONNECTION value.
+
 ## 0.4.0-speech - Offline voice commands
 
 - Package the approved ARM64 Vosk speech environment and small English model from

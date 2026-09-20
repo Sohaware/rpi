@@ -2,7 +2,7 @@
 # Stable public entry point. Every published update pins immutable stage scripts.
 set -euo pipefail
 umask 022
-VERSION="0.4.0"
+VERSION="0.4.1"
 NETWORK_SHA256="9f4d334da0561f97d51c7f6ee14eb6b123ec75d93d398bafb69ac35c2a6d82ae"
 APPS_SHA256="6114d828f66e49bd195e16ecd0cd5fc22eb161ff1a5a02142fc1508c2b0f275e"
 [[ $EUID -eq 0 ]] || { echo 'Run this setup command using sudo.'; exit 1; }
@@ -23,12 +23,13 @@ print(json.loads(p.read_text()).get('stage','') if p.exists() else '')
 PY
 }
 state=$(stage)
+initial_state=$state
 if [[ "$state" != network-ready ]]; then
     fetch network.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.1.2-network/bootstrap/codynick-setup.sh "$NETWORK_SHA256"
     bash "$temp/network.sh"
     state=$(stage)
     if [[ "$state" == pending || "$state" == applying ]]; then
-        if [[ " ${SSH_CONNECTION:-} " == *" 10.42.0.1 "* ]]; then
+        if [[ "$initial_state" == pending || "$initial_state" == applying ]]; then
             /usr/local/sbin/codynick-setup --confirm
         else
             echo 'Join the displayed Pi hotspot and reconnect to SSH at 10.42.0.1.'
