@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.1-ocr-led - Joystick-triggered OCR result
+
+- Add `joystick_ocr_led.py`, a one-shot beginner demo that waits for the CodyJoy
+  Pro joystick to move up before taking a USB-camera picture or starting OCR.
+- Normalize recognized text for case, spaces, and punctuation. Fill all 16 RGB LEDs
+  green when the result contains `codynick`; otherwise fill them red.
+- Reuse the verified 0.5.0 OCR environment and model assets. Preserve existing user
+  files and examples during upgrade.
+
 ## 0.5.0-ocr - Offline English camera OCR
 
 - Package a slim, approved-image ARM64 OCR environment plus English standard and

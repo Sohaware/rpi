@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.5.0; application: 0.5.0 (English OCR trial). Network component: 0.1.2.**
+**Unified setup: 0.5.1; application: 0.5.1 (English OCR trial). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -14,6 +14,7 @@ Version 0.4.1 fixes same-command confirmation after hotspot handover when sudo
 does not retain the SSH connection environment. Version 0.5.0 adds offline English
 camera OCR, corrects the `start.codynick` homepage, retries interrupted source/OCR
 downloads, and releases the setup lock before following the live log.
+Version 0.5.1 adds a joystick-triggered OCR-to-RGB beginner demo.
 
 **Use this same command for first installation, a supported upgrade, or application
 repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
@@ -23,8 +24,8 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 ```
 
 It chooses the required stage and shows the installation log. It accepts core
-0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, and repeats
-of 0.5.0. Upstream stage scripts/assets are pinned
+0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
+and repeats of 0.5.1. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -35,7 +36,7 @@ It performs the network confirmation and continues to applications. No separate
 
 Have the USB webcam and a USB microphone (a webcam microphone is acceptable)
 connected. Upgrading from 0.4.0 adds approximately **100 MB** of OCR downloads; a fresh
-0.5.0 installation downloads approximately **456 MB**. Allow at least 3 GB free storage.
+0.5.1 installation downloads approximately **456 MB**. Allow at least 3 GB free storage.
 Downloads are cached and verified; repair restores managed runtime files.
 Text-to-speech, face features, and chapter 8 are not installed yet. This remains a
 staged hardware trial, not a production fleet updater.
@@ -94,7 +95,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.5.0**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.5.1**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -130,7 +131,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.5.0: READY`
+same entry point starts application installation. Wait for `CodyNick 0.5.1: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -179,7 +180,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.5.0: READY`**, then press
+Wait for **`CodyNick 0.5.1: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -245,7 +246,7 @@ validated by the import check.
 ### Repeating, checking, and recovering
 
 **If 0.2.0 or 0.2.1 failed at the www-data write-access check, run the three commands above.**
-No manual permission commands or SD-card rewrite are required. Version 0.5.0 accepts
+No manual permission commands or SD-card rewrite are required. Version 0.5.1 accepts
 failed and completed 0.2.0/0.2.1 installations and repairs web-user access with explicit
 ACLs. It grants traversal of `/home` and `/home/client`, writes to the active script
 and log, and shared-folder access. It does not grant writes to the whole client home.
@@ -264,7 +265,7 @@ student script is restarted during installation.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -273,7 +274,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.5.0/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.5.1/app_setup.py --check
 ```
 
 To retrieve the latest installation output after reconnecting:
@@ -300,6 +301,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.5.1-ocr-led** | Local validation passed; Pi hardware test pending | Adds a one-shot joystick-UP camera OCR demo that turns all RGB LEDs green when normalized text contains `codynick`, otherwise red. Reuses 0.5.0 OCR assets. |
 | **0.5.0-ocr** | Local validation passed; Pi OCR hardware test pending | Offline English fast/standard/best OCR, USB-camera text demo with confidence/JSON/annotation output, explicit PHP-first Apache homepage, interrupted-download retries, and setup-lock release before live log following. Application data and examples remain preserved. |
 | **0.4.1-setup** | Clean-install retest pending | The second run recognizes the saved pending/applying network stage and opens confirmation without relying on SSH environment variables. Application payload remains 0.4.0. |
 | **0.4.0-speech** | Voice LED hardware test passed on user's Pi | Offline English speech-to-text, constrained voice commands, microphone-to-RGB demo, and the camera/counting/model-comparison demos prepared in the unpublished 0.3.1 candidate. Reuses verified 0.3.0 vision assets. |
@@ -336,7 +338,7 @@ before stopping it. Backups are stored under `/var/backups/codynick/`.
 
 ## Next stage
 
-1. Install 0.5.0 on the Pi and test `camera_read_text.py`, repeated installation,
+1. Install 0.5.1 on the Pi and test `camera_read_text.py`, `joystick_ocr_led.py`, repeated installation,
    the corrected `start.codynick` homepage, and reboot persistence.
 2. Package text-to-speech and face features later, retaining
    existing on-device paths and student data.
@@ -345,7 +347,7 @@ before stopping it. Backups are stored under `/var/backups/codynick/`.
 
 Chapter 8 will be a separate upgrade. Keep this SD card for the next stage.
 
-## AI demo gallery (0.5.0)
+## AI demo gallery (0.5.1)
 
 Open `CodyNick examples` in the IDE and select **Run This File**:
 
@@ -356,6 +358,7 @@ Open `CodyNick examples` in the IDE and select **Run This File**:
 | `model_comparison.py` | Capture one photo, run nano/small/medium sequentially at the same threshold, and print load time and median of three detection calls. Each model saves its own annotated image. |
 | `voice_led_colors.py` | Listen offline for English color commands and set all 16 RGB LEDs. Say lights off or stop listening to finish. |
 | `camera_read_text.py` | Capture printed English text, run offline standard OCR, print confidence, and save annotated JPG plus JSON results. |
+| `joystick_ocr_led.py` | Wait for CodyJoy Pro joystick UP, capture text, then fill all RGB LEDs green for `codynick` or red otherwise. |
 
 Photos have unique names; find annotations under Images/results. These demos use
 the USB webcam and existing models, with no cloud credentials or extra downloads.
@@ -372,7 +375,7 @@ is not saved or sent to a cloud service.
 The old `usb_camera_objects.py` remains on upgraded devices to preserve any edits;
 new installations receive only the renamed demo. Existing student/example files
 are never overwritten. Configurable uplink credentials, dongle replacement
-reconciliation, and swap remain postponed; version 0.5.0 does not add them.
+reconciliation, and swap remain postponed; version 0.5.1 does not add them.
 
 ## Implementation and testing
 

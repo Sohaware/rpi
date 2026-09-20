@@ -97,6 +97,67 @@ class ExampleTests(unittest.TestCase):
         self.assertIn("JSON result", output.getvalue())
         ai.close.assert_called_once()
 
+    def test_joystick_ocr_sets_green_for_normalized_codynick(self):
+        ai = MagicMock()
+        ai.read_text.return_value = {
+            "text": "Welcome to Cody Nick!",
+            "annotated_image": "/home/client/images/results/ocr.jpg",
+            "json_result": "/home/client/images/results/ocr.json",
+        }
+        cody = MagicMock()
+        cody.ensure_connected.return_value = True
+        matrix = MagicMock()
+        joystick = MagicMock()
+        joystick.states.side_effect = [[], ["UP"]]
+        node = MagicMock()
+        node.name = "video0"
+        node.__truediv__.return_value.resolve.return_value = "/sys/devices/usb1/video0"
+        modules = {
+            "codynick_ai": types.SimpleNamespace(CodyNickAI=MagicMock(return_value=ai)),
+            "CodyNick": types.SimpleNamespace(
+                CN=MagicMock(return_value=cody), RGB_Matrix=matrix, Joystick=joystick
+            ),
+        }
+        output = io.StringIO()
+        with patch.dict("sys.modules", modules), patch.object(Path, "glob", return_value=[node]), \
+             patch("time.sleep"), contextlib.redirect_stdout(output):
+            script = runpy.run_path(str(EXAMPLES / "joystick_ocr_led.py"))
+            script["main"]()
+        ai.take_picture.assert_called_once()
+        ai.load_app.assert_called_once_with("ocr", model="standard", languages=["en"])
+        self.assertEqual(matrix.set.call_count, 16)
+        self.assertTrue(all(call.args[2] == "#00FF00" for call in matrix.set.call_args_list))
+        self.assertIn("CODYNICK FOUND", output.getvalue())
+        ai.close.assert_called_once()
+        cody.close.assert_called_once()
+
+    def test_joystick_ocr_sets_red_when_text_is_absent(self):
+        ai = MagicMock()
+        ai.read_text.return_value = {
+            "text": "Something else",
+            "annotated_image": "/home/client/images/results/ocr.jpg",
+            "json_result": "/home/client/images/results/ocr.json",
+        }
+        cody = MagicMock()
+        cody.ensure_connected.return_value = True
+        matrix = MagicMock()
+        joystick = MagicMock()
+        joystick.states.return_value = ["UP"]
+        node = MagicMock()
+        node.name = "video0"
+        node.__truediv__.return_value.resolve.return_value = "/sys/devices/usb1/video0"
+        modules = {
+            "codynick_ai": types.SimpleNamespace(CodyNickAI=MagicMock(return_value=ai)),
+            "CodyNick": types.SimpleNamespace(
+                CN=MagicMock(return_value=cody), RGB_Matrix=matrix, Joystick=joystick
+            ),
+        }
+        with patch.dict("sys.modules", modules), patch.object(Path, "glob", return_value=[node]):
+            script = runpy.run_path(str(EXAMPLES / "joystick_ocr_led.py"))
+            script["main"]()
+        self.assertEqual(matrix.set.call_count, 16)
+        self.assertTrue(all(call.args[2] == "#FF0000" for call in matrix.set.call_args_list))
+
     def test_voice_commands_set_colors_and_clean_up(self):
         events = iter([
             {"accepted": False},
