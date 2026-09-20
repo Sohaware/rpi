@@ -1,4 +1,4 @@
-"""CodyNick 0.5.1 demo: trigger camera OCR with the joystick and show a color."""
+"""CodyNick 0.5.2 demo: trigger camera OCR with the joystick and show a color."""
 import time
 from pathlib import Path
 from uuid import uuid4
@@ -48,7 +48,8 @@ def main():
 
         name = "joystick_ocr_" + uuid4().hex[:12]
         print("Joystick UP: taking picture...", flush=True)
-        print("Picture:", ai.take_picture(name), flush=True)
+        print("Picture:", ai.take_picture(
+            name, cody=cody, get_ready_sound=True), flush=True)
         print("Loading English OCR...", flush=True)
         ai.load_app("ocr", model="standard", languages=["en"])
         result = ai.read_text(

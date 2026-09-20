@@ -18,11 +18,17 @@ class ExampleTests(unittest.TestCase):
         if failure:
             ai.detect_objects.side_effect = RuntimeError('model failure')
         factory = MagicMock(return_value=ai)
+        cody = MagicMock()
+        cody.ensure_connected.return_value = True
         node = MagicMock()
         node.name = 'video0'
         node.__truediv__.return_value.resolve.return_value = '/sys/devices/usb1/video0'
         output = io.StringIO()
-        with patch.dict('sys.modules', {'codynick_ai': types.SimpleNamespace(CodyNickAI=factory)}), \
+        modules = {
+            'codynick_ai': types.SimpleNamespace(CodyNickAI=factory),
+            'CodyNick': types.SimpleNamespace(CN=MagicMock(return_value=cody)),
+        }
+        with patch.dict('sys.modules', modules), \
              patch.object(Path, 'glob', return_value=[node] if nodes else []), \
              patch('time.sleep'), contextlib.redirect_stdout(output):
             script = runpy.run_path(str(EXAMPLES / name))
@@ -35,27 +41,33 @@ class ExampleTests(unittest.TestCase):
                     ai.close.assert_called_once()
                 else:
                     factory.assert_not_called()
-                return ai, output.getvalue()
+                cody.close.assert_called_once()
+                return ai, cody, output.getvalue()
             if failure or not nodes:
                 self.fail('Expected a clear error')
         ai.close.assert_called_once()
-        return ai, output.getvalue()
+        cody.close.assert_called_once()
+        for capture in ai.take_picture.call_args_list:
+            self.assertIs(capture.kwargs['cody'], cody)
+            self.assertTrue(capture.kwargs['get_ready_sound'])
+        return ai, cody, output.getvalue()
 
     def test_camera_objects_and_zero_detections(self):
-        ai, output = self.execute('camera_objects.py')
+        ai, _, output = self.execute('camera_objects.py')
         self.assertIn('No objects detected', output)
         self.assertTrue(ai.take_picture.call_args.args[0].startswith('camera_objects_'))
-        _, output = self.execute('camera_objects.py', [{'class_name': 'cup', 'confidence': .8}])
+        _, _, output = self.execute(
+            'camera_objects.py', [{'class_name': 'cup', 'confidence': .8}])
         self.assertIn('cup: score 0.80', output)
 
     def test_counter_counts_target_per_frame(self):
-        ai, output = self.execute('object_counter.py', [
+        ai, _, output = self.execute('object_counter.py', [
             {'class_name': 'bottle'}, {'class_name': 'cup'}, {'class_name': 'bottle'}])
         self.assertIn('[2, 2, 2, 2, 2]', output)
         self.assertEqual(len({call.args[0] for call in ai.take_picture.call_args_list}), 5)
 
     def test_comparison_same_photo_sequential_models(self):
-        ai, output = self.execute('model_comparison.py')
+        ai, _, output = self.execute('model_comparison.py')
         self.assertEqual([call.kwargs['model'] for call in ai.load_app.call_args_list],
                          ['nano', 'small', 'medium'])
         self.assertEqual(ai.unload_app.call_count, 3)
@@ -82,11 +94,17 @@ class ExampleTests(unittest.TestCase):
             "json_result": "/home/client/images/results/text_ocr.json",
         }
         factory = MagicMock(return_value=ai)
+        cody = MagicMock()
+        cody.ensure_connected.return_value = True
         node = MagicMock()
         node.name = "video0"
         node.__truediv__.return_value.resolve.return_value = "/sys/devices/usb1/video0"
         output = io.StringIO()
-        with patch.dict("sys.modules", {"codynick_ai": types.SimpleNamespace(CodyNickAI=factory)}), \
+        modules = {
+            "codynick_ai": types.SimpleNamespace(CodyNickAI=factory),
+            "CodyNick": types.SimpleNamespace(CN=MagicMock(return_value=cody)),
+        }
+        with patch.dict("sys.modules", modules), \
              patch.object(Path, "glob", return_value=[node]), contextlib.redirect_stdout(output):
             script = runpy.run_path(str(EXAMPLES / "camera_read_text.py"))
             script["main"]()
@@ -95,7 +113,10 @@ class ExampleTests(unittest.TestCase):
         self.assertIn("HELLO CODY NICK", output.getvalue())
         self.assertIn("average confidence: 0.85", output.getvalue())
         self.assertIn("JSON result", output.getvalue())
+        self.assertIs(ai.take_picture.call_args.kwargs["cody"], cody)
+        self.assertTrue(ai.take_picture.call_args.kwargs["get_ready_sound"])
         ai.close.assert_called_once()
+        cody.close.assert_called_once()
 
     def test_joystick_ocr_sets_green_for_normalized_codynick(self):
         ai = MagicMock()
@@ -124,6 +145,8 @@ class ExampleTests(unittest.TestCase):
             script = runpy.run_path(str(EXAMPLES / "joystick_ocr_led.py"))
             script["main"]()
         ai.take_picture.assert_called_once()
+        self.assertIs(ai.take_picture.call_args.kwargs["cody"], cody)
+        self.assertTrue(ai.take_picture.call_args.kwargs["get_ready_sound"])
         ai.load_app.assert_called_once_with("ocr", model="standard", languages=["en"])
         self.assertEqual(matrix.set.call_count, 16)
         self.assertTrue(all(call.args[2] == "#00FF00" for call in matrix.set.call_args_list))
@@ -155,6 +178,8 @@ class ExampleTests(unittest.TestCase):
         with patch.dict("sys.modules", modules), patch.object(Path, "glob", return_value=[node]):
             script = runpy.run_path(str(EXAMPLES / "joystick_ocr_led.py"))
             script["main"]()
+        self.assertIs(ai.take_picture.call_args.kwargs["cody"], cody)
+        self.assertTrue(ai.take_picture.call_args.kwargs["get_ready_sound"])
         self.assertEqual(matrix.set.call_count, 16)
         self.assertTrue(all(call.args[2] == "#FF0000" for call in matrix.set.call_args_list))
 

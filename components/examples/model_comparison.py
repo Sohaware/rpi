@@ -1,8 +1,9 @@
-"""CodyNick Examples 0.3.1: compare three YOLO models on one photo."""
+"""CodyNick 0.5.2 demo: compare three YOLO models on one photo."""
 from statistics import median
 from time import perf_counter
 from pathlib import Path
 from uuid import uuid4
+import CodyNick
 from codynick_ai import CodyNickAI
 
 
@@ -30,11 +31,16 @@ CONFIDENCE = 0.35
 
 
 def main():
-    ai = open_usb_camera()
+    cody = CodyNick.CN()
+    ai = None
     rows = []
     try:
+        if not cody.ensure_connected():
+            raise RuntimeError('CodyNick gadget not found. Connect it and run again.')
+        ai = open_usb_camera()
         name = 'comparison_' + uuid4().hex[:12]
-        print('Picture:', ai.take_picture(name), flush=True)
+        print('Picture:', ai.take_picture(
+            name, cody=cody, get_ready_sound=True), flush=True)
         ai.close_camera()
         print('Comparing one photo at the same confidence threshold.', flush=True)
         print('Times measure complete detection calls, not just model inference.', flush=True)
@@ -61,9 +67,10 @@ def main():
         print('More detections or higher scores do not prove better accuracy.', flush=True)
         print('This is a small demo, not an accuracy benchmark with labelled data.', flush=True)
     finally:
-        ai.close()
+        if ai is not None:
+            ai.close()
+        cody.close()
 
 
 if __name__ == '__main__':
     main()
-

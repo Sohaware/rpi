@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.2-camera-sounds - Camera countdown and shutter feedback
+
+- Enable the established CodyJoy get-ready countdown/cue and USB-speaker shutter
+  sound in all five bundled camera-capture examples: object detection, object
+  counting, model comparison, camera OCR, and joystick-triggered OCR.
+- Use the CodyJoy buzzer as the shutter fallback when no USB playback device is
+  available or audio playback fails. Capture occurs after the cue so sound-time
+  frames are discarded.
+- Keep the controller API opt-in for third-party scripts. Reuse the verified 0.5.0
+  vision/OCR assets and 0.4.0 speech assets. Upgrade untouched published camera
+  examples while preserving student-edited copies and other user files.
+
 ## 0.5.1-ocr-led - Joystick-triggered OCR result
 
 - Add `joystick_ocr_led.py`, a one-shot beginner demo that waits for the CodyJoy

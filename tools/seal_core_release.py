@@ -18,14 +18,14 @@ def main():
             if path.is_file() and "__pycache__" not in path.parts:
                 files[path.relative_to(ROOT).as_posix()] = sha(path)
     data = {
-        "version": "0.5.1", "tag": "v0.5.1-ocr-led", "status": "hardware-trial",
-        "components": {"ide": "0.5.0", "CodyNick.py": "1.20.1", "Dashboard.py": "image-20260711", "watchdog": "0.2.0", "vision": "0.3.0-image-baseline", "examples": "0.5.1", "speech": "0.4.0-image-baseline", "ocr": "0.5.0-image-baseline"},
+        "version": "0.5.2", "tag": "v0.5.2-camera-sounds", "status": "hardware-trial",
+        "components": {"ide": "0.5.0", "CodyNick.py": "1.20.1", "Dashboard.py": "image-20260711", "watchdog": "0.2.0", "vision": "0.3.0-image-baseline", "examples": "0.5.2", "speech": "0.4.0-image-baseline", "ocr": "0.5.0-image-baseline"},
         "ai_installed": True, "ai_scope": ["usb-camera", "yolo", "speech-to-text", "voice-commands", "ocr-en"], "files": files,
         "vision_assets": json.loads((ROOT / "releases/vision-0.3.0.json").read_text())["assets"],
         "speech_assets": json.loads((ROOT / "releases/speech-0.4.0.json").read_text())["assets"],
         "ocr_assets": json.loads((ROOT / "releases/ocr-0.5.0.json").read_text())["assets"],
     }
-    manifest = ROOT / "releases/core-0.5.1.json"
+    manifest = ROOT / "releases/core-0.5.2.json"
     manifest.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8", newline="\n")
     bootstrap = ROOT / "bootstrap/codynick-apps.sh"
     text = bootstrap.read_text(encoding="utf-8")

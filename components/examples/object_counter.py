@@ -1,7 +1,8 @@
-"""CodyNick Examples 0.3.1: count a chosen object in five separate photos."""
+"""CodyNick 0.5.2 demo: count a chosen object in five separate photos."""
 import time
 from pathlib import Path
 from uuid import uuid4
+import CodyNick
 from codynick_ai import CodyNickAI
 
 
@@ -30,15 +31,19 @@ CONFIDENCE = 0.35
 
 
 def main():
-    ai = open_usb_camera()
+    cody = CodyNick.CN()
+    ai = None
     counts = []
     try:
+        if not cody.ensure_connected():
+            raise RuntimeError('CodyNick gadget not found. Connect it and run again.')
+        ai = open_usb_camera()
         print(f'Counting {TARGET!r} per photo, not unique objects over time.', flush=True)
         ai.load_app('yolo', model='nano')
         session = uuid4().hex[:12]
         for index in range(SAMPLES):
             name = f'count_{session}_{index + 1}'
-            ai.take_picture(name)
+            ai.take_picture(name, cody=cody, get_ready_sound=True)
             result = ai.detect_objects(name, confidence=CONFIDENCE)
             count = sum(item['class_name'] == TARGET for item in result['detections'])
             counts.append(count)
@@ -49,9 +54,10 @@ def main():
         if counts:
             print(f'Per-photo counts: {counts}; maximum in one photo: {max(counts)}', flush=True)
     finally:
-        ai.close()
+        if ai is not None:
+            ai.close()
+        cody.close()
 
 
 if __name__ == '__main__':
     main()
-

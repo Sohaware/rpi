@@ -1,6 +1,7 @@
-"""CodyNick Examples 0.3.1: photograph and identify everyday objects."""
+"""CodyNick 0.5.2 demo: photograph and identify everyday objects."""
 from pathlib import Path
 from uuid import uuid4
+import CodyNick
 from codynick_ai import CodyNickAI
 
 
@@ -23,10 +24,15 @@ def open_usb_camera():
 
 
 def main():
-    ai = open_usb_camera()
+    cody = CodyNick.CN()
+    ai = None
     try:
+        if not cody.ensure_connected():
+            raise RuntimeError('CodyNick gadget not found. Connect it and run again.')
+        ai = open_usb_camera()
         name = 'camera_objects_' + uuid4().hex[:12]
-        print('Picture:', ai.take_picture(name), flush=True)
+        print('Picture:', ai.take_picture(
+            name, cody=cody, get_ready_sound=True), flush=True)
         print('Loading YOLO nano...', flush=True)
         ai.load_app('yolo', model='nano')
         result = ai.detect_objects(name)
@@ -39,9 +45,10 @@ def main():
         print('Annotated picture:', result['annotated_image'], flush=True)
         print('See Images and its results folder in the IDE.', flush=True)
     finally:
-        ai.close()
+        if ai is not None:
+            ai.close()
+        cody.close()
 
 
 if __name__ == '__main__':
     main()
-

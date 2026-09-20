@@ -13,8 +13,8 @@ import sys
 import time
 import urllib.request
 
-VERSION = "0.5.1"
-TAG = "v0.5.1-ocr-led"
+VERSION = "0.5.2"
+TAG = "v0.5.2-camera-sounds"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -22,6 +22,13 @@ NETWORK = Path("/var/lib/codynick/network-setup.json")
 VENV = Path("/home/client/.codynick-ai/envs/controller")
 SERVICES = ("ssh", "codynick-ap", "codynick-dhcp", "codynick-nat")
 PRESERVE = {"code/config.php", "dashboard/config.php", "docs/config.php", "blocks/data/main.json"}
+PUBLISHED_EXAMPLE_HASHES = {
+    "camera_objects.py": {"222325649e3d86b721ab7393ce5e3e2ce2245dc1e7eb4e8b5b9b5226406802ae"},
+    "camera_read_text.py": {"f6240542d104f9f14d6c06324f4782d84a2111ebb9d78ba2adc669b0dea78301"},
+    "joystick_ocr_led.py": {"981b04b8dbcf0a1ce4efb1eaad697e92815753ea82d55348bab6e41ed3b20e86"},
+    "model_comparison.py": {"a61ab573653c6ec1884e6b13c7bd3ad953cfe5fd331c32453cf1146500f7d41f"},
+    "object_counter.py": {"37aa42216304d5072eb5cd6b3074285d13392935d13af254e9f837b14e0175db"},
+}
 
 
 def run(*args, **kwargs):
@@ -114,6 +121,15 @@ def deploy(source, destination, backup, preserve=False):
     temporary.replace(destination)
 
 
+def preserve_example(path, name):
+    """Preserve student edits, but replace untouched examples from older releases."""
+    path = safe_destination(path)
+    if not path.exists():
+        return False
+    known = PUBLISHED_EXAMPLE_HASHES.get(str(name), set())
+    return hashlib.sha256(path.read_bytes()).hexdigest() not in known
+
+
 def check_platform():
     info = platform.freedesktop_os_release()
     if info.get("ID") != "ubuntu" or info.get("VERSION_ID") != "26.04" or platform.machine() != "aarch64":
@@ -123,7 +139,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -328,7 +344,8 @@ def install():
         suffix = PurePosixPath(*relative.parts[2:])
         root = {"ide": Path("/var/www/html"), "client": Path("/home/client"), "watchdog": Path("/root/codynick"),
                 "ai": Path("/home/client/vhl_object_detection"), "examples": Path("/home/client/userfiles/CodyNick examples")}[component]
-        preserve = component == "examples" or (component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/")))
+        preserve = ((component == "examples" and preserve_example(root / str(suffix), suffix)) or
+                    (component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/"))))
         deploy(source / name, root / str(suffix), backup, preserve)
         if component == "examples":
             run("chown", "client:codynick-media", root, root / str(suffix))
