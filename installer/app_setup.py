@@ -13,8 +13,8 @@ import sys
 import time
 import urllib.request
 
-VERSION = "0.5.2"
-TAG = "v0.5.2-camera-sounds"
+VERSION = "0.5.3"
+TAG = "v0.5.3-examples-polish"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -22,13 +22,7 @@ NETWORK = Path("/var/lib/codynick/network-setup.json")
 VENV = Path("/home/client/.codynick-ai/envs/controller")
 SERVICES = ("ssh", "codynick-ap", "codynick-dhcp", "codynick-nat")
 PRESERVE = {"code/config.php", "dashboard/config.php", "docs/config.php", "blocks/data/main.json"}
-PUBLISHED_EXAMPLE_HASHES = {
-    "camera_objects.py": {"222325649e3d86b721ab7393ce5e3e2ce2245dc1e7eb4e8b5b9b5226406802ae"},
-    "camera_read_text.py": {"f6240542d104f9f14d6c06324f4782d84a2111ebb9d78ba2adc669b0dea78301"},
-    "joystick_ocr_led.py": {"981b04b8dbcf0a1ce4efb1eaad697e92815753ea82d55348bab6e41ed3b20e86"},
-    "model_comparison.py": {"a61ab573653c6ec1884e6b13c7bd3ad953cfe5fd331c32453cf1146500f7d41f"},
-    "object_counter.py": {"37aa42216304d5072eb5cd6b3074285d13392935d13af254e9f837b14e0175db"},
-}
+EXAMPLES_ROOT = Path("/home/client/userfiles/CodyNick examples")
 
 
 def run(*args, **kwargs):
@@ -121,13 +115,19 @@ def deploy(source, destination, backup, preserve=False):
     temporary.replace(destination)
 
 
-def preserve_example(path, name):
-    """Preserve student edits, but replace untouched examples from older releases."""
+def reset_examples(path, backup):
+    """Replace the system-owned examples while retaining a recovery backup."""
     path = safe_destination(path)
-    if not path.exists():
-        return False
-    known = PUBLISHED_EXAMPLE_HASHES.get(str(name), set())
-    return hashlib.sha256(path.read_bytes()).hexdigest() not in known
+    if path.exists():
+        if not path.is_dir():
+            raise RuntimeError(f"Examples path is not a directory: {path}")
+        relative = Path(*path.parts[1:]) if path.is_absolute() else path
+        old = backup / relative
+        old.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copytree(path, old, symlinks=True)
+        shutil.rmtree(path)
+    path.mkdir(parents=True, mode=0o2775)
+    path.chmod(0o2775)
 
 
 def check_platform():
@@ -139,7 +139,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -238,6 +238,9 @@ GRANT ALL PRIVILEGES ON codynick.* TO 'codynick'@'localhost';
 
 
 def install_units():
+    write("/usr/local/bin/codynick-version", f"""#!/usr/bin/env bash
+exec /usr/bin/python3 /usr/local/lib/codynick/core-{VERSION}/version_status.py "$@"
+""", 0o755)
     write("/etc/systemd/system/script.service", f"""[Unit]
 Description=CodyNick student script
 After=network.target mariadb.service
@@ -338,14 +341,14 @@ def install():
     vision_setup.install(manifest, run)
     speech_setup.install(manifest, run)
     ocr_setup.install(manifest, run)
+    reset_examples(EXAMPLES_ROOT, backup)
     for name in verify_manifest(manifest):
         relative = PurePosixPath(name)
         component = relative.parts[1]
         suffix = PurePosixPath(*relative.parts[2:])
         root = {"ide": Path("/var/www/html"), "client": Path("/home/client"), "watchdog": Path("/root/codynick"),
-                "ai": Path("/home/client/vhl_object_detection"), "examples": Path("/home/client/userfiles/CodyNick examples")}[component]
-        preserve = ((component == "examples" and preserve_example(root / str(suffix), suffix)) or
-                    (component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/"))))
+                "ai": Path("/home/client/vhl_object_detection"), "examples": EXAMPLES_ROOT}[component]
+        preserve = component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/"))
         deploy(source / name, root / str(suffix), backup, preserve)
         if component == "examples":
             run("chown", "client:codynick-media", root, root / str(suffix))
@@ -363,6 +366,7 @@ def install():
     health_check()
     save_state("ready", completed_version=VERSION, ai_installed=True,
                ai_scope=["usb-camera", "yolo", "speech-to-text", "voice-commands", "ocr-en"])
+    run("/usr/local/bin/codynick-version")
     print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/"
           "\nUSB vision, offline English speech, and English OCR: runtime/model checks passed"
           "\nMicrophone capture: test with voice_led_colors.py"

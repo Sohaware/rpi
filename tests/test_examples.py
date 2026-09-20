@@ -55,7 +55,7 @@ class ExampleTests(unittest.TestCase):
     def test_camera_objects_and_zero_detections(self):
         ai, _, output = self.execute('camera_objects.py')
         self.assertIn('No objects detected', output)
-        self.assertTrue(ai.take_picture.call_args.args[0].startswith('camera_objects_'))
+        self.assertEqual(ai.take_picture.call_args.args[0], 'camera_objects')
         _, _, output = self.execute(
             'camera_objects.py', [{'class_name': 'cup', 'confidence': .8}])
         self.assertIn('cup: score 0.80', output)
@@ -64,7 +64,8 @@ class ExampleTests(unittest.TestCase):
         ai, _, output = self.execute('object_counter.py', [
             {'class_name': 'bottle'}, {'class_name': 'cup'}, {'class_name': 'bottle'}])
         self.assertIn('[2, 2, 2, 2, 2]', output)
-        self.assertEqual(len({call.args[0] for call in ai.take_picture.call_args_list}), 5)
+        self.assertEqual({call.args[0] for call in ai.take_picture.call_args_list},
+                         {'object_counter'})
 
     def test_comparison_same_photo_sequential_models(self):
         ai, _, output = self.execute('model_comparison.py')
@@ -72,6 +73,7 @@ class ExampleTests(unittest.TestCase):
                          ['nano', 'small', 'medium'])
         self.assertEqual(ai.unload_app.call_count, 3)
         self.assertEqual(ai.take_picture.call_count, 1)
+        self.assertEqual(ai.take_picture.call_args.args[0], 'model_comparison')
         calls = ai.detect_objects.call_args_list
         self.assertEqual(len(calls), 15)
         self.assertEqual(len({call.args[0] for call in calls}), 1)
@@ -109,6 +111,8 @@ class ExampleTests(unittest.TestCase):
             script = runpy.run_path(str(EXAMPLES / "camera_read_text.py"))
             script["main"]()
         ai.load_app.assert_called_once_with("ocr", model="standard", languages=["en"])
+        self.assertEqual(ai.take_picture.call_args.args[0], "camera_text")
+        self.assertEqual(ai.read_text.call_args.kwargs["confidence"], 0.20)
         self.assertEqual(ai.read_text.call_args.kwargs["preprocessing"], "scene")
         self.assertIn("HELLO CODY NICK", output.getvalue())
         self.assertIn("average confidence: 0.85", output.getvalue())
@@ -141,16 +145,21 @@ class ExampleTests(unittest.TestCase):
         }
         output = io.StringIO()
         with patch.dict("sys.modules", modules), patch.object(Path, "glob", return_value=[node]), \
-             patch("time.sleep"), contextlib.redirect_stdout(output):
+             patch("time.sleep") as sleep, contextlib.redirect_stdout(output):
             script = runpy.run_path(str(EXAMPLES / "joystick_ocr_led.py"))
             script["main"]()
         ai.take_picture.assert_called_once()
         self.assertIs(ai.take_picture.call_args.kwargs["cody"], cody)
         self.assertTrue(ai.take_picture.call_args.kwargs["get_ready_sound"])
+        self.assertEqual(ai.take_picture.call_args.args[0], "joystick_ocr")
+        self.assertEqual(ai.read_text.call_args.kwargs["confidence"], 0.20)
         ai.load_app.assert_called_once_with("ocr", model="standard", languages=["en"])
         self.assertEqual(matrix.set.call_count, 16)
         self.assertTrue(all(call.args[2] == "#00FF00" for call in matrix.set.call_args_list))
         self.assertIn("CODYNICK FOUND", output.getvalue())
+        self.assertIn("Text match score: 1.00", output.getvalue())
+        sleep.assert_any_call(5)
+        self.assertGreaterEqual(matrix.clear.call_count, 3)
         ai.close.assert_called_once()
         cody.close.assert_called_once()
 
@@ -175,13 +184,30 @@ class ExampleTests(unittest.TestCase):
                 CN=MagicMock(return_value=cody), RGB_Matrix=matrix, Joystick=joystick
             ),
         }
-        with patch.dict("sys.modules", modules), patch.object(Path, "glob", return_value=[node]):
+        with patch.dict("sys.modules", modules), patch.object(Path, "glob", return_value=[node]), \
+             patch("time.sleep") as sleep:
             script = runpy.run_path(str(EXAMPLES / "joystick_ocr_led.py"))
             script["main"]()
         self.assertIs(ai.take_picture.call_args.kwargs["cody"], cody)
         self.assertTrue(ai.take_picture.call_args.kwargs["get_ready_sound"])
         self.assertEqual(matrix.set.call_count, 16)
         self.assertTrue(all(call.args[2] == "#FF0000" for call in matrix.set.call_args_list))
+        sleep.assert_any_call(5)
+        self.assertGreaterEqual(matrix.clear.call_count, 3)
+
+    def test_joystick_ocr_match_tolerates_one_character_error(self):
+        modules = {
+            "codynick_ai": types.SimpleNamespace(CodyNickAI=MagicMock()),
+            "CodyNick": types.SimpleNamespace(),
+        }
+        with patch.dict("sys.modules", modules):
+            script = runpy.run_path(str(EXAMPLES / "joystick_ocr_led.py"))
+        self.assertEqual(script["text_match_score"]("Welcome CodyNlck", "codynick"),
+                         0.875)
+        self.assertGreaterEqual(
+            script["text_match_score"]("Welcome CodyNlck", "codynick"),
+            script["MATCH_SIMILARITY"],
+        )
 
     def test_voice_commands_set_colors_and_clean_up(self):
         events = iter([

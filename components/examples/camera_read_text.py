@@ -1,8 +1,10 @@
-"""CodyNick 0.5.2 demo: photograph English text and read it offline."""
+"""CodyNick 0.5.3 demo: photograph English text and read it offline."""
 from pathlib import Path
-from uuid import uuid4
 import CodyNick
 from codynick_ai import CodyNickAI
+
+
+OCR_CONFIDENCE = 0.20
 
 
 def open_usb_camera():
@@ -30,14 +32,14 @@ def main():
         if not cody.ensure_connected():
             raise RuntimeError("CodyNick gadget not found. Connect it and run again.")
         ai = open_usb_camera()
-        name = "camera_text_" + uuid4().hex[:12]
+        name = "camera_text"
         print("Picture:", ai.take_picture(
             name, cody=cody, get_ready_sound=True), flush=True)
         print("Loading English OCR...", flush=True)
         ai.load_app("ocr", model="standard", languages=["en"])
         result = ai.read_text(
             name,
-            confidence=0.30,
+            confidence=OCR_CONFIDENCE,
             preprocessing="scene",
             perspective="auto",
             save_visual=True,

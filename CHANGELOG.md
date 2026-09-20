@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.3-examples-polish - Managed demos and clear version status
+
+- Treat `/home/client/userfiles/CodyNick examples` as system-owned. Before every
+  installation, repair, or upgrade, copy its old contents into the release backup,
+  remove the complete live folder, and install only the current example set.
+- Replace random camera image names with stable per-demo names, so repeated runs
+  overwrite prior inputs, annotated images, and JSON results. Model comparison keeps
+  one stable output per model.
+- Set OCR demo confidence through `OCR_CONFIDENCE` (default `0.20`). Add adjustable
+  `MATCH_SIMILARITY` (default `0.80`) so the joystick demo tolerates a small OCR error.
+- Keep the joystick OCR result LEDs illuminated for five seconds, then clear them,
+  including defensive cleanup after failures.
+- Add `codynick-version` to report the installed release, component versions, stage,
+  and checksum status (`current`, `modified`, `missing`, or `unexpected`) for every
+  example. READY now requires this audit to pass.
+
 ## 0.5.2-camera-sounds - Camera countdown and shutter feedback
 
 - Enable the established CodyJoy get-ready countdown/cue and USB-speaker shutter

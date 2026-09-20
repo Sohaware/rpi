@@ -1,6 +1,5 @@
-"""CodyNick 0.5.2 demo: photograph and identify everyday objects."""
+"""CodyNick 0.5.3 demo: photograph and identify everyday objects."""
 from pathlib import Path
-from uuid import uuid4
 import CodyNick
 from codynick_ai import CodyNickAI
 
@@ -30,7 +29,7 @@ def main():
         if not cody.ensure_connected():
             raise RuntimeError('CodyNick gadget not found. Connect it and run again.')
         ai = open_usb_camera()
-        name = 'camera_objects_' + uuid4().hex[:12]
+        name = 'camera_objects'
         print('Picture:', ai.take_picture(
             name, cody=cody, get_ready_sound=True), flush=True)
         print('Loading YOLO nano...', flush=True)

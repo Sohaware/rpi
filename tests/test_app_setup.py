@@ -63,17 +63,19 @@ class AppTests(unittest.TestCase):
             m.deploy(src, dst, base / "backup", preserve=True)
             self.assertEqual(dst.read_text(), "default")
 
-    def test_published_example_is_upgraded_but_student_edit_is_preserved(self):
-        name, known = next(iter(m.PUBLISHED_EXAMPLE_HASHES.items()))
+    def test_examples_are_backed_up_then_replaced(self):
         with tempfile.TemporaryDirectory() as temp:
-            path = Path(temp) / name
-            with patch.object(m.hashlib, "sha256") as digest:
-                digest.return_value.hexdigest.return_value = next(iter(known))
-                self.assertFalse(m.preserve_example(path, name))
-                path.write_text("published example")
-                self.assertFalse(m.preserve_example(path, name))
-                digest.return_value.hexdigest.return_value = "f" * 64
-                self.assertTrue(m.preserve_example(path, name))
+            base = Path(temp)
+            path = base / "CodyNick examples"
+            backup = base / "backup"
+            path.mkdir()
+            (path / "old.py").write_text("student edit")
+            m.reset_examples(path, backup)
+            self.assertTrue(path.is_dir())
+            self.assertEqual(list(path.iterdir()), [])
+            relative = Path(*path.parts[1:]) if path.is_absolute() else path
+            self.assertEqual((backup / relative / "old.py").read_text(),
+                             "student edit")
 
     def test_symlink_destination_is_rejected(self):
         with patch.object(Path, "is_symlink", return_value=True), self.assertRaises(RuntimeError):
@@ -134,11 +136,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.5.2.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.5.3.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.5.2.json"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.5.3.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
         entry = (ROOT / "setup.sh").read_text()

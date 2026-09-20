@@ -1,4 +1,4 @@
-"""CodyNick 0.4.0 demo: control the RGB matrix with offline voice commands."""
+"""CodyNick 0.5.3 demo: control the RGB matrix with offline voice commands."""
 import CodyNick
 from codynick_ai import CodyNickAI
 

@@ -1,8 +1,7 @@
-"""CodyNick 0.5.2 demo: compare three YOLO models on one photo."""
+"""CodyNick 0.5.3 demo: compare three YOLO models on one photo."""
 from statistics import median
 from time import perf_counter
 from pathlib import Path
-from uuid import uuid4
 import CodyNick
 from codynick_ai import CodyNickAI
 
@@ -38,7 +37,7 @@ def main():
         if not cody.ensure_connected():
             raise RuntimeError('CodyNick gadget not found. Connect it and run again.')
         ai = open_usb_camera()
-        name = 'comparison_' + uuid4().hex[:12]
+        name = 'model_comparison'
         print('Picture:', ai.take_picture(
             name, cody=cody, get_ready_sound=True), flush=True)
         ai.close_camera()
