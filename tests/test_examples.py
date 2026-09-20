@@ -73,6 +73,30 @@ class ExampleTests(unittest.TestCase):
                 self.execute(name, nodes=False)
                 self.execute(name, failure=True)
 
+    def test_camera_ocr_prints_text_confidence_and_outputs(self):
+        ai = MagicMock()
+        ai.read_text.return_value = {
+            "text": "HELLO CODY NICK",
+            "items": [{"confidence": 0.8}, {"confidence": 0.9}],
+            "annotated_image": "/home/client/images/results/text_ocr.jpg",
+            "json_result": "/home/client/images/results/text_ocr.json",
+        }
+        factory = MagicMock(return_value=ai)
+        node = MagicMock()
+        node.name = "video0"
+        node.__truediv__.return_value.resolve.return_value = "/sys/devices/usb1/video0"
+        output = io.StringIO()
+        with patch.dict("sys.modules", {"codynick_ai": types.SimpleNamespace(CodyNickAI=factory)}), \
+             patch.object(Path, "glob", return_value=[node]), contextlib.redirect_stdout(output):
+            script = runpy.run_path(str(EXAMPLES / "camera_read_text.py"))
+            script["main"]()
+        ai.load_app.assert_called_once_with("ocr", model="standard", languages=["en"])
+        self.assertEqual(ai.read_text.call_args.kwargs["preprocessing"], "scene")
+        self.assertIn("HELLO CODY NICK", output.getvalue())
+        self.assertIn("average confidence: 0.85", output.getvalue())
+        self.assertIn("JSON result", output.getvalue())
+        ai.close.assert_called_once()
+
     def test_voice_commands_set_colors_and_clean_up(self):
         events = iter([
             {"accepted": False},

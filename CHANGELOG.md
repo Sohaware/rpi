@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0-ocr - Offline English camera OCR
+
+- Package a slim, approved-image ARM64 OCR environment plus English standard and
+  best Tesseract data; use Ubuntu's English data as the fast model.
+- Add `camera_read_text.py`: capture from a USB webcam, apply scene preprocessing
+  and optional perspective correction, print text/confidence, and save annotated
+  JPG and JSON results under Images/results.
+- Install and health-check Tesseract plus fast/standard/best English models without
+  capturing a photo during installation. Preserve existing examples and user data.
+- Reset Apache's accumulated directory-index list before selecting `index.php`, and
+  fail health checks if `/` is still the Apache default page instead of CodyNick.
+- Retry interrupted source and OCR-asset downloads. Release the unified setup lock
+  before following the background log, so a completed/failed worker cannot leave a
+  harmless log viewer blocking repair.
+- Keep network component 0.1.2 and the existing Wi-Fi credentials. Configurable
+  uplinks, replaced-dongle reconciliation, swap, TTS, face features, and chapter 8
+  remain deferred.
+
 ## 0.4.1-setup - Reliable same-command hotspot confirmation
 
 - Remember the network stage seen at entry. A second run begun in pending/applying

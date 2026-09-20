@@ -10,10 +10,11 @@ import platform
 import shutil
 import subprocess
 import sys
+import time
 import urllib.request
 
-VERSION = "0.4.0"
-TAG = "v0.4.0-speech"
+VERSION = "0.5.0"
+TAG = "v0.5.0-ocr"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -75,17 +76,26 @@ def verify_manifest(manifest):
     return files
 
 
-def download_sources(manifest, directory):
+def download_sources(manifest, directory, attempts=4):
     for name, sha in verify_manifest(manifest).items():
         target = directory / name
         target.parent.mkdir(parents=True, exist_ok=True)
         if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest() == sha:
             continue
-        with urllib.request.urlopen(BASE + name, timeout=120) as response:
-            data = response.read(8 * 1024 * 1024 + 1)
-        if len(data) > 8 * 1024 * 1024 or hashlib.sha256(data).hexdigest() != sha:
-            raise RuntimeError(f"Release checksum failed: {name}")
-        target.write_bytes(data)
+        for attempt in range(1, attempts + 1):
+            try:
+                with urllib.request.urlopen(BASE + name, timeout=120) as response:
+                    data = response.read(8 * 1024 * 1024 + 1)
+                if len(data) > 8 * 1024 * 1024 or hashlib.sha256(data).hexdigest() != sha:
+                    raise RuntimeError(f"Release checksum failed: {name}")
+                target.write_bytes(data)
+                break
+            except Exception:
+                target.unlink(missing_ok=True)
+                if attempt == attempts:
+                    raise
+                print(f"Source download interrupted; retrying ({attempt}/{attempts}): {name}", flush=True)
+                time.sleep(3 * attempt)
 
 
 def deploy(source, destination, backup, preserve=False):
@@ -113,7 +123,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -246,7 +256,8 @@ UMask=0002
 [Install]
 WantedBy=multi-user.target
 """)
-    write("/etc/apache2/conf-available/codynick.conf", """DirectoryIndex index.php index.html
+    write("/etc/apache2/conf-available/codynick.conf", """DirectoryIndex disabled
+DirectoryIndex index.php index.html
 <Directory /var/www/html>
     Options -Indexes
     AllowOverride None
@@ -266,6 +277,7 @@ WantedBy=multi-user.target
 
 
 def health_check():
+    import ocr_setup
     import vision_setup
     import speech_setup
     for service in (*SERVICES, "apache2", "mariadb", "codynick"):
@@ -275,11 +287,19 @@ def health_check():
     check_web_access()
     vision_setup.health_check(run)
     speech_setup.health_check(run)
+    ocr_setup.health_check(run)
     for url in ("/", "/code/", "/dashboard/", "/blocks/", "/docs/"):
         run("curl", "--fail", "--silent", "--show-error", "--max-time", "20", "--output", "/dev/null", "http://127.0.0.1" + url)
+    root_page = subprocess.run(
+        ["curl", "--fail", "--silent", "--show-error", "--max-time", "20", "http://127.0.0.1/"],
+        check=True, text=True, capture_output=True,
+    ).stdout
+    if "Apache2 Default Page" in root_page or "CodyNick" not in root_page:
+        raise RuntimeError("Apache root page is not the CodyNick device page")
 
 
 def install():
+    import ocr_setup
     import vision_setup
     import speech_setup
     check_platform()
@@ -295,12 +315,13 @@ def install():
     run("apt-get", "install", "-y", "apache2", "libapache2-mod-php", "php-mysql", "php-mbstring",
         "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", "acl",
         "v4l-utils", "libgomp1", "libglib2.0-0t64", "libgl1",
-        "alsa-utils", "ffmpeg", env=env)
+        "alsa-utils", "ffmpeg", "tesseract-ocr", "tesseract-ocr-eng", env=env)
     prepare_accounts()
     configure_database()
     repair_web_access()
     vision_setup.install(manifest, run)
     speech_setup.install(manifest, run)
+    ocr_setup.install(manifest, run)
     for name in verify_manifest(manifest):
         relative = PurePosixPath(name)
         component = relative.parts[1]
@@ -324,11 +345,12 @@ def install():
     install_units()
     health_check()
     save_state("ready", completed_version=VERSION, ai_installed=True,
-               ai_scope=["usb-camera", "yolo", "speech-to-text", "voice-commands"])
+               ai_scope=["usb-camera", "yolo", "speech-to-text", "voice-commands", "ocr-en"])
     print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/"
-          "\nUSB vision and offline English speech: runtime/model checks passed"
+          "\nUSB vision, offline English speech, and English OCR: runtime/model checks passed"
           "\nMicrophone capture: test with voice_led_colors.py"
-          "\nOCR, text-to-speech, face features, and chapter 8: NOT INSTALLED"
+          "\nCamera OCR: test with camera_read_text.py"
+          "\nText-to-speech, face features, and chapter 8: NOT INSTALLED"
           "\nNo reboot required.", flush=True)
 
 

@@ -1,0 +1,32 @@
+{
+  "version": "0.5.0",
+  "tag": "v0.5.0-ocr",
+  "os": "ubuntu",
+  "os_version": "26.04",
+  "arch": "aarch64",
+  "language": "en",
+  "engines": [
+    "tesseract"
+  ],
+  "models": [
+    "fast",
+    "standard",
+    "best"
+  ],
+  "assets": [
+    {
+      "name": "ocr-environment-0.5.0.tar.gz",
+      "kind": "runtime",
+      "size": 80900040,
+      "sha256": "62d1fa876e5a7dc8f0e7b692e33b17c7f59ecd2698861997256f381782990123",
+      "expanded_size": 222608404
+    },
+    {
+      "name": "ocr-english-models-0.5.0.tar.gz",
+      "kind": "models",
+      "size": 24062328,
+      "sha256": "dddbe840cc7d4716b764d8ef6b5f2eb1e0fd310d06ea5adac4215e812c595586",
+      "expanded_size": 38867255
+    }
+  ]
+}

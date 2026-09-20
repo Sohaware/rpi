@@ -122,11 +122,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.4.0.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.5.0.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.4.0.json"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.5.0.json"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
         entry = (ROOT / "setup.sh").read_text()
@@ -138,6 +138,12 @@ class AppTests(unittest.TestCase):
         text = (ROOT / "installer/app_setup.py").read_text()
         for forbidden in ('"netplan"', '"dnsmasq"', '"reboot"', '"nft"', '"NetworkManager"'):
             self.assertNotIn(forbidden, text)
+
+    def test_apache_root_prefers_php_and_rejects_default_page(self):
+        text = (ROOT / "installer/app_setup.py").read_text()
+        self.assertIn("DirectoryIndex disabled", text)
+        self.assertIn("DirectoryIndex index.php index.html", text)
+        self.assertIn("Apache2 Default Page", text)
 
     def test_block_output_uses_installed_active_script(self):
         text = (ROOT / "components/ide/blocks/index.php").read_text(encoding="utf-8")

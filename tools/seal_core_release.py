@@ -18,17 +18,18 @@ def main():
             if path.is_file() and "__pycache__" not in path.parts:
                 files[path.relative_to(ROOT).as_posix()] = sha(path)
     data = {
-        "version": "0.4.0", "tag": "v0.4.0-speech", "status": "hardware-trial",
-        "components": {"ide": "0.3.0", "CodyNick.py": "1.20.1", "Dashboard.py": "image-20260711", "watchdog": "0.2.0", "vision": "0.3.0-image-baseline", "examples": "0.4.0", "speech": "0.4.0-image-baseline"},
-        "ai_installed": True, "ai_scope": ["usb-camera", "yolo", "speech-to-text", "voice-commands"], "files": files,
+        "version": "0.5.0", "tag": "v0.5.0-ocr", "status": "hardware-trial",
+        "components": {"ide": "0.5.0", "CodyNick.py": "1.20.1", "Dashboard.py": "image-20260711", "watchdog": "0.2.0", "vision": "0.3.0-image-baseline", "examples": "0.5.0", "speech": "0.4.0-image-baseline", "ocr": "0.5.0-image-baseline"},
+        "ai_installed": True, "ai_scope": ["usb-camera", "yolo", "speech-to-text", "voice-commands", "ocr-en"], "files": files,
         "vision_assets": json.loads((ROOT / "releases/vision-0.3.0.json").read_text())["assets"],
         "speech_assets": json.loads((ROOT / "releases/speech-0.4.0.json").read_text())["assets"],
+        "ocr_assets": json.loads((ROOT / "releases/ocr-0.5.0.json").read_text())["assets"],
     }
-    manifest = ROOT / "releases/core-0.4.0.json"
+    manifest = ROOT / "releases/core-0.5.0.json"
     manifest.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8", newline="\n")
     bootstrap = ROOT / "bootstrap/codynick-apps.sh"
     text = bootstrap.read_text(encoding="utf-8")
-    for key, path in (("HELPER", ROOT / "installer/app_setup.py"), ("MANIFEST", manifest), ("VISION", ROOT / "installer/vision_setup.py"), ("SPEECH", ROOT / "installer/speech_setup.py")):
+    for key, path in (("HELPER", ROOT / "installer/app_setup.py"), ("MANIFEST", manifest), ("VISION", ROOT / "installer/vision_setup.py"), ("SPEECH", ROOT / "installer/speech_setup.py"), ("OCR", ROOT / "installer/ocr_setup.py")):
         text = re.sub(key + r'_SHA256="[^"]+"', key + '_SHA256="' + sha(path) + '"', text)
     bootstrap.write_text(text, encoding="utf-8", newline="\n")
     entry = ROOT / "setup.sh"

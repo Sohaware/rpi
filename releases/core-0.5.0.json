@@ -1,0 +1,152 @@
+{
+  "version": "0.5.0",
+  "tag": "v0.5.0-ocr",
+  "status": "hardware-trial",
+  "components": {
+    "ide": "0.5.0",
+    "CodyNick.py": "1.20.1",
+    "Dashboard.py": "image-20260711",
+    "watchdog": "0.2.0",
+    "vision": "0.3.0-image-baseline",
+    "examples": "0.5.0",
+    "speech": "0.4.0-image-baseline",
+    "ocr": "0.5.0-image-baseline"
+  },
+  "ai_installed": true,
+  "ai_scope": [
+    "usb-camera",
+    "yolo",
+    "speech-to-text",
+    "voice-commands",
+    "ocr-en"
+  ],
+  "files": {
+    "components/ide/assets/logo.png": "641d004fbe2f4a2268f7129beba677679c9feae94d8b1dd245323d57e6eb8d61",
+    "components/ide/blocks/BLOCK_PACKAGE_GUIDE.md": "11e9dd6c0dc5029fe8960cf6951f9c2ae129573f5f8e4ba11102f07157999fad",
+    "components/ide/blocks/blocks/codynick_core.json": "6a7fbf907d0b9ddd7ec8d2960ee4463addc4e30d2443618c587b81d7ebbe96fe",
+    "components/ide/blocks/data/.htaccess": "fa28d421a28ed9b6f4b997d5119c2b8adbacff6e2dd119a179b71230f9664934",
+    "components/ide/blocks/data/.keep": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "components/ide/blocks/data/main.json": "f0a1e04a5ba9cc0eebd45a5ba4ed707473de8eacc77a16c6cd16f3ddf9194131",
+    "components/ide/blocks/index.php": "5eb5c0945010a8183e29ccece787f72cb9580299f9e7760052666a2373eef247",
+    "components/ide/blocks/README.md": "5469540815d285416688ad84c64530a1b44e2c8e0c68a0c78092f7a51b0d75ac",
+    "components/ide/code/ansi-terminal.css": "d8c96e89bd8a758606422cfaaf26c581d96d7c31c8c04eb25f0b9cb075ea4c02",
+    "components/ide/code/ansi-terminal.js": "c1fc89f691cfee90b2b750d9ae88bed6f0ef1e8832990b8654f17050e6965e9c",
+    "components/ide/code/config.php": "20dec2ef9a8ccaeb17e48d776704e5f33f64b89d47d45acbfe6df6e837940972",
+    "components/ide/code/index.php": "fcf9923856c3d90f60f9e43e2580429fbcd06624f87863aad5023fc6480ee829",
+    "components/ide/code/logo.png": "641d004fbe2f4a2268f7129beba677679c9feae94d8b1dd245323d57e6eb8d61",
+    "components/ide/code/media.php": "97099428ba92dec9a94422a2b8629a32da6de1c78897669633ad07c1a7a6c3a9",
+    "components/ide/dashboard/cards.php": "82a5e272999dfaa3d6e7189b313db116b6d74e05ebfc6281d6831b8987636249",
+    "components/ide/dashboard/config.php": "70f1365e0b01ae382ed18a2331b6691c9fd1d99e4836c9f4bbef621cc08858f0",
+    "components/ide/dashboard/index.php": "bf32b0331af2ebccdc0e14cb23fab0d2d49ddba0880eeb214c9fe69f90259eaa",
+    "components/ide/dashboard/README.md": "c2b8a2a35653cf20b8b972e0ae1eee8058607a50b35cbd155a34723b25b04376",
+    "components/ide/device_info_sample.json": "ff8a2281355f894663008f5ab5a1ef3e8ac2f7fcf2bb496e08dfd0e64f061dc6",
+    "components/ide/docs/config.php": "b5638283b55acb843c538384f99be7cc8979ce2c46d9f543ada7bcd12b2fda4e",
+    "components/ide/docs/docs/Getting-Started/Welcome.md": "fb50f77b05326a79d63c479ef5653a0661de5249ea3a0f55757a3a29bb9f0e33",
+    "components/ide/docs/docs/Guides/Installation.md": "a495c6a0f28c2d698534d1a2e74af3259f20da59da6a4dee1ee355ee1cbcd958",
+    "components/ide/docs/docs/Python/01-python_quick_reference.md": "502a9f178f433d657c0d286c22d05603db78cca0f7cd5f0cedd6396435ac849b",
+    "components/ide/docs/docs/Python/joystick.md": "7cca8f93fbcdbb635a903122cc1d542e7c68986bccd9a93ab6505fea82dccb5e",
+    "components/ide/docs/docs/Python/led_matrix.md": "0ec1292130e3a7d6d1be674e11959a680b644301673c888a20c2cf436d1105dd",
+    "components/ide/docs/docs/Python/motion_detection.md": "aee474deda7b13a6cbd73c4c995af3702c21a950206c9bcfe9ab993d160e982d",
+    "components/ide/docs/docs/Python/rgb_led_matrix.md": "c47caa2382d860c28c031f9f015a62465b294a2a9389e64166b19a554dbd1edb",
+    "components/ide/docs/docs/Python/seven_segment_display.md": "18ab859e53070a8d5ff29a34039ef5aae87055624e35ace5f5bcd24355009e26",
+    "components/ide/docs/docs/Python/sound_maker.md": "fe0a8402a118ab8ab0d254dc98456331a8459d4aa94e673a2b4c8c45151bbdd9",
+    "components/ide/docs/docs/Python/temperature_sensor.md": "0535591b00d776aad6df0fadf12c04a10365ae8e380c4f9bb53297a100461305",
+    "components/ide/docs/docs/Python/ultrasonic_sensor.md": "424fc5956f646c4c4b6a7f9c101e324f9a8a4d3a7fc8ba637311e37c3aa4bfe4",
+    "components/ide/docs/docs/Reference/Configuration.md": "7ef68da53696f16f77442b0f51b26d8503165e0f32e6b60e0a7de460c725ba8c",
+    "components/ide/docs/docs/System_Info/Capabilities.md": "f8523213a696d522abb60b0910d81da725e660ecd0d627e884f37e602ff93199",
+    "components/ide/docs/index.php": "ff007a0a51fa48e7ed9227782ba982298514d3d7e71d5db6d88cd9eee95b3f70",
+    "components/ide/docs/README.md": "ad334ec4857b0a68bcf8138466c6ccd2fb103b89190754105ed57ec747255c0a",
+    "components/ide/docs/vendor/parsedown/Parsedown.php": "34075a6f176841dbb91ca6a26ac7455b5bb576e368cfadb8249edb79d67b1a06",
+    "components/ide/index.php": "0b13ba9e16c34fa9523190c3b8d57f859f7f34ea26423454903c29ff4663bc7e",
+    "components/ide/README.md": "e5591e722b43d84e7809d9f6d4a3e5343e8c0180426690262b308fead44f6555",
+    "components/client/CodyNick.py": "76f185b1f4000eac7d52ca55a4af0308ea0f0a671e8aa18c0990064fc89b0155",
+    "components/client/Dashboard.py": "0a25e41a1af3c40cf083ef1874511bfe53ece86196eb1f3893ec806ab64b9734",
+    "components/watchdog/security.py": "af77c19c3665230684773d81f288d56fdbf15a44bac6adf0c7448bc380bc530e",
+    "components/watchdog/service.py": "1023ae8a54791a74e24a86d66892baafb66fc3c796e7ed2cc143b6bc3955ddcd",
+    "components/ai/codynick_ai/__init__.py": "b621ca818996d8672b31fbdd48f26de5fb4d5ffcfadf94f0a0b8a2ec4c9e6f53",
+    "components/ai/codynick_ai/audio_store.py": "4d4a41cc28f81868a52c2181cc383da7fd64926874c5fb91d13c91237f8f7d5f",
+    "components/ai/codynick_ai/controller.py": "a9e1399a1e550d8ced77b67de9e1c1425c6a7720e841e21cf33efac2bb7e40ae",
+    "components/ai/codynick_ai/exceptions.py": "4e18a18e2acd1c9dcb81d0ce2c684ee8907994be1de61915b62392733fa9df2e",
+    "components/ai/codynick_ai/image_store.py": "54b8176861007b6522745593c8a6f90fc21051601a174bf6cbf49643142ac8bb",
+    "components/ai/codynick_ai/protocol.py": "27267afa8eddfc150445367b4cdebada91e0c10db95f2373b673a3772d580296",
+    "components/ai/codynick_ai/workers/__init__.py": "50a92b8dfa25ecf1d87234361a88f0a00a4902bfa4bc3b6ad543a21d4f0456fc",
+    "components/ai/codynick_ai/workers/coqui_tts_engine.py": "5b4241ab494113e023eba01d719de583230343d90a3a6907f58063555053b64e",
+    "components/ai/codynick_ai/workers/espeak_tts_engine.py": "466601c14d7d819aed49821c2dca415995c59df0441af15ed81bbd487c4e413a",
+    "components/ai/codynick_ai/workers/ocr_worker.py": "63994a3eec919e119d5d11c50640860d0dce60fdf2f7dfa4ba3cd52b49d0a94c",
+    "components/ai/codynick_ai/workers/stt_worker.py": "46839af68fbf9665277c0b87f7593584eecbd870bae4c0be7f1982d952536051",
+    "components/ai/codynick_ai/workers/tesseract_engine.py": "f5215969e087beb824073a095d02e13a5a49984358921fbc11787544d15e61f6",
+    "components/ai/codynick_ai/workers/tts_worker.py": "dba72b7574a17792fb09f2d91e1e3d282192eaff675d3c16baca9180ecfc1884",
+    "components/ai/codynick_ai/workers/vosk_engine.py": "f21ba63a15cf1a867b7cd292f92d060e6d17503d03f558df32c6cc287753680b",
+    "components/ai/codynick_ai/workers/yolo_engine.py": "b958b9f9d00fb9a319a9a61956cd9511dc7cc7e4edbc168147bc99c5ac023add",
+    "components/ai/codynick_ai/workers/yolo_worker.py": "30f744927e59af88f636c1f723cbe1e5fe32ccc2476217abf1f38b0b7a5325f0",
+    "components/ai/sounds/README.md": "d33380e023e60f634620a963f1e736dba36e3499f459eb6d2048de16a87a6848",
+    "components/ai/sounds/shutter_loud.wav": "02c650d301aac41f917382e8684639ffc1d3c1d5c84db12703da2914d25abe69",
+    "components/examples/camera_objects.py": "222325649e3d86b721ab7393ce5e3e2ce2245dc1e7eb4e8b5b9b5226406802ae",
+    "components/examples/camera_read_text.py": "f6240542d104f9f14d6c06324f4782d84a2111ebb9d78ba2adc669b0dea78301",
+    "components/examples/model_comparison.py": "a61ab573653c6ec1884e6b13c7bd3ad953cfe5fd331c32453cf1146500f7d41f",
+    "components/examples/object_counter.py": "37aa42216304d5072eb5cd6b3074285d13392935d13af254e9f837b14e0175db",
+    "components/examples/voice_led_colors.py": "b9c52eb0f2ff23eb46fb5e65ebf6840cc09f746a772259181fe7365c8e2aeeb7"
+  },
+  "vision_assets": [
+    {
+      "name": "python-runtimes-0.3.0.tar.gz",
+      "kind": "runtime",
+      "size": 30601953,
+      "sha256": "b7307a75ffe802e523317aa5f52f06f3c5f5e447559b8719981360752d5d51ad",
+      "expanded_size": 77559086
+    },
+    {
+      "name": "controller-environment-0.3.0.tar.gz",
+      "kind": "runtime",
+      "size": 68643113,
+      "sha256": "1d9d2a64c51659748ec1c521a100ebd03566e012e7924ddfb3a8c92f775f9e36",
+      "expanded_size": 194384736
+    },
+    {
+      "name": "yolo-environment-0.3.0.tar.gz",
+      "kind": "runtime",
+      "size": 68406261,
+      "sha256": "213e329002f5d6a8f922fefe7622c821290ffafafd5869fd54d7ae211c72ae22",
+      "expanded_size": 196526198
+    },
+    {
+      "name": "vision-models-0.3.0.tar.gz",
+      "kind": "models",
+      "size": 142188768,
+      "sha256": "2d056fde56bd456fae9242487a66b8434bc1a33003e2c6ba3e184120d83e83fb",
+      "expanded_size": 161530533
+    }
+  ],
+  "speech_assets": [
+    {
+      "name": "stt-environment-0.4.0.tar.gz",
+      "kind": "runtime",
+      "size": 3668907,
+      "sha256": "05b7f624d326ccfeabd33d16e65fe53de95fa9be1c9f20b7908b3a9cccc1ee4d",
+      "expanded_size": 12126497
+    },
+    {
+      "name": "stt-english-small-model-0.4.0.tar.gz",
+      "kind": "models",
+      "size": 42061291,
+      "sha256": "02069d4b505086b31680acd31bba91c362635ca41f568f44d1faa154711826f2",
+      "expanded_size": 70898967
+    }
+  ],
+  "ocr_assets": [
+    {
+      "name": "ocr-environment-0.5.0.tar.gz",
+      "kind": "runtime",
+      "size": 80900040,
+      "sha256": "62d1fa876e5a7dc8f0e7b692e33b17c7f59ecd2698861997256f381782990123",
+      "expanded_size": 222608404
+    },
+    {
+      "name": "ocr-english-models-0.5.0.tar.gz",
+      "kind": "models",
+      "size": 24062328,
+      "sha256": "dddbe840cc7d4716b764d8ef6b5f2eb1e0fd310d06ea5adac4215e812c595586",
+      "expanded_size": 38867255
+    }
+  ]
+}
