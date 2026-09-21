@@ -13,7 +13,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--socket", required=True, dest="socket_path")
     parser.add_argument("--model-key", required=True)
-    parser.add_argument("--language", required=True, choices=("en", "fr"))
+    parser.add_argument("--language", required=True, choices=("en",))
     args = parser.parse_args()
 
     connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)

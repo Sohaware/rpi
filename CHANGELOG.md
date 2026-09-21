@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.0-tts - Offline speech generation and reusable audio
+
+- Package the approved-image ARM64 Coqui TTS 0.22 environment, English Glow-TTS
+  model, and MultiBand-MelGAN vocoder as versioned SHA256-checked release assets.
+- Limit the first supported TTS release to the tested fast English voice. Install and
+  load-check its model without synthesizing speech during setup.
+- Add `create_speech_file.py` to generate a named WAV once and preserve it in
+  `/home/client/audio`. It does not overwrite an existing recording automatically.
+- Add `play_saved_audio.py` to replay that saved file without loading or running the
+  TTS worker. Cache the 48 kHz stereo conversion privately and reuse it while the
+  source file and requested volume are unchanged.
+- Add audio listing, existence, and deletion helpers to the controller. Preserve the
+  Audio folder, student files, and prior AI assets during installation and repair.
+- Add archive-safety, repeat-restore, and generate-once/play-many tests. Face features,
+  chapter 8, configurable uplinks, dongle reconciliation, and swap remain deferred.
+
 ## 0.5.3-examples-polish - Managed demos and clear version status
 
 - Treat `/home/client/userfiles/CodyNick examples` as system-owned. Before every

@@ -263,6 +263,62 @@ class ExampleTests(unittest.TestCase):
         cody.close.assert_called_once()
         matrix.clear.assert_called_once_with(cody)
 
+    def test_create_speech_generates_once_and_keeps_named_file(self):
+        ai = MagicMock()
+        ai.audio_exists.return_value = False
+        ai.load_app.return_value = {"ok": True}
+        ai.tts.return_value = {
+            "ok": True,
+            "audio_file": "/home/client/audio/welcome_message.wav",
+        }
+        modules = {
+            "codynick_ai": types.SimpleNamespace(
+                CodyNickAI=MagicMock(return_value=ai)
+            )
+        }
+        with patch.dict("sys.modules", modules):
+            script = runpy.run_path(str(EXAMPLES / "create_speech_file.py"))
+            script["main"]()
+        ai.load_app.assert_called_once_with("tts", model="fast", language="en")
+        ai.tts.assert_called_once_with(
+            script["TEXT"], "welcome_message", speaker="speaker1"
+        )
+        ai.close.assert_called_once()
+
+    def test_create_speech_does_not_regenerate_existing_audio(self):
+        ai = MagicMock()
+        ai.audio_exists.return_value = True
+        modules = {
+            "codynick_ai": types.SimpleNamespace(
+                CodyNickAI=MagicMock(return_value=ai)
+            )
+        }
+        with patch.dict("sys.modules", modules):
+            script = runpy.run_path(str(EXAMPLES / "create_speech_file.py"))
+            script["main"]()
+        ai.load_app.assert_not_called()
+        ai.tts.assert_not_called()
+        ai.close.assert_called_once()
+
+    def test_play_saved_audio_does_not_load_tts(self):
+        ai = MagicMock()
+        ai.audio_exists.return_value = True
+        ai.speak.return_value = {
+            "ok": True,
+            "audio_file": "/home/client/audio/welcome_message.wav",
+        }
+        modules = {
+            "codynick_ai": types.SimpleNamespace(
+                CodyNickAI=MagicMock(return_value=ai)
+            )
+        }
+        with patch.dict("sys.modules", modules):
+            script = runpy.run_path(str(EXAMPLES / "play_saved_audio.py"))
+            script["main"]()
+        ai.load_app.assert_not_called()
+        ai.speak.assert_called_once_with("welcome_message")
+        ai.close.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()

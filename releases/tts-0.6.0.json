@@ -1,0 +1,27 @@
+{
+  "version": "0.6.0",
+  "tag": "v0.6.0-tts",
+  "os": "ubuntu",
+  "os_version": "26.04",
+  "arch": "aarch64",
+  "language": "en",
+  "engine": "coqui-tts",
+  "model": "glow-tts",
+  "vocoder": "multiband-melgan",
+  "assets": [
+    {
+      "name": "tts-environment-0.6.0.tar.gz",
+      "kind": "runtime",
+      "size": 572286546,
+      "sha256": "ea2a8f746333b4a6c2d9dc87a8a1544b88ddcc5cb41dce916c7e36d7572ca9ce",
+      "expanded_size": 1918296228
+    },
+    {
+      "name": "tts-english-fast-model-0.6.0.tar.gz",
+      "kind": "models",
+      "size": 391475427,
+      "sha256": "0e44ceb90112969da4cce7a4671b5c1438833d6ecefad3a11e9bd2a092b42a8a",
+      "expanded_size": 426696232
+    }
+  ]
+}

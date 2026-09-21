@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.5.3; application: 0.5.3 (managed examples polish). Network component: 0.1.2.**
+**Unified setup: 0.6.0; application: 0.6.0 (offline English text-to-speech). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -20,6 +20,9 @@ bundled camera-capture example, with a CodyJoy buzzer fallback for shutter playb
 Version 0.5.3 replaces the complete system-owned examples folder on every setup run,
 uses stable camera filenames, adds adjustable OCR sensitivity and tolerant text
 matching, keeps OCR result LEDs on for five seconds, and adds `codynick-version`.
+Version 0.6.0 adds offline English text-to-speech, persistent named WAV files, and
+separate beginner examples for generating speech once and replaying it later without
+loading the TTS model again.
 
 **Use this same command for first installation, a supported upgrade, or application
 repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
@@ -30,7 +33,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, and repeats of 0.5.3. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, and repeats of 0.6.0. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -40,11 +43,11 @@ It performs the network confirmation and continues to applications. No separate
 `--confirm` command is required with this entry point. Answer its confirmation prompt.
 
 Have the USB webcam and a USB microphone (a webcam microphone is acceptable)
-connected. Upgrading from 0.4.0 adds approximately **100 MB** of OCR downloads; a fresh
-0.5.3 installation downloads approximately **456 MB**. Allow at least 3 GB free storage.
-Downloads are cached and verified; repair restores managed runtime files.
-Text-to-speech, face features, and chapter 8 are not installed yet. This remains a
-staged hardware trial, not a production fleet updater.
+connected. Version 0.6.0 adds approximately **964 MB** of TTS downloads. A fresh
+installation downloads about **1.4 GB** across all application assets. Allow at least
+6 GB free storage. Downloads are cached and verified; repair restores managed runtime
+files. Face features and chapter 8 are not installed yet. TTS hardware acceptance is
+pending, so this remains a staged hardware trial, not a production fleet updater.
 
 ## 1. Prepare before installation
 
@@ -100,7 +103,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.5.3**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.6.0**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -136,7 +139,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.5.3: READY`
+same entry point starts application installation. Wait for `CodyNick 0.6.0: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -185,7 +188,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.5.3: READY`**, then press
+Wait for **`CodyNick 0.6.0: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -226,6 +229,13 @@ average-confidence results. Inspect the original picture, annotated picture, and
 result in **Images/results**. It uses the same capture sounds as the object demo. No
 photo or recognized text is sent to a cloud service.
 
+**Offline TTS test:** Open `CodyNick examples/create_speech_file.py` and click
+**Run this File**. The first run loads the English model and creates
+`/home/client/audio/welcome_message.wav`. Preview it in the IDE's **Audio** section.
+Then run `play_saved_audio.py`; it plays the existing file without loading TTS.
+Run both again to confirm the generator leaves the named file unchanged and playback
+reuses it. A USB audio output must be connected for the playback test.
+
 ### Installed scope and credentials
 
 | Item | Details |
@@ -237,11 +247,13 @@ photo or recognized text is sent to a cloud service.
 | Student Python runtime | `/home/client/.codynick-ai/envs/controller/bin/python` (bundled Python 3.10); keyboard, PySerial, requests, MySQL connector, NumPy/OpenCV |
 | YOLO worker | `/home/client/.codynick-ai/envs/yolo/bin/python`; models in `/home/client/.deepface/weights`; AI source in `/home/client/vhl_object_detection` |
 | OCR worker | `/home/client/.codynick-ai/envs/ocr/bin/python`; offline English fast/standard/best Tesseract models |
+| TTS worker | `/home/client/.codynick-ai/envs/tts/bin/python`; offline English Glow-TTS with MultiBand-MelGAN |
+| Saved audio | `/home/client/audio`; named files persist and appear in the IDE Audio section |
 | SSH administrator | Existing username/password or key, unchanged |
 | New client account | `client` / `codynick`; existing account passwords are not reset |
 | Dashboard database | Database/user/password: `codynick` / `codynick` / `codynick`; database-scoped permissions |
 | Root login/password | Unchanged; root login is not required |
-| AI environments/models | USB-camera capture, YOLO nano/small/medium, offline English speech commands, and English OCR fast/standard/best |
+| AI environments/models | USB-camera capture, YOLO nano/small/medium, offline English speech commands, English OCR fast/standard/best, and English TTS |
 
 This is a trusted-classroom-network application, not an internet-facing service.
 The IDE does not provide user authentication or isolate students from one another.
@@ -253,7 +265,7 @@ validated by the import check.
 ### Repeating, checking, and recovering
 
 **If 0.2.0 or 0.2.1 failed at the www-data write-access check, run the three commands above.**
-No manual permission commands or SD-card rewrite are required. Version 0.5.3 accepts
+No manual permission commands or SD-card rewrite are required. Version 0.6.0 accepts
 failed and completed 0.2.0/0.2.1 installations and repairs web-user access with explicit
 ACLs. It grants traversal of `/home` and `/home/client`, writes to the active script
 and log, and shared-folder access. It does not grant writes to the whole client home.
@@ -278,7 +290,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -287,7 +299,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.5.3/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.6.0/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -324,6 +336,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.6.0-tts** | Local validation passed; Pi TTS/audio hardware test pending | Adds offline English Glow-TTS, persistent named WAV files, cached playback conversion, and separate generate-once/replay examples. Existing audio and student files are preserved. |
 | **0.5.3-examples-polish** | Local validation passed; Pi hardware retest pending | Replaces the system-owned examples folder on every setup run; uses stable image names; adds adjustable OCR confidence, tolerant `codynick` matching, five-second LED results, and the `codynick-version` audit command. |
 | **0.5.2-camera-sounds** | Local validation passed; Pi audio hardware test pending | All five bundled camera-capture examples play a CodyJoy countdown/cue and USB-speaker shutter sound, with a CodyJoy buzzer fallback. Existing AI assets and student data are preserved. |
 | **0.5.1-ocr-led** | Local validation passed; Pi hardware test pending | Adds a one-shot joystick-UP camera OCR demo that turns all RGB LEDs green when normalized text contains `codynick`, otherwise red. Reuses 0.5.0 OCR assets. |
@@ -363,17 +376,15 @@ before stopping it. Backups are stored under `/var/backups/codynick/`.
 
 ## Next stage
 
-1. Install 0.5.3 on the Pi and test clean example replacement, `codynick-version`,
-   stable image replacement, OCR sensitivity/matching, five-second LEDs, camera
-   sounds, repeated installation, and reboot persistence.
-2. Package text-to-speech and face features later, retaining
-   existing on-device paths and student data.
+1. Install 0.6.0 on the Pi and test first-time TTS asset download, named speech
+   generation, repeated playback, Audio preview, repair, and reboot persistence.
+2. Package face features later, retaining existing on-device paths and student data.
 3. Add verified migrations and recovery for later releases, then test the complete
    clean-OS procedure before recommending fleet-wide upgrades.
 
 Chapter 8 will be a separate upgrade. Keep this SD card for the next stage.
 
-## AI demo gallery (0.5.3)
+## AI demo gallery (0.6.0)
 
 Open `CodyNick examples` in the IDE and select **Run This File**:
 
@@ -385,6 +396,8 @@ Open `CodyNick examples` in the IDE and select **Run This File**:
 | `voice_led_colors.py` | Listen offline for English color commands and set all 16 RGB LEDs. Say lights off or stop listening to finish. |
 | `camera_read_text.py` | Capture printed English text, run offline standard OCR, print confidence, and save annotated JPG plus JSON results. |
 | `joystick_ocr_led.py` | Wait for CodyJoy Pro joystick UP, capture text, then fill all RGB LEDs green for `codynick` or red otherwise. |
+| `create_speech_file.py` | Generate `welcome_message.wav` once with offline English TTS and keep it in the Audio folder. An existing file is not regenerated. |
+| `play_saved_audio.py` | Play `welcome_message.wav` through the selected USB audio output without loading or running the TTS model. |
 
 Each demo uses one stable base name and overwrites its previous images/results instead
 of accumulating random names. Model comparison keeps three stable annotated outputs,
@@ -406,7 +419,15 @@ Set `OCR_CONFIDENCE` in either OCR example to adjust filtering: lower values acc
 more uncertain text and higher values are stricter. In `joystick_ocr_led.py`,
 `MATCH_SIMILARITY` controls tolerance for small OCR mistakes. The defaults are `0.20`
 and `0.80`. Configurable uplink credentials, dongle replacement reconciliation, and
-swap remain postponed; version 0.5.3 does not add them.
+swap remain postponed; version 0.6.0 does not add them.
+
+Generated speech is stored under `/home/client/audio` and remains available after the
+program exits or the Pi reboots. Change `AUDIO_NAME` and `TEXT` in
+`create_speech_file.py` to create another reusable message. Run
+`play_saved_audio.py` whenever it is needed. Playback uses a private converted-audio
+cache under `/home/client/.cache/codynick/audio`; the visible Audio folder contains
+only the named student files. The first TTS model load can take noticeably longer
+than later playback.
 
 ## Implementation and testing
 

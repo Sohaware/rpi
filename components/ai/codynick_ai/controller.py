@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import atexit
+import hashlib
 import os
 import queue
 import re
@@ -69,19 +70,13 @@ TTS_MODEL_ALIASES = {
     "fast": "en_glow",
     "glow": "en_glow",
     "glow-tts": "en_glow",
-    "vits": "en_vits",
-    "multi": "en_vctk",
-    "vctk": "en_vctk",
-    "french": "fr_vits",
-    "css10": "fr_vits",
 }
 
 TTS_LANGUAGE_ALIASES = {
     "en": "en", "english": "en",
-    "fr": "fr", "french": "fr", "francais": "fr", "français": "fr",
 }
 
-TTS_SPEAKERS = ("speaker1", "speaker2", "speaker3")
+TTS_SPEAKERS = ("speaker1",)
 
 
 def _safe_error(code: str, message: str, **details) -> dict:
@@ -703,6 +698,18 @@ class CodyNickAI:
             return str(current_path)
         return str(self.audio_store.save_current_as(name))
 
+    def list_audio(self) -> list[str]:
+        """Return saved WAV, MP3, and M4A filenames from the Audio folder."""
+        return self.audio_store.list_audio()
+
+    def audio_exists(self, name: str | None = None) -> bool:
+        """Return whether a named audio file is available for playback."""
+        return self.audio_store.audio_exists(name)
+
+    def delete_audio(self, name: str) -> None:
+        """Delete one named audio file from the Audio folder."""
+        self.audio_store.delete_audio(name)
+
     def load_app(
         self,
         app: str,
@@ -1181,27 +1188,18 @@ class CodyNickAI:
             if language_key is None:
                 return _safe_error(
                     "INVALID_LANGUAGE",
-                    "Choose a legacy TTS language: en or fr.",
-                    allowed_languages=["en", "fr"],
+                    "CodyNick 0.6.0 provides offline English TTS.",
+                    allowed_languages=["en"],
                 )
             model_key = TTS_MODEL_ALIASES.get(str(model).strip().lower())
             if model_key is None:
                 return _safe_error(
                     "INVALID_MODEL",
-                    "Choose TTS model: default, fast, vits, multi, or french.",
-                    allowed_models=["default", "fast", "vits", "multi", "french"],
+                    "Choose TTS model: default or fast.",
+                    allowed_models=["default", "fast"],
                 )
             if model_key == "default":
-                model_key = "fr_vits" if language_key == "fr" else "en_glow"
-            if language_key == "fr" and model_key != "fr_vits":
-                return _safe_error(
-                    "INVALID_MODEL",
-                    "The legacy French model is selected with model='default' or 'french'.",
-                )
-            if language_key == "en" and model_key == "fr_vits":
-                return _safe_error(
-                    "INVALID_MODEL", "The French model requires language='fr'."
-                )
+                model_key = "en_glow"
             if not self.tts_python.is_file():
                 return _safe_error(
                     "TTS_ENVIRONMENT_MISSING",
@@ -1342,7 +1340,7 @@ class CodyNickAI:
         if speaker_key not in TTS_SPEAKERS:
             return _safe_error(
                 "INVALID_SPEAKER",
-                "Choose speaker1, speaker2, or speaker3.",
+                "Choose speaker1.",
                 allowed_speakers=list(TTS_SPEAKERS),
             )
         try:
@@ -1447,26 +1445,38 @@ class CodyNickAI:
                 audio_file=str(audio_path),
             )
         started = time.perf_counter()
-        converted_path = audio_path.with_name(audio_path.stem + "_48k.wav")
+        cache_dir = self.workspace / ".cache" / "codynick" / "audio"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_key = hashlib.sha256(
+            f"{audio_path}:{volume_value:.4f}".encode("utf-8")
+        ).hexdigest()[:20]
+        converted_path = cache_dir / f"{cache_key}.wav"
+        cache_reused = (
+            converted_path.is_file()
+            and converted_path.stat().st_size > 0
+            and converted_path.stat().st_mtime_ns >= audio_path.stat().st_mtime_ns
+        )
         try:
-            converted = subprocess.run(
-                [
-                    "ffmpeg", "-y", "-loglevel", "error",
-                    "-i", str(audio_path),
-                    "-af", f"volume={volume_value / 100.0:.4f}",
-                    "-ar", "48000", "-ac", "2",
-                    str(converted_path),
-                ],
-                check=False,
-                timeout=120.0,
-                capture_output=True,
-                text=True,
-            )
-            if converted.returncode != 0:
-                return _safe_error(
-                    "AUDIO_CONVERSION_FAILED",
-                    (converted.stderr or "Audio conversion failed.").strip(),
+            if not cache_reused:
+                converted = subprocess.run(
+                    [
+                        "ffmpeg", "-y", "-loglevel", "error",
+                        "-i", str(audio_path),
+                        "-af", f"volume={volume_value / 100.0:.4f}",
+                        "-ar", "48000", "-ac", "2",
+                        str(converted_path),
+                    ],
+                    check=False,
+                    timeout=120.0,
+                    capture_output=True,
+                    text=True,
                 )
+                if converted.returncode != 0:
+                    converted_path.unlink(missing_ok=True)
+                    return _safe_error(
+                        "AUDIO_CONVERSION_FAILED",
+                        (converted.stderr or "Audio conversion failed.").strip(),
+                    )
             played = subprocess.run(
                 ["aplay", "-q", "-D", selected_device, str(converted_path)],
                 check=False,
@@ -1490,6 +1500,7 @@ class CodyNickAI:
             "error_code": "OK",
             "audio_file": str(audio_path),
             "playback_file": str(converted_path),
+            "playback_cache_reused": cache_reused,
             "device": selected_device,
             "volume": volume_value,
             "playback_sec": time.perf_counter() - started,

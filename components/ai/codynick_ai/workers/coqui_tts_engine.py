@@ -18,25 +18,6 @@ MODELS = {
         "language": "en",
         "speakers": {"speaker1": None},
     },
-    "en_vits": {
-        "name": "tts_models/en/ljspeech/vits",
-        "language": "en",
-        "speakers": {"speaker1": None},
-    },
-    "en_vctk": {
-        "name": "tts_models/en/vctk/vits",
-        "language": "en",
-        "speakers": {
-            "speaker1": "p225",
-            "speaker2": "p231",
-            "speaker3": "p240",
-        },
-    },
-    "fr_vits": {
-        "name": "tts_models/fr/css10/vits",
-        "language": "fr",
-        "speakers": {"speaker1": None},
-    },
 }
 
 
