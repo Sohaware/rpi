@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.1-tts-permissions - Repair restored TTS ownership
+
+- Assign the managed TTS environment, English model, and vocoder cache to `client`
+  after every restore. Coqui rewrites cached configuration paths during model loading,
+  so read-only root ownership caused the 0.6.0 health check to fail.
+- Reuse the verified 0.6.0 release assets and cache. Rerunning the unified setup command
+  repairs an interrupted 0.6.0 installation without downloading those assets again.
+
 ## 0.6.0-tts - Offline speech generation and reusable audio
 
 - Package the approved-image ARM64 Coqui TTS 0.22 environment, English Glow-TTS

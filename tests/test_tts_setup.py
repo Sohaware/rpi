@@ -4,6 +4,7 @@ from pathlib import Path
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import MagicMock
 
 
 spec = importlib.util.spec_from_file_location(
@@ -82,6 +83,13 @@ class TtsSetupTests(unittest.TestCase):
         ):
             self.assertEqual(Path(name).name, name)
             self.assertTrue(name.endswith("-0.6.0.tar.gz"))
+
+    def test_managed_tts_files_are_returned_to_client(self):
+        run = MagicMock()
+        m.repair_ownership(run)
+        run.assert_called_once_with(
+            "chown", "-R", "client:client", *m.MANAGED_PATHS
+        )
 
 
 if __name__ == "__main__":

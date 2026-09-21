@@ -1,4 +1,4 @@
-"""Version 0.6.0: allowlisted, checksummed offline English TTS deployment."""
+"""Version 0.6.1: allowlisted, checksummed offline English TTS deployment."""
 import hashlib
 import os
 from pathlib import Path, PurePosixPath
@@ -10,7 +10,7 @@ import time
 import urllib.request
 
 
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 TAG = "v0.6.0-tts"
 ROOTS = (
     "home/client/.codynick-ai/envs/tts",
@@ -21,6 +21,7 @@ LINK_ROOTS = ROOTS + (
     "home/client/.local/share/uv/python/cpython-3.10.20-linux-aarch64-gnu",
     "home/client/.local/share/uv/python/cpython-3.10-linux-aarch64-gnu",
 )
+MANAGED_PATHS = tuple("/" + root for root in ROOTS)
 
 
 def allowed(name):
@@ -130,6 +131,10 @@ def download(url, target, item, attempts=4):
             time.sleep(3 * attempt)
 
 
+def repair_ownership(run):
+    run("chown", "-R", "client:client", *MANAGED_PATHS)
+
+
 def install(manifest, run):
     cache = Path("/var/cache/codynick/tts-0.6.0")
     cache.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -149,6 +154,8 @@ def install(manifest, run):
     for item in assets:
         print("Restoring verified TTS asset:", item["name"], flush=True)
         restore_archive(cache / item["name"])
+    # Coqui updates cached model configuration while resolving its vocoder.
+    repair_ownership(run)
 
 
 def health_check(run):

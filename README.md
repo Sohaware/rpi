@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.6.0; application: 0.6.0 (offline English text-to-speech). Network component: 0.1.2.**
+**Unified setup: 0.6.1; application: 0.6.1 (TTS permissions repair). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -23,6 +23,8 @@ matching, keeps OCR result LEDs on for five seconds, and adds `codynick-version`
 Version 0.6.0 adds offline English text-to-speech, persistent named WAV files, and
 separate beginner examples for generating speech once and replaying it later without
 loading the TTS model again.
+Version 0.6.1 repairs ownership of the restored TTS environment and models so Coqui
+can update its cached configuration while running as the `client` account.
 
 **Use this same command for first installation, a supported upgrade, or application
 repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
@@ -33,7 +35,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, and repeats of 0.6.0. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, and repeats of 0.6.1. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -103,7 +105,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.6.0**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.6.1**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -139,7 +141,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.6.0: READY`
+same entry point starts application installation. Wait for `CodyNick 0.6.1: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -188,7 +190,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.6.0: READY`**, then press
+Wait for **`CodyNick 0.6.1: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -265,7 +267,7 @@ validated by the import check.
 ### Repeating, checking, and recovering
 
 **If 0.2.0 or 0.2.1 failed at the www-data write-access check, run the three commands above.**
-No manual permission commands or SD-card rewrite are required. Version 0.6.0 accepts
+No manual permission commands or SD-card rewrite are required. Version 0.6.1 accepts
 failed and completed 0.2.0/0.2.1 installations and repairs web-user access with explicit
 ACLs. It grants traversal of `/home` and `/home/client`, writes to the active script
 and log, and shared-folder access. It does not grant writes to the whole client home.
@@ -290,7 +292,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -299,7 +301,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.6.0/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.6.1/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -336,6 +338,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.6.1-tts-permissions** | Local validation passed; Pi repair test pending | Repairs ownership of the managed TTS environment and model cache after restore, allowing Coqui to update its vocoder configuration as `client`. Reuses the verified 0.6.0 assets. |
 | **0.6.0-tts** | Local validation passed; Pi TTS/audio hardware test pending | Adds offline English Glow-TTS, persistent named WAV files, cached playback conversion, and separate generate-once/replay examples. Existing audio and student files are preserved. |
 | **0.5.3-examples-polish** | Local validation passed; Pi hardware retest pending | Replaces the system-owned examples folder on every setup run; uses stable image names; adds adjustable OCR confidence, tolerant `codynick` matching, five-second LED results, and the `codynick-version` audit command. |
 | **0.5.2-camera-sounds** | Local validation passed; Pi audio hardware test pending | All five bundled camera-capture examples play a CodyJoy countdown/cue and USB-speaker shutter sound, with a CodyJoy buzzer fallback. Existing AI assets and student data are preserved. |
@@ -376,7 +379,7 @@ before stopping it. Backups are stored under `/var/backups/codynick/`.
 
 ## Next stage
 
-1. Install 0.6.0 on the Pi and test first-time TTS asset download, named speech
+1. Install 0.6.1 on the Pi and test TTS ownership repair, named speech
    generation, repeated playback, Audio preview, repair, and reboot persistence.
 2. Package face features later, retaining existing on-device paths and student data.
 3. Add verified migrations and recovery for later releases, then test the complete
@@ -419,7 +422,7 @@ Set `OCR_CONFIDENCE` in either OCR example to adjust filtering: lower values acc
 more uncertain text and higher values are stricter. In `joystick_ocr_led.py`,
 `MATCH_SIMILARITY` controls tolerance for small OCR mistakes. The defaults are `0.20`
 and `0.80`. Configurable uplink credentials, dongle replacement reconciliation, and
-swap remain postponed; version 0.6.0 does not add them.
+swap remain postponed; version 0.6.1 does not add them.
 
 Generated speech is stored under `/home/client/audio` and remains available after the
 program exits or the Pi reboots. Change `AUDIO_NAME` and `TEXT` in
