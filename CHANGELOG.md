@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.7.1-api-reference - Complete IoT and AI programming reference
+
+- Document the local Dashboard module's database functions, complete `Card` constructor,
+  attributes, methods, lifecycle, all eleven card types, accepted structured values,
+  browser interaction patterns, and race/cleanup considerations.
+- Document every public `CodyNick.WiFi_IoT` connection, credential, keep-alive, status,
+  reset, typed cloud read, and typed cloud write command with limits and return values.
+- Document the `CodyNickAI` constructor, model loading, camera/image storage, object
+  detection, OCR, audio recording, STT, live commands, TTS/playback, result dictionaries,
+  exceptions, output paths, and resource lifecycle.
+- Clearly distinguish API-supported model/language keys from the English models actually
+  installed in this release.
+
 ## 0.7.0-offline-docs-camera - Offline learning guide and camera cleanup
 
 - Replace generic on-device pages with an offline guide for the main panel, Python

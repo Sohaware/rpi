@@ -1,6 +1,7 @@
 import hashlib
 import importlib.util
 import json
+import ast
 from pathlib import Path
 import re
 import tempfile
@@ -136,11 +137,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.0.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.1.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.0.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.1.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
         entry = (ROOT / "setup.sh").read_text()
@@ -171,7 +172,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.0.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.1.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
@@ -187,6 +188,41 @@ class AppTests(unittest.TestCase):
         text = (ROOT / "components/ai/codynick_ai/controller.py").read_text()
         self.assertIn("keep_open: bool = False", text)
         self.assertIn("if not keep_open:\n                self.close_camera()", text)
+
+    def test_reference_mentions_every_public_iot_and_ai_method(self):
+        docs_root = ROOT / "components/ide/docs/docs"
+        docs = "\n".join(path.read_text(encoding="utf-8")
+                         for path in docs_root.rglob("*.md"))
+
+        def class_methods(path, class_name):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            target = next(node for node in tree.body
+                          if isinstance(node, ast.ClassDef)
+                          and node.name == class_name)
+            return [node.name for node in target.body
+                    if isinstance(node, ast.FunctionDef)
+                    and not node.name.startswith("_")
+                    and not any(isinstance(item, ast.Name)
+                                and item.id == "property"
+                                for item in node.decorator_list)]
+
+        public = []
+        public += class_methods(
+            ROOT / "components/client/Dashboard.py", "Card"
+        )
+        public += class_methods(
+            ROOT / "components/client/CodyNick.py", "WiFi_IoT"
+        )
+        public += class_methods(
+            ROOT / "components/ai/codynick_ai/controller.py", "CodyNickAI"
+        )
+        public += class_methods(
+            ROOT / "components/ai/codynick_ai/controller.py", "SpeechListener"
+        )
+        public += ["configure", "ensure_database", "ensure_table", "clear"]
+
+        missing = sorted({name for name in public if f"{name}(" not in docs})
+        self.assertEqual(missing, [], f"Public methods missing from ODD: {missing}")
 
 
 if __name__ == "__main__":

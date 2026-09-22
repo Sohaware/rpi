@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.7.0; application: 0.7.0 (offline docs and camera cleanup). Network component: 0.1.2.**
+**Unified setup: 0.7.1; application: 0.7.1 (IoT and AI API reference). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -29,6 +29,9 @@ Version 0.7.0 replaces the placeholder on-device documentation with an offline g
 to the installed IDE, gadgets, dashboard, media, and AI features. It bundles gadget
 images and Blockly locally. One-shot captures now release the USB camera immediately,
 multi-photo demos opt in explicitly, and service restarts request graceful cleanup.
+Version 0.7.1 expands that guide into a programmer's reference for the local Dashboard,
+CodyNick controller Wi-Fi/cloud API, and every public CodyNick AI operation, including
+signatures, parameters, return structures, examples, errors, and lifecycle rules.
 
 **Use this same command for first installation, a supported upgrade, or application
 repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
@@ -39,7 +42,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, and repeats of 0.7.0. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, and repeats of 0.7.1. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -109,7 +112,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.7.0**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.7.1**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
