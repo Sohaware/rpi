@@ -12,7 +12,7 @@ By the end of this page, students will be able to:
 - Use `True` and `False` results in a Python program.
 - Print a message only when motion first appears.
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/motion.JPG" alt="Motion Detection sensor" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/motion.jpg" alt="Motion Detection sensor" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 1 - Motion Detection sensor gadget.
 </div>

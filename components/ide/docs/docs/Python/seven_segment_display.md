@@ -19,12 +19,11 @@ By the end of this page, students will be able to:
 - Display a decimal number.
 - Update the displayed value inside a Python program.
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/7segment_display.jpg" alt="CodyNick Seven Segment Display" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 1 - CodyNick Seven Segment Display for showing numeric values.
 </div>
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/UltraSeg.png" alt="UltraSeg gadget" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/ultraseg.png" alt="UltraSeg gadget" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 2 - UltraSeg gadget. It combines a seven-segment display with an ultrasonic sensor.
 </div>

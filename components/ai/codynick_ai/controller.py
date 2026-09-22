@@ -347,12 +347,14 @@ class CodyNickAI:
         burst_frames: int = 12,
         cody: Any | None = None,
         get_ready_sound: bool = False,
+        keep_open: bool = False,
     ) -> str:
         """Capture a picture, always updating ``current.jpg``.
 
         If ``name`` is provided, a named copy is created as well. When
         ``get_ready_sound`` is true, the supplied CodyNick connection plays a
         timed countdown, capture cue and shutter pattern during camera warm-up.
+        The camera is released after capture unless ``keep_open`` is true.
         """
         capture_mode = str(capture_mode).strip().lower()
         if capture_mode not in {"brightest", "sharpest", "last"}:
@@ -594,8 +596,8 @@ class CodyNickAI:
                         remember(candidate)
                     time.sleep(0.10)
         finally:
-            # The camera intentionally remains open for the next capture.
-            pass
+            if not keep_open:
+                self.close_camera()
 
         if best_frame is None:
             raise CameraNotAvailableError(

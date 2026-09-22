@@ -17,7 +17,7 @@ By the end of this page, students will be able to:
 - Turn one pixel off.
 - Clear the whole matrix.
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/led_matrix.JPG" alt="CodyNick LED Matrix" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/led_matrix.jpg" alt="CodyNick LED Matrix" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 1 - CodyNick 8 by 8 monochrome LED Matrix.
 </div>

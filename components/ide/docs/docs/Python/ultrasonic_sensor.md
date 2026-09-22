@@ -12,12 +12,12 @@ By the end of this page, students will be able to:
 - Print a value with its unit.
 - Use distance inside a simple condition.
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/ultrasonic_sensor.JPG" alt="Ultrasonic sensor" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/ultrasonic.jpg" alt="Ultrasonic sensor" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 1 - Ultrasonic Sensor gadget.
 </div>
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/UltraSeg.png" alt="UltraSeg gadget" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/ultraseg.png" alt="UltraSeg gadget" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 2 - UltraSeg gadget. It combines an ultrasonic sensor with a seven-segment display.
 </div>

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0-offline-docs-camera - Offline learning guide and camera cleanup
+
+- Replace generic on-device pages with an offline guide for the main panel, Python
+  IDE, Blockly, gadgets, dashboard/IoT, camera/media, installed AI tools, examples,
+  updates, and troubleshooting.
+- Store the working gadget illustrations on the Pi and bundle Blockly locally so the
+  linked learning tools no longer depend on public CDNs during normal use.
+- Release the webcam automatically after ordinary one-shot captures. Require repeated
+  capture programs to opt into `keep_open=True` and close the camera after the loop.
+- Configure the student-script service to send `SIGINT` before its ten-second stop
+  timeout, allowing Python `finally` cleanup during IDE-triggered restarts.
+
 ## 0.6.1-tts-permissions - Repair restored TTS ownership
 
 - Assign the managed TTS environment, English model, and vocoder cache to `client`

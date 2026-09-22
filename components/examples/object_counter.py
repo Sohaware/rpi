@@ -41,7 +41,9 @@ def main():
         ai.load_app('yolo', model='nano')
         for index in range(SAMPLES):
             name = 'object_counter'
-            ai.take_picture(name, cody=cody, get_ready_sound=True)
+            ai.take_picture(
+                name, cody=cody, get_ready_sound=True, keep_open=True
+            )
             result = ai.detect_objects(name, confidence=CONFIDENCE)
             count = sum(item['class_name'] == TARGET for item in result['detections'])
             counts.append(count)
@@ -49,6 +51,7 @@ def main():
             print('Annotated picture:', result['annotated_image'], flush=True)
             if index + 1 < SAMPLES:
                 time.sleep(INTERVAL_SECONDS)
+        ai.close_camera()
         if counts:
             print(f'Per-photo counts: {counts}; maximum in one photo: {max(counts)}', flush=True)
     finally:

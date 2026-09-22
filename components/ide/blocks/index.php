@@ -211,7 +211,7 @@ if ($api === 'run') {
   <title><?= htmlspecialchars($APP_TITLE, ENT_QUOTES, 'UTF-8') ?></title>
 
   <!-- For offline deployment, download Blockly and replace these two script URLs with local files. -->
-  <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+  <script src="/blocks/vendor/blockly/blockly.min.js"></script>
 
   <style>
     :root {
@@ -979,6 +979,7 @@ function initBlockly() {
 
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: buildToolbox(),
+    media: '/blocks/vendor/blockly/media/',
     renderer: 'zelos',
     theme: CodyNickTheme,
     trashcan: true,

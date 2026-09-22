@@ -66,6 +66,9 @@ class ExampleTests(unittest.TestCase):
         self.assertIn('[2, 2, 2, 2, 2]', output)
         self.assertEqual({call.args[0] for call in ai.take_picture.call_args_list},
                          {'object_counter'})
+        self.assertTrue(all(call.kwargs['keep_open']
+                            for call in ai.take_picture.call_args_list))
+        ai.close_camera.assert_called_once()
 
     def test_comparison_same_photo_sequential_models(self):
         ai, _, output = self.execute('model_comparison.py')

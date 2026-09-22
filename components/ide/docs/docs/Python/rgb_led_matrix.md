@@ -13,7 +13,7 @@ By the end of this page, students will be able to:
 - Use RGB percentage colors.
 - Clear all RGB LEDs.
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/cjp_neo.png" alt="CodyJoy Pro RGB LED Matrix" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/cjp_neo.png" alt="CodyJoy Pro RGB LED Matrix" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 1 - CodyJoy Pro with the 4 by 4 RGB LED Matrix.
 </div>

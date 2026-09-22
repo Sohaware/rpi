@@ -1,5 +1,8 @@
 # CodyNick Blockly PHP IDE
 
+Blockly is bundled under `vendor/blockly`, so the editor works while the Raspberry Pi
+hotspot has no internet connection.
+
 This package contains:
 
 - `index.php` — the full-screen Blockly-based IDE and server API in one PHP file.

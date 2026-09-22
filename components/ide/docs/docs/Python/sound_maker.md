@@ -21,7 +21,7 @@ By the end of this page, students will be able to:
 - Play a note and continue immediately.
 - Play a note and wait until it is done.
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/cjp_neo.png" alt="CodyJoy Pro with Sound Maker" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/cjp_neo.png" alt="CodyJoy Pro with Sound Maker" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 1 - CodyJoy Pro device. The board includes an RGB LED Matrix, joystick, and Sound Maker.
 </div>

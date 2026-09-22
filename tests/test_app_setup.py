@@ -136,11 +136,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.6.1.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.0.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.6.1.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.0.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
         entry = (ROOT / "setup.sh").read_text()
@@ -163,6 +163,30 @@ class AppTests(unittest.TestCase):
         text = (ROOT / "components/ide/blocks/index.php").read_text(encoding="utf-8")
         self.assertIn("$PYTHON_OUTPUT_FILE = '/home/client/active_script.py';", text)
         self.assertIn("'# CodyNick run: '", text)
+
+    def test_student_script_service_requests_graceful_cleanup(self):
+        text = (ROOT / "installer/app_setup.py").read_text()
+        self.assertIn("KillMode=control-group", text)
+        self.assertIn("KillSignal=SIGINT", text)
+        self.assertIn("TimeoutStopSec=10", text)
+
+    def test_offline_docs_and_blockly_assets_are_managed(self):
+        manifest = json.loads((ROOT / "releases/core-0.7.0.json").read_text())
+        files = manifest["files"]
+        self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
+        self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
+        self.assertIn("components/ide/blocks/vendor/blockly/blockly.min.js", files)
+        self.assertIn("components/ide/blocks/vendor/blockly/media/sprites.svg", files)
+        blockly = (ROOT / "components/ide/blocks/index.php").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("https://unpkg.com", blockly)
+        self.assertIn("media: '/blocks/vendor/blockly/media/'", blockly)
+
+    def test_camera_capture_defaults_to_release(self):
+        text = (ROOT / "components/ai/codynick_ai/controller.py").read_text()
+        self.assertIn("keep_open: bool = False", text)
+        self.assertIn("if not keep_open:\n                self.close_camera()", text)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ By the end of this page, students will be able to:
 - Store a sensor value in a variable.
 - Print the value only when it changes.
 
-<img src="https://dl.sohaware.com/uploads/projects/codynick/img/temp_sensor.jpg" alt="Temperature sensor" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
+<img src="/docs/assets/gadgets/temperature.jpg" alt="Temperature sensor" style="max-width:100%; border-radius:10px; margin: 12px 0 24px 0;">
 <div style="text-align:center; font-size:0.92em; color:#6b7280; margin-top:-16px; margin-bottom:24px;">
 Figure 1 - Temperature Sensor gadget.
 </div>
