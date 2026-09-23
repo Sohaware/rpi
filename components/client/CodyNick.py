@@ -9,7 +9,7 @@ from typing import Optional
 import requests, shutil
 from datetime import datetime
 
-__version__ = "1.20.1"
+__version__ = "1.21.0"
 
 # update 18-11-2025 03
 
@@ -56,7 +56,6 @@ class SerialPort:
             timeout=timeout,
             write_timeout=1,
         )
-        time.sleep(0.5)  # wait for board reset (common for Arduino-like devices)
         self.ser = ser
 
     def flush(self):
@@ -135,8 +134,22 @@ class SerialPort:
 
 class CN:
     RECONNECT_INTERVAL = 1.0
+    USB_STARTUP_DELAY = 2.0
+    IDENTIFY_TIMEOUT = 1.0
+    IDENTIFY_COMMAND = "CN@@IDENTIFY--------"
+    IDENTIFY_RESPONSE_PREFIX = "CN@@CJP-Neo"
 
-    def _auto_detect_serial(self, startup_delay: float = 2.0) -> SerialPort:
+    @staticmethod
+    def _is_usb_serial_port(info):
+        device = str(getattr(info, "device", ""))
+        return (
+            device.startswith("/dev/ttyUSB")
+            or device.startswith("/dev/ttyACM")
+            or (getattr(info, "vid", None) is not None
+                and getattr(info, "pid", None) is not None)
+        )
+
+    def _auto_detect_serial(self) -> SerialPort:
         """
         Scan available serial ports, send an identify command to each,
         and return a SerialPort connected to the first one that responds
@@ -145,24 +158,22 @@ class CN:
         Probing command: exact 20-byte packet "CN@@IDENTIFY--------"
         (no '\\n' or '\\r').
         """
-        IDENTIFY_COMMAND = "CN@@IDENTIFY--------"  # 20 chars
-        IDENTIFY_PREFIX = "CN@@"
-        IDENTIFY_TIMEOUT = 1.0  # seconds
         MAX_RESPONSE_BYTES = 64
 
-        # Small delay for OS/device stabilization if needed
-        time.sleep(startup_delay)
-
-        ports = list(serial.tools.list_ports.comports())
+        ports = [
+            info for info in serial.tools.list_ports.comports()
+            if self._is_usb_serial_port(info)
+        ]
 
         if not ports:
-            print("[auto_detect_serial] No serial ports found.")
-            raise RuntimeError("No serial ports found")
+            print("[auto_detect_serial] No USB serial ports found.")
+            raise RuntimeError("No USB serial ports found")
 
-        # Show list of present ports
-        print("[auto_detect_serial] Available serial ports:")
+        print("[auto_detect_serial] Available USB serial ports:")
         for idx, info in enumerate(ports):
             print(f"  {idx}: {info.device} - {info.description}")
+        if len(ports) > 1:
+            print("[auto_detect_serial] Multiple USB serial devices found; using the first valid CodyJoy Pro.")
 
         # Probe each port
         for info in ports:
@@ -171,26 +182,29 @@ class CN:
             candidate = None
 
             try:
+                started = time.monotonic()
                 candidate = SerialPort(port=port_name)
-                time.sleep(3)
+                time.sleep(self.USB_STARTUP_DELAY)
 
                 # Clear buffers
                 candidate.flush()
 
                 # Send EXACTLY 20 bytes (no newline)
                 # (IDENTIFY_COMMAND length is already 20)
-                candidate.send_line(IDENTIFY_COMMAND, add_newline=False)
+                candidate.send_line(self.IDENTIFY_COMMAND, add_newline=False)
 
                 # Read response character-wise
                 response = candidate.read_line(
-                    timeout=IDENTIFY_TIMEOUT,
+                    timeout=self.IDENTIFY_TIMEOUT,
                     max_bytes=MAX_RESPONSE_BYTES,
                 )
 
                 # Check if it looks like a CodyNick device
-                if response and IDENTIFY_PREFIX in response: # response.startswith(IDENTIFY_PREFIX):
+                if response and response.startswith(self.IDENTIFY_RESPONSE_PREFIX):
+                    elapsed = time.monotonic() - started
                     print(
-                        f"\033[92m[auto_detect_serial] Found CodyNick device on {port_name}: {response}\033[0m"
+                        f"\033[92m[auto_detect_serial] Found CodyJoy Pro on {port_name} "
+                        f"in {elapsed:.2f}s: {response.rstrip(chr(0))}\033[0m"
                     )
                     return candidate
 
@@ -207,7 +221,7 @@ class CN:
 
         # If we reach here, nothing responded correctly
         raise RuntimeError(
-            "No CodyNick-compatible serial device found (no response starting with 'CN@@')."
+            f"No CodyJoy Pro found (expected response starting with {self.IDENTIFY_RESPONSE_PREFIX!r})."
         )
 
     def __init__(self):
@@ -251,7 +265,7 @@ class CN:
 
         self._last_reconnect_attempt = now
         try:
-            self.ser = self._auto_detect_serial(startup_delay=0.0)
+            self.ser = self._auto_detect_serial()
             if self.ser is not None:
                 self._io_failures = 0
                 self.connected_at = time.time()

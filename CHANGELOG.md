@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.3-usb-serial-detection - Focused CodyJoy Pro discovery
+
+- Remove the unconditional two-second delay before serial enumeration and the
+  redundant half-second delay inside serial-port construction.
+- Probe only USB serial candidates (`ttyUSB`, `ttyACM`, or ports with USB VID/PID),
+  excluding Raspberry Pi onboard UARTs such as `ttyAMA` and `ttyS`.
+- Wait a fixed two seconds after opening each candidate, retain a one-second response
+  timeout, and accept only the exact `CN@@CJP-Neo` identity prefix.
+- Select the first valid CodyJoy Pro when multiple USB serial devices are present,
+  without caching or retry-based identification. Multi-device user selection remains
+  deliberately deferred.
+- Require CodyPi test firmware with its blocking setup `delay(2000)` removed; this Pi
+  updater does not flash microcontroller firmware. Preserve that sketch as CodyPi
+  firmware 1.19.4 under `firmware/CodyPi/`.
+
 ## 0.7.2-teacher-guides - Protected presenter library and release identity
 
 - Add a password-protected offline teacher portal at `/teachers/`, with the initial
