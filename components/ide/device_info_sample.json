@@ -1,7 +1,8 @@
 {
   "devicename": "CodyNick",
   "serial_number": "unknown",
-  "production_date": "1675-01-01",
+  "production_date": "2026-09-22",
+  "software_version": "0.7.2",
   "description": "None",
   "support_link": "https://support.codynick.com"
 }

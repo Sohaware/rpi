@@ -137,11 +137,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.1.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.2.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.1.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.2.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
         entry = (ROOT / "setup.sh").read_text()
@@ -172,10 +172,12 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.1.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.2.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
+        self.assertIn("components/ide/teachers/index.php", files)
+        self.assertIn("components/ide/teachers/guides/01-temperature-alarm-live-coding.md", files)
         self.assertIn("components/ide/blocks/vendor/blockly/blockly.min.js", files)
         self.assertIn("components/ide/blocks/vendor/blockly/media/sprites.svg", files)
         blockly = (ROOT / "components/ide/blocks/index.php").read_text(
@@ -223,6 +225,34 @@ class AppTests(unittest.TestCase):
 
         missing = sorted({name for name in public if f"{name}(" not in docs})
         self.assertEqual(missing, [], f"Public methods missing from ODD: {missing}")
+
+    def test_teacher_portal_is_protected_and_password_is_preserved(self):
+        text = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
+        self.assertIn('<Directory /var/www/html/teachers>', text)
+        self.assertIn('AuthUserFile /etc/apache2/codynick-teachers.htpasswd', text)
+        self.assertIn('if not password_file.exists():', text)
+        self.assertIn('"htpasswd", "-bc"', text)
+        self.assertIn('teacher_status != "401"', text)
+
+    def test_teacher_guide_uses_the_shipped_gadget_api(self):
+        guide = (ROOT / "components/ide/teachers/guides/01-temperature-alarm-live-coding.md").read_text(encoding="utf-8")
+        for command in ("CodyNick.CN()", "CodyNick.RGB_Matrix.set(",
+                        "CodyNick.Seven_Segment.display(",
+                        "CodyNick.Temperature_Sensor.read(",
+                        "CodyNick.Joystick.click(",
+                        "CodyNick.CJP_Sound_Maker.play_until_done("):
+            self.assertIn(command, guide)
+        for nonexistent in ("CodyNick.CodyJoy(", "RGB_LED", "SevenSegment(",
+                            "CodyNick.Temperature(", ".is_clicked()"):
+            self.assertNotIn(nonexistent, guide)
+
+    def test_release_metadata_is_current_and_state_is_readable(self):
+        installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
+        homepage = (ROOT / "components/ide/index.php").read_text(encoding="utf-8")
+        self.assertIn('write(STATE, json.dumps(data, indent=2) + "\\n", 0o644)', installer)
+        self.assertIn('"software_version" => "0.7.2"', homepage)
+        self.assertIn('"production_date" => "2026-09-22"', homepage)
+        self.assertNotIn("1675-01-01", homepage)
 
 
 if __name__ == "__main__":

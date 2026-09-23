@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.2-teacher-guides - Protected presenter library and release identity
+
+- Add a password-protected offline teacher portal at `/teachers/`, with the initial
+  login `teacher` / `codynick` and an administrator command for changing its password.
+- Add the first progressive live-coding guide, building a temperature alarm through
+  LED, blink, seven-segment, counter, sensor, color, melody, and joystick-inhibit steps.
+- Preserve changed teacher credentials during installation, repair, and upgrades.
+- Display the installed software version and real release date on `start.codynick`.
+- Make application release state readable so `codynick-version` works without `sudo`.
+- Verify that the main page carries current release identity and that teacher pages
+  reject unauthenticated requests.
+
 ## 0.7.1-api-reference - Complete IoT and AI programming reference
 
 - Document the local Dashboard module's database functions, complete `Card` constructor,

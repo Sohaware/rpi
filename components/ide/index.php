@@ -10,8 +10,9 @@ $jsonFile = "/device_info.json";
 $device = [
     "devicename" => "CodyNick",
     "serial_number" => "unknown",
-    "production_date" => "1675-01-01",
-    "description" => "None",
+    "production_date" => "2026-09-22",
+    "description" => "CodyNick 0.7.2",
+    "software_version" => "0.7.2",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];
@@ -262,6 +263,11 @@ function e($value) {
                     <div class="link-desc">Read local guides and instructions.</div>
                 </a>
 
+                <a class="link-card" href="/teachers">
+                    <div class="link-title">Teacher Guides</div>
+                    <div class="link-desc">Open protected presenter material.</div>
+                </a>
+
                 <a class="link-card" href="<?php echo e($device["support_link"]); ?>" target="_blank" rel="noopener">
                     <div class="link-title">Support</div>
                     <div class="link-desc">Get help, updates, and support resources.</div>
@@ -277,6 +283,11 @@ function e($value) {
                 <div class="info-box">
                     <div class="label">Production Date</div>
                     <div class="value"><?php echo e($device["production_date"]); ?></div>
+                </div>
+
+                <div class="info-box">
+                    <div class="label">Software Version</div>
+                    <div class="value"><?php echo e($device["software_version"]); ?></div>
                 </div>
 
                 <div class="info-box">

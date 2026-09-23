@@ -13,8 +13,9 @@ import sys
 import time
 import urllib.request
 
-VERSION = "0.7.1"
-TAG = "v0.7.1-api-reference"
+VERSION = "0.7.2"
+TAG = "v0.7.2-teacher-guides"
+RELEASE_DATE = "2026-09-22"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -57,7 +58,9 @@ def save_state(stage, **extra):
     if stage in ("installing", "ready"):
         data.pop("error", None)
     data.update(version=VERSION, stage=stage, updated_at=datetime.datetime.now(datetime.timezone.utc).isoformat(), **extra)
-    write(STATE, json.dumps(data, indent=2) + "\n", 0o600)
+    # This state contains release metadata, not credentials, and powers the
+    # administrator-facing version command.
+    write(STATE, json.dumps(data, indent=2) + "\n", 0o644)
 
 
 def verify_manifest(manifest):
@@ -241,6 +244,11 @@ def install_units():
     write("/usr/local/bin/codynick-version", f"""#!/usr/bin/env bash
 exec /usr/bin/python3 /usr/local/lib/codynick/core-{VERSION}/version_status.py "$@"
 """, 0o755)
+    write("/usr/local/bin/codynick-teacher-password", """#!/usr/bin/env bash
+set -euo pipefail
+[[ $EUID -eq 0 ]] || { echo 'Run: sudo codynick-teacher-password' >&2; exit 1; }
+exec /usr/bin/htpasswd /etc/apache2/codynick-teachers.htpasswd teacher
+""", 0o755)
     write("/etc/systemd/system/script.service", f"""[Unit]
 Description=CodyNick student script
 After=network.target mariadb.service
@@ -283,6 +291,12 @@ DirectoryIndex index.php index.html
     AllowOverride None
     Require all granted
 </Directory>
+<Directory /var/www/html/teachers>
+    AuthType Basic
+    AuthName "CodyNick Teacher Guides"
+    AuthUserFile /etc/apache2/codynick-teachers.htpasswd
+    Require valid-user
+</Directory>
 <IfModule mod_php.c>
     php_value upload_max_filesize 50M
     php_value post_max_size 55M
@@ -294,6 +308,14 @@ DirectoryIndex index.php index.html
     run("systemctl", "daemon-reload")
     run("systemctl", "enable", "apache2", "codynick", "script")
     run("systemctl", "restart", "apache2", "codynick", "script")
+
+
+def configure_teacher_access():
+    password_file = safe_destination(Path("/etc/apache2/codynick-teachers.htpasswd"))
+    if not password_file.exists():
+        run("htpasswd", "-bc", password_file, "teacher", "codynick")
+    run("chown", "root:www-data", password_file)
+    password_file.chmod(0o640)
 
 
 def health_check():
@@ -318,6 +340,17 @@ def health_check():
     ).stdout
     if "Apache2 Default Page" in root_page or "CodyNick" not in root_page:
         raise RuntimeError("Apache root page is not the CodyNick device page")
+    if f"Software Version</div>\n                    <div class=\"value\">{VERSION}" not in root_page:
+        raise RuntimeError("Main page does not show the current CodyNick version")
+    if RELEASE_DATE not in root_page:
+        raise RuntimeError("Main page does not show the current release date")
+    teacher_status = subprocess.run(
+        ["curl", "--silent", "--output", "/dev/null", "--write-out", "%{http_code}",
+         "--max-time", "20", "http://127.0.0.1/teachers/"],
+        check=True, text=True, capture_output=True,
+    ).stdout
+    if teacher_status != "401":
+        raise RuntimeError("Teacher portal is not protected by authentication")
 
 
 def install():
@@ -335,7 +368,7 @@ def install():
     save_state("installing", backup=str(backup), components=manifest["components"])
     env = dict(os.environ, DEBIAN_FRONTEND="noninteractive", NEEDRESTART_MODE="l")
     run("apt-get", "update", env=env)
-    run("apt-get", "install", "-y", "apache2", "libapache2-mod-php", "php-mysql", "php-mbstring",
+    run("apt-get", "install", "-y", "apache2", "apache2-utils", "libapache2-mod-php", "php-mysql", "php-mbstring",
         "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", "acl",
         "v4l-utils", "libgomp1", "libglib2.0-0t64", "libgl1",
         "alsa-utils", "ffmpeg", "espeak-ng", "libsndfile1",
@@ -366,8 +399,15 @@ def install():
             if item.is_file() and not item.is_symlink():
                 run("chown", "www-data:www-data", item)
     info = Path("/device_info.json")
-    if not info.exists():
-        write(info, json.dumps({"devicename": "CodyNick", "serial_number": read_json(NETWORK).get("ssid", "unknown"), "description": f"CodyNick core {VERSION}", "logo_path": "/assets/logo.png"}, indent=2))
+    device = read_json(info)
+    device.setdefault("devicename", "CodyNick")
+    device.setdefault("serial_number", read_json(NETWORK).get("ssid", "unknown"))
+    device.setdefault("support_link", "https://support.codynick.com")
+    device.setdefault("logo_path", "/assets/logo.png")
+    device.update(description=f"CodyNick core {VERSION}", production_date=RELEASE_DATE,
+                  software_version=VERSION)
+    write(info, json.dumps(device, indent=2) + "\n")
+    configure_teacher_access()
     install_units()
     health_check()
     save_state("ready", completed_version=VERSION, ai_installed=True,
@@ -379,6 +419,7 @@ def install():
           "\nMicrophone capture: test with voice_led_colors.py"
           "\nCamera OCR: test with camera_read_text.py"
           "\nGenerate speech once with create_speech_file.py; replay it with play_saved_audio.py"
+          "\nTeacher guides: http://10.42.0.1/teachers/ (initial login teacher / codynick)"
           "\nFace features and chapter 8: NOT INSTALLED"
           "\nNo reboot required.", flush=True)
 

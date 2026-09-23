@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.7.1; application: 0.7.1 (IoT and AI API reference). Network component: 0.1.2.**
+**Unified setup: 0.7.2; application: 0.7.2 (protected teacher guides). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -32,6 +32,9 @@ multi-photo demos opt in explicitly, and service restarts request graceful clean
 Version 0.7.1 expands that guide into a programmer's reference for the local Dashboard,
 CodyNick controller Wi-Fi/cloud API, and every public CodyNick AI operation, including
 signatures, parameters, return structures, examples, errors, and lifecycle rules.
+Version 0.7.2 adds a password-protected offline teacher portal and its first progressive
+live-coding guide. It also repairs normal-user version reporting and makes the main
+panel's software version and release date update with every release.
 
 **Use this same command for first installation, a supported upgrade, or application
 repair. Already on the verified hotspot? Run it now without rewriting the SD card:**
@@ -42,7 +45,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, and repeats of 0.7.1. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, and repeats of 0.7.2. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -112,7 +115,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.7.1**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.7.2**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -299,7 +302,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -308,7 +311,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.6.1/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.7.2/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -320,6 +323,14 @@ codynick-version
 Each example is reported as `current`, `modified`, or `missing`; extra files are
 reported as `unexpected`. Rerun the unified setup command to replace a changed
 examples folder with the current set.
+
+The offline presenter library is available at `http://10.42.0.1/teachers/`. Its
+initial login is `teacher` / `codynick`. Change that default from an administrator
+terminal; the new password is preserved by later repairs and upgrades:
+
+```bash
+sudo codynick-teacher-password
+```
 
 To retrieve the latest installation output after reconnecting:
 
@@ -345,6 +356,9 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.7.2-teacher-guides** | Local validation passed; Pi acceptance pending | Adds the protected offline teacher portal, first progressive presenter guide, password-change command, current homepage version/date, and normal-user `codynick-version` repair. |
+| **0.7.1-api-reference** | Pi upgrade passed | Adds complete local Dashboard, IoT/cloud, and installed AI API references. |
+| **0.7.0-offline-docs-camera** | Pi upgrade passed | Adds the offline guide and local assets, automatic one-shot camera release, and graceful script cleanup. |
 | **0.6.1-tts-permissions** | Local validation passed; Pi repair test pending | Repairs ownership of the managed TTS environment and model cache after restore, allowing Coqui to update its vocoder configuration as `client`. Reuses the verified 0.6.0 assets. |
 | **0.6.0-tts** | Local validation passed; Pi TTS/audio hardware test pending | Adds offline English Glow-TTS, persistent named WAV files, cached playback conversion, and separate generate-once/replay examples. Existing audio and student files are preserved. |
 | **0.5.3-examples-polish** | Local validation passed; Pi hardware retest pending | Replaces the system-owned examples folder on every setup run; uses stable image names; adds adjustable OCR confidence, tolerant `codynick` matching, five-second LED results, and the `codynick-version` audit command. |
