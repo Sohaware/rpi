@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.4-gadget-tests - Public hardware checks and teaching polish
+
+- Add a public `/gadget-tests/` portal backed by the managed
+  `/home/client/CodyNick Gadget Tests` folder, with eleven focused hardware test pages
+  and a copy button on every code block.
+- Replace the managed gadget-test folder on install, repair, and upgrade while retaining
+  a recovery backup, and include its checksum state in `codynick-version`.
+- Revise the protected temperature-alarm presenter guide for beginner-first code,
+  stand-alone seven-segment use, counting 1 through 10, and a 20 C lower threshold.
+- Move the combined CodyJoy Pro joystick, RGB side, center, and buzzer test out of the
+  presenter lesson and into the public gadget-test collection.
+- Increase RGB per-command settling time from 3 ms to 5 ms and remove noisy internal
+  seven-segment conversion diagnostics from the user log.
+- Add copy buttons to the protected teacher guide and update all release identity,
+  homepage, manifest, checksum, installation, repair, and health-check paths.
+
 ## 0.7.3-usb-serial-detection - Focused CodyJoy Pro discovery
 
 - Remove the unconditional two-second delay before serial enumeration and the

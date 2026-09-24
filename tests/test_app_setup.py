@@ -144,11 +144,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.3.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.4.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(hashlib.sha256((ROOT / name).read_bytes()).hexdigest(), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.3.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.4.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, hashlib.sha256((ROOT / name).read_bytes()).hexdigest())
         entry = (ROOT / "setup.sh").read_text()
@@ -179,12 +179,14 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.3.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.4.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
         self.assertIn("components/ide/teachers/index.php", files)
         self.assertIn("components/ide/teachers/guides/01-temperature-alarm-live-coding.md", files)
+        self.assertIn("components/ide/gadget-tests/index.php", files)
+        self.assertIn("components/gadget-tests/01-codyjoy-pro.md", files)
         self.assertIn("components/ide/blocks/vendor/blockly/blockly.min.js", files)
         self.assertIn("components/ide/blocks/vendor/blockly/media/sprites.svg", files)
         blockly = (ROOT / "components/ide/blocks/index.php").read_text(
@@ -241,6 +243,31 @@ class AppTests(unittest.TestCase):
         self.assertIn('"htpasswd", "-bc"', text)
         self.assertIn('teacher_status != "401"', text)
 
+    def test_public_gadget_tests_are_managed_and_copyable(self):
+        installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
+        portal = (ROOT / "components/ide/gadget-tests/index.php").read_text(encoding="utf-8")
+        self.assertIn('/home/client/CodyNick Gadget Tests', installer)
+        self.assertIn('reset_examples(GADGET_TESTS_ROOT, backup)', installer)
+        self.assertIn('/gadget-tests/', installer)
+        self.assertNotIn('<Directory /var/www/html/gadget-tests>', installer)
+        self.assertIn("navigator.clipboard.writeText", portal)
+        self.assertEqual(len(list((ROOT / "components/gadget-tests").glob("*.md"))), 11)
+
+    def test_presenter_guide_scope_and_copy_buttons(self):
+        guide = (ROOT / "components/ide/teachers/guides/01-temperature-alarm-live-coding.md").read_text(encoding="utf-8")
+        portal = (ROOT / "components/ide/teachers/index.php").read_text(encoding="utf-8")
+        self.assertIn("# CodyNick Fabric Presenter Guide: Build a CodyNick Temperature Alarm", guide)
+        self.assertIn("temperature < 20", guide)
+        self.assertIn("range(1, 11)", guide)
+        self.assertNotIn("## Step 9", guide)
+        self.assertIn("navigator.clipboard.writeText", portal)
+
+    def test_gadget_library_output_and_rgb_timing(self):
+        library = (ROOT / "components/client/CodyNick.py").read_text(encoding="utf-8")
+        self.assertIn('class RGB_Matrix:\n    COMMAND_DELAY = 0.005', library)
+        self.assertNotIn('log(f"Float = {f}, value trimmed = {value_trimmed}")', library)
+        self.assertNotIn('log(f"value in function = {value_trimmed}")', library)
+
     def test_teacher_guide_uses_the_shipped_gadget_api(self):
         guide = (ROOT / "components/ide/teachers/guides/01-temperature-alarm-live-coding.md").read_text(encoding="utf-8")
         for command in ("CodyNick.CN()", "CodyNick.RGB_Matrix.set(",
@@ -257,7 +284,7 @@ class AppTests(unittest.TestCase):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
         homepage = (ROOT / "components/ide/index.php").read_text(encoding="utf-8")
         self.assertIn('write(STATE, json.dumps(data, indent=2) + "\\n", 0o644)', installer)
-        self.assertIn('"software_version" => "0.7.3"', homepage)
+        self.assertIn('"software_version" => "0.7.4"', homepage)
         self.assertIn('"production_date" => "2026-09-23"', homepage)
         self.assertNotIn("1675-01-01", homepage)
 

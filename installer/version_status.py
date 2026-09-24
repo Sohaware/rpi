@@ -7,9 +7,10 @@ from pathlib import Path, PurePosixPath
 import sys
 
 
-VERSION = "0.7.3"
+VERSION = "0.7.4"
 STATE = Path("/var/lib/codynick/application-state.json")
 EXAMPLES = Path("/home/client/userfiles/CodyNick examples")
+GADGET_TESTS = Path("/home/client/CodyNick Gadget Tests")
 
 
 def read_json(path):
@@ -19,16 +20,16 @@ def read_json(path):
         return {}
 
 
-def example_statuses(manifest):
+def managed_statuses(manifest, component, root):
     statuses = []
     expected_names = set()
     for name, expected in sorted(manifest.get("files", {}).items()):
         relative = PurePosixPath(name)
-        if relative.parts[:2] != ("components", "examples"):
+        if relative.parts[:2] != ("components", component):
             continue
         suffix = PurePosixPath(*relative.parts[2:])
         expected_names.add(str(suffix))
-        path = EXAMPLES / str(suffix)
+        path = root / str(suffix)
         if not path.is_file():
             status = "missing"
         elif hashlib.sha256(path.read_bytes()).hexdigest() == expected:
@@ -36,13 +37,17 @@ def example_statuses(manifest):
         else:
             status = "modified"
         statuses.append({"name": str(suffix), "status": status})
-    if EXAMPLES.is_dir():
-        for path in sorted(EXAMPLES.rglob("*")):
+    if root.is_dir():
+        for path in sorted(root.rglob("*")):
             if path.is_file():
-                name = path.relative_to(EXAMPLES).as_posix()
+                name = path.relative_to(root).as_posix()
                 if name not in expected_names:
                     statuses.append({"name": name, "status": "unexpected"})
     return statuses
+
+
+def example_statuses(manifest):
+    return managed_statuses(manifest, "examples", EXAMPLES)
 
 
 def main():
@@ -56,7 +61,8 @@ def main():
         "completed_version": state.get("completed_version"),
         "stage": state.get("stage", "unknown"),
         "components": state.get("components", {}),
-        "examples": example_statuses(manifest),
+        "examples": managed_statuses(manifest, "examples", EXAMPLES),
+        "gadget_tests": managed_statuses(manifest, "gadget-tests", GADGET_TESTS),
     }
     if args.json:
         print(json.dumps(result, indent=2))
@@ -69,12 +75,17 @@ def main():
         print("CodyNick examples:")
         for item in result["examples"]:
             print(f"  [{item['status']}] {item['name']}")
+        print("CodyNick gadget tests:")
+        for item in result["gadget_tests"]:
+            print(f"  [{item['status']}] {item['name']}")
     healthy = (
         result["installed_version"] == VERSION
         and result["completed_version"] == VERSION
         and result["stage"] == "ready"
         and result["examples"]
         and all(item["status"] == "current" for item in result["examples"])
+        and result["gadget_tests"]
+        and all(item["status"] == "current" for item in result["gadget_tests"])
     )
     return 0 if healthy else 1
 

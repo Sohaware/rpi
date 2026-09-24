@@ -13,8 +13,8 @@ import sys
 import time
 import urllib.request
 
-VERSION = "0.7.3"
-TAG = "v0.7.3-usb-serial-detection"
+VERSION = "0.7.4"
+TAG = "v0.7.4-gadget-tests"
 RELEASE_DATE = "2026-09-23"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
@@ -24,6 +24,7 @@ VENV = Path("/home/client/.codynick-ai/envs/controller")
 SERVICES = ("ssh", "codynick-ap", "codynick-dhcp", "codynick-nat")
 PRESERVE = {"code/config.php", "dashboard/config.php", "docs/config.php", "blocks/data/main.json"}
 EXAMPLES_ROOT = Path("/home/client/userfiles/CodyNick examples")
+GADGET_TESTS_ROOT = Path("/home/client/CodyNick Gadget Tests")
 
 
 def run(*args, **kwargs):
@@ -75,7 +76,7 @@ def verify_manifest(manifest):
             raise RuntimeError(f"Invalid release path: {name}")
         if len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
             raise RuntimeError("Invalid release checksum")
-        if path.parts[1] not in ("ide", "client", "watchdog", "ai", "examples"):
+        if path.parts[1] not in ("ide", "client", "watchdog", "ai", "examples", "gadget-tests"):
             raise RuntimeError("Unsupported component")
     return files
 
@@ -142,7 +143,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -332,7 +333,7 @@ def health_check():
     speech_setup.health_check(run)
     ocr_setup.health_check(run)
     tts_setup.health_check(run)
-    for url in ("/", "/code/", "/dashboard/", "/blocks/", "/docs/"):
+    for url in ("/", "/code/", "/dashboard/", "/blocks/", "/docs/", "/gadget-tests/"):
         run("curl", "--fail", "--silent", "--show-error", "--max-time", "20", "--output", "/dev/null", "http://127.0.0.1" + url)
     root_page = subprocess.run(
         ["curl", "--fail", "--silent", "--show-error", "--max-time", "20", "http://127.0.0.1/"],
@@ -381,15 +382,17 @@ def install():
     ocr_setup.install(manifest, run)
     tts_setup.install(manifest, run)
     reset_examples(EXAMPLES_ROOT, backup)
+    reset_examples(GADGET_TESTS_ROOT, backup)
     for name in verify_manifest(manifest):
         relative = PurePosixPath(name)
         component = relative.parts[1]
         suffix = PurePosixPath(*relative.parts[2:])
         root = {"ide": Path("/var/www/html"), "client": Path("/home/client"), "watchdog": Path("/root/codynick"),
-                "ai": Path("/home/client/vhl_object_detection"), "examples": EXAMPLES_ROOT}[component]
+                "ai": Path("/home/client/vhl_object_detection"), "examples": EXAMPLES_ROOT,
+                "gadget-tests": GADGET_TESTS_ROOT}[component]
         preserve = component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/"))
         deploy(source / name, root / str(suffix), backup, preserve)
-        if component == "examples":
+        if component in ("examples", "gadget-tests"):
             run("chown", "client:codynick-media", root, root / str(suffix))
             (root / str(suffix)).chmod(0o664)
     for folder in (Path("/var/www/html/blocks/data"), Path("/var/www/html/blocks/blocks")):
@@ -419,6 +422,7 @@ def install():
           "\nMicrophone capture: test with voice_led_colors.py"
           "\nCamera OCR: test with camera_read_text.py"
           "\nGenerate speech once with create_speech_file.py; replay it with play_saved_audio.py"
+          "\nGadget tests: http://10.42.0.1/gadget-tests/"
           "\nTeacher guides: http://10.42.0.1/teachers/ (initial login teacher / codynick)"
           "\nFace features and chapter 8: NOT INSTALLED"
           "\nNo reboot required.", flush=True)

@@ -9,7 +9,7 @@ from typing import Optional
 import requests, shutil
 from datetime import datetime
 
-__version__ = "1.21.0"
+__version__ = "1.21.1"
 
 # update 18-11-2025 03
 
@@ -587,7 +587,7 @@ class LED_Matrix:
 
 # RGB Matrix functions
 class RGB_Matrix:
-    COMMAND_DELAY = 0.003
+    COMMAND_DELAY = 0.005
     XY_TO_LED = [
         [0, 1, 2, 3],
         [7, 6, 5, 4],
@@ -1133,7 +1133,6 @@ class Seven_Segment:
         value = str(f)
         value_trimmed = value[:5]
 
-        log(f"Float = {f}, value trimmed = {value_trimmed}")
         try:
             if Cody is None or not Cody.ensure_connected():
                 return
@@ -1148,7 +1147,6 @@ class Seven_Segment:
             # value = value+"0"*(10-len(value))  # pad to 10 chars
 
             value_trimmed = value_trimmed.ljust(8, '\0')
-            log(f"value in function = {value_trimmed}")
             Cody.ser.send_line(f"CN@@7SEG@@{display_index:02d}{value_trimmed}", add_newline=False)
             time.sleep(Seven_Segment.COMMAND_DELAY)
         except Exception as e:

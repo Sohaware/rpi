@@ -55,8 +55,10 @@ $title = $selected ? guideTitle($selected) : 'Teacher Guides';
         main { min-width:0; padding:32px clamp(20px,5vw,72px); }
         article { max-width:920px; margin:auto; padding:34px 42px; background:var(--panel); border:1px solid var(--line); border-radius:8px; }
         h1,h2,h3 { line-height:1.25; } h1 { margin-top:0; }
-        pre { overflow:auto; padding:16px; background:#111827; color:#f8fafc; border-radius:6px; }
+        pre { overflow:auto; padding:46px 16px 16px; background:#111827; color:#f8fafc; border-radius:6px; }
         code { font-family:ui-monospace,monospace; } :not(pre)>code { padding:2px 5px; background:#edf1f5; border-radius:4px; }
+        .code-wrap { position:relative; margin:1.25em 0; } .code-wrap pre { margin:0; }
+        .copy-code { position:absolute; top:9px; right:9px; border:1px solid #475569; background:#1f2937; color:#fff; border-radius:5px; padding:6px 10px; cursor:pointer; }
         blockquote { margin-left:0; padding-left:16px; border-left:4px solid var(--accent); color:#405065; }
         @media(max-width:760px){ .layout{grid-template-columns:1fr} nav{border-right:0;border-bottom:1px solid var(--line)} article{padding:24px 20px} }
     </style>
@@ -69,5 +71,17 @@ $title = $selected ? guideTitle($selected) : 'Teacher Guides';
     <?php endforeach; ?></nav>
     <main><article><?= $parser->text($markdown) ?></article></main>
 </div>
+<script>
+document.querySelectorAll('article pre').forEach(function(pre) {
+    const wrap=document.createElement('div'); wrap.className='code-wrap'; pre.parentNode.insertBefore(wrap,pre); wrap.appendChild(pre);
+    const button=document.createElement('button'); button.type='button'; button.className='copy-code'; button.textContent='Copy'; wrap.appendChild(button);
+    button.addEventListener('click', async function() {
+        const text=pre.textContent||'';
+        try { await navigator.clipboard.writeText(text); button.textContent='Copied'; }
+        catch (_) { const area=document.createElement('textarea'); area.value=text; document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove(); button.textContent='Copied'; }
+        setTimeout(function(){button.textContent='Copy';},1400);
+    });
+});
+</script>
 </body>
 </html>

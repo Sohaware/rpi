@@ -11,8 +11,8 @@ $device = [
     "devicename" => "CodyNick",
     "serial_number" => "unknown",
     "production_date" => "2026-09-23",
-    "description" => "CodyNick 0.7.3",
-    "software_version" => "0.7.3",
+    "description" => "CodyNick 0.7.4",
+    "software_version" => "0.7.4",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];
@@ -266,6 +266,11 @@ function e($value) {
                 <a class="link-card" href="/teachers">
                     <div class="link-title">Teacher Guides</div>
                     <div class="link-desc">Open protected presenter material.</div>
+                </a>
+
+                <a class="link-card" href="/gadget-tests">
+                    <div class="link-title">Gadget Tests</div>
+                    <div class="link-desc">Run public hardware checks and copy test code.</div>
                 </a>
 
                 <a class="link-card" href="<?php echo e($device["support_link"]); ?>" target="_blank" rel="noopener">
