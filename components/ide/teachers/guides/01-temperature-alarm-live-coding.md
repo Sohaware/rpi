@@ -359,12 +359,51 @@ while True:
 - The alarm melody is `C6`, `E6`, `G6`, `E6`.
 - The joystick is checked between complete melody cycles.
 
+---
+
+## Step 9: Connect to AI and Take a Picture
+
+### Ask before starting
+
+> We have given our program sensor inputs. What new things could it understand if we
+> gave it eyes?
+
+The camera has not been connected during the earlier steps. Connect the USB camera now
+and wait a few seconds for the Raspberry Pi to recognize it.
+
+Replace the previous program with this short camera program:
+
+```python
+from codynick_ai import CodyNickAI
+
+ai = CodyNickAI(workspace="/home/client", camera_index=0)
+
+picture = ai.take_picture("camera_demo")
+print("Picture saved:", picture)
+
+ai.close()
+```
+
+Run the program, then open **Images** in the IDE and select `camera_demo.jpg` to show
+the captured picture to the audience. Running the program again replaces the same
+picture instead of filling the Images folder with many files.
+
+### Point out
+
+- `CodyNickAI` connects the student program to the installed AI tools.
+- `take_picture()` captures one image and releases the camera after the shot.
+- `"camera_demo"` is the reusable image name.
+- The image is stored in `/home/client/images` and appears under **Images** in the IDE.
+- Taking a picture is the first step. The same picture can next be used for object
+  detection, OCR, face tools, or another AI model.
+
 ## Closing audience questions
 
 - Which thresholds would you use for a refrigerator, greenhouse, or classroom?
 - What other sensor could replace the temperature sensor?
 - What could the joystick control besides the alarm?
 - How could the dashboard or cloud record the temperature history?
+- What could an AI model discover in the picture we just captured?
 
 ## Presenter reminder
 

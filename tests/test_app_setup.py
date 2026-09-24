@@ -161,17 +161,24 @@ class AppTests(unittest.TestCase):
              patch.object(m, "run"), patch.object(m.shutil, "disk_usage", return_value=MagicMock(free=4 * 1024 ** 3)):
             m.check_platform()
 
+    def test_075_upgrade_is_accepted(self):
+        with patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
+             patch.object(m.platform, "machine", return_value="aarch64"), \
+             patch.object(m, "read_json", side_effect=[{"stage": "network-ready"}, {"version": "0.7.5", "stage": "ready"}]), \
+             patch.object(m, "run"), patch.object(m.shutil, "disk_usage", return_value=MagicMock(free=4 * 1024 ** 3)):
+            m.check_platform()
+
     def test_ready_clears_stale_failure(self):
         with patch.object(m, "read_json", return_value={"error": "old failure"}), patch.object(m, "write") as write:
             m.save_state("ready")
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.5.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.6.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(release_sha(ROOT / name), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.5.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.6.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, release_sha(ROOT / name))
 
@@ -207,7 +214,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.5.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.6.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
@@ -287,7 +294,10 @@ class AppTests(unittest.TestCase):
         self.assertIn("# CodyNick Fabric Presenter Guide: Build a CodyNick Temperature Alarm", guide)
         self.assertIn("temperature < 20", guide)
         self.assertIn("range(1, 11)", guide)
-        self.assertNotIn("## Step 9", guide)
+        self.assertIn("## Step 9: Connect to AI and Take a Picture", guide)
+        self.assertIn('CodyNickAI(workspace="/home/client", camera_index=0)', guide)
+        self.assertIn('ai.take_picture("camera_demo")', guide)
+        self.assertIn("Images** in the IDE", guide)
         self.assertIn("navigator.clipboard.writeText", portal)
 
     def test_gadget_library_output_and_rgb_timing(self):
@@ -312,7 +322,7 @@ class AppTests(unittest.TestCase):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
         homepage = (ROOT / "components/ide/index.php").read_text(encoding="utf-8")
         self.assertIn('write(STATE, json.dumps(data, indent=2) + "\\n", 0o644)', installer)
-        self.assertIn('"software_version" => "0.7.5"', homepage)
+        self.assertIn('"software_version" => "0.7.6"', homepage)
         self.assertIn('"production_date" => "2026-09-23"', homepage)
         self.assertNotIn("1675-01-01", homepage)
 

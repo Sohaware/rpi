@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.6-camera-presenter-step - First AI bridge
+
+- Add presenter-guide Step 9: connect the USB camera for the first time, capture a
+  reusable picture, and display it through the IDE Images area.
+- Introduce the installed `CodyNickAI` toolkit without adding beginner-level error
+  handling or inference complexity.
+
 ## 0.7.5-checksum-repair - Portable release sealing
 
 - Repair the 0.7.4 teacher-guide checksum mismatch caused by Windows CRLF
