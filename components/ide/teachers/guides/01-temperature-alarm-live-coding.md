@@ -374,14 +374,22 @@ and wait a few seconds for the Raspberry Pi to recognize it.
 Replace the previous program with this short camera program:
 
 ```python
+import CodyNick
 from codynick_ai import CodyNickAI
 
+cody = CodyNick.CN()
 ai = CodyNickAI(workspace="/home/client", camera_index=0)
 
-picture = ai.take_picture("camera_demo")
+picture = ai.take_picture(
+    "camera_demo",
+    cody=cody,
+    get_ready_sound=True
+)
+
 print("Picture saved:", picture)
 
 ai.close()
+cody.close()
 ```
 
 Run the program, then open **Images** in the IDE and select `camera_demo.jpg` to show
@@ -391,11 +399,177 @@ picture instead of filling the Images folder with many files.
 ### Point out
 
 - `CodyNickAI` connects the student program to the installed AI tools.
+- `cody=cody` connects the camera activity to CodyJoy Pro.
+- `get_ready_sound=True` plays the get-ready and shutter sounds.
 - `take_picture()` captures one image and releases the camera after the shot.
 - `"camera_demo"` is the reusable image name.
 - The image is stored in `/home/client/images` and appears under **Images** in the IDE.
 - Taking a picture is the first step. The same picture can next be used for object
   detection, OCR, face tools, or another AI model.
+
+---
+
+## Step 10: Detect Objects in the Picture
+
+### Ask before starting
+
+> The camera can take a picture, but can the computer tell us what is inside it?
+
+Place a few familiar objects in front of the camera, such as a bottle, cup, chair, or
+person. Extend the camera program so it captures a fresh picture and analyzes it:
+
+```python
+import CodyNick
+from codynick_ai import CodyNickAI
+
+cody = CodyNick.CN()
+ai = CodyNickAI(workspace="/home/client", camera_index=0)
+
+picture = ai.take_picture(
+    "camera_demo",
+    cody=cody,
+    get_ready_sound=True
+)
+
+print("Picture saved:", picture)
+
+ai.load_app("yolo", model="nano")
+result = ai.detect_objects("camera_demo")
+
+print("Objects found:", len(result["detections"]))
+
+for item in result["detections"]:
+    print(item["class_name"], item["confidence"])
+
+ai.close()
+cody.close()
+```
+
+After the result appears, open **Images**, open the `results` folder, and select
+`camera_demo_objects.jpg`. Show how the AI has drawn a box and label around each
+recognized object.
+
+### Point out
+
+- `load_app("yolo", model="nano")` loads the fast object-detection model.
+- `detect_objects("camera_demo")` analyzes the picture captured by the program.
+- `result["detections"]` contains the objects found by the model.
+- Each result includes a class name and a confidence score.
+- The annotated image is saved under **Images → results**.
+- The model may miss an object or label it incorrectly. Better lighting and a clear
+  view usually improve the result.
+
+---
+
+## Step 11: Control the LEDs with Your Voice
+
+### Ask before starting
+
+> We have controlled the lights with code and a joystick. Can we control them without
+> touching the computer or the gadget at all?
+
+Use a USB microphone, or use the microphone built into the USB camera if it has one.
+Keep it close enough to hear the presenter clearly.
+
+In the IDE, open **CodyNick Examples → `voice_led_colors.py`** and select
+**Run This File**. Wait until the terminal says that offline English speech recognition
+is ready, then say one command at a time:
+
+- `red`
+- `green`
+- `blue`
+- `yellow`
+- `white`
+- `purple`
+- `lights off`
+- `stop listening`
+
+The installed example includes useful progress messages. This shorter presenter version
+keeps the same commands, recognition settings, hardware behavior, and cleanup logic:
+
+```python
+import CodyNick
+from codynick_ai import CodyNickAI
+
+
+COMMAND_COLORS = {
+    "red": "#FF0000",
+    "green": "#00FF00",
+    "blue": "#0000FF",
+    "yellow": "#FFFF00",
+    "white": "#FFFFFF",
+    "purple": "#FF00FF",
+}
+
+COMMANDS = list(COMMAND_COLORS) + ["lights off", "stop listening"]
+
+
+def fill_matrix(cody, color):
+    for led in range(16):
+        CodyNick.RGB_Matrix.set(cody, led, color)
+
+
+def main():
+    cody = CodyNick.CN()
+    ai = CodyNickAI(workspace="/home/client")
+    listener = None
+
+    try:
+        if not cody.ensure_connected():
+            raise RuntimeError("CodyNick gadget not found.")
+
+        ai.load_app("stt", model="small", language="en")
+
+        listener = ai.listen(
+            commands=COMMANDS,
+            min_confidence=0.45,
+            device="auto"
+        )
+
+        for event in listener:
+            if not event.get("accepted"):
+                continue
+
+            command = event["matched_command"]
+            print("Heard:", command)
+
+            if command == "stop listening":
+                break
+            elif command == "lights off":
+                CodyNick.RGB_Matrix.clear(cody)
+            else:
+                fill_matrix(cody, COMMAND_COLORS[command])
+
+    finally:
+        if listener is not None:
+            listener.stop()
+
+        ai.close()
+        CodyNick.RGB_Matrix.clear(cody)
+        cody.close()
+
+
+main()
+```
+
+### Point out
+
+- `load_app("stt", ...)` loads offline speech-to-text. The spoken audio does not need
+  to be sent to an internet service.
+- `COMMANDS` limits recognition to the phrases used by this demonstration.
+- `device="auto"` selects an available USB or camera microphone.
+- `min_confidence=0.45` rejects uncertain matches below the selected confidence level.
+- `lights off` clears the LEDs but keeps the microphone listening.
+- `stop listening` ends the program and turns the LEDs off.
+- The `finally` section releases the microphone and clears the hardware even when the
+  program is stopped unexpectedly.
+
+### Demonstration tips
+
+- Wait for the ready message before speaking.
+- Speak one command clearly, then pause briefly for the result.
+- Reduce nearby conversation and music while demonstrating recognition.
+- If a command is rejected, move closer to the microphone and repeat it normally.
 
 ## Closing audience questions
 
@@ -404,6 +578,8 @@ picture instead of filling the Images folder with many files.
 - What could the joystick control besides the alarm?
 - How could the dashboard or cloud record the temperature history?
 - What could an AI model discover in the picture we just captured?
+- How could the program react when it recognizes a particular object?
+- What other spoken commands could control a CodyNick project?
 
 ## Presenter reminder
 

@@ -2,9 +2,9 @@
 # Stable public entry point. Every published update pins immutable stage scripts.
 set -euo pipefail
 umask 022
-VERSION="0.7.6"
+VERSION="0.7.7"
 NETWORK_SHA256="9f4d334da0561f97d51c7f6ee14eb6b123ec75d93d398bafb69ac35c2a6d82ae"
-APPS_SHA256="838b20ca0e5c97358701d1364863422dca68a7f34814be64bea3675392273d34"
+APPS_SHA256="9501d97b5cbc37b48eb4a226bbd42e4137afddd17138f15dcfbb3c0c9967edd2"
 [[ $EUID -eq 0 ]] || { echo 'Run this setup command using sudo.'; exit 1; }
 echo "CodyNick setup ${VERSION}: install / repair / upgrade"
 exec 7>/run/lock/codynick-setup-entry.lock
@@ -45,7 +45,7 @@ for service in ssh codynick-ap codynick-dhcp codynick-nat; do
         systemctl start "$service" || { echo "Network service $service needs recovery; application installation was not started."; exit 1; }
     fi
 done
-fetch apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.7.6-camera-presenter-step/bootstrap/codynick-apps.sh "$APPS_SHA256"
+fetch apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.7.7-presenter-ai-examples/bootstrap/codynick-apps.sh "$APPS_SHA256"
 bash "$temp/apps.sh"
 echo 'Progress follows. Ctrl+C closes this display only; background installation continues.'
 flock -u 7

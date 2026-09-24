@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 umask 022
-VERSION="0.7.6"
+VERSION="0.7.7"
 VISION_SHA256="63e350ccdde8e755e194f97e2e3294ef2a90c10ca36d16fafaa78ce8c2edc1dc"
 SPEECH_SHA256="c6a365e6ff8e5cde5a44e60fdffcaec7d0466349da41b42cbada937891fd4518"
 OCR_SHA256="3524f9157a67f1196fff7a247ce2045452a58b9d9e86a70d271480eda06d2f0b"
 TTS_SHA256="3ecd2d623c50fe3cc242904c9b3f5425b4245024430a791588f13ea5c37fff0c"
-TAG="v0.7.6-camera-presenter-step"
-HELPER_SHA256="1097e68bae7b71c0ad202b2f5068ce4ec1bc4dd589f95812f679908b18f8e702"
-MANIFEST_SHA256="249e9555b2e2cdc48f332dcc2b4c3c54360de2070e9a3723174d1d83226e2b8e"
-VERSION_STATUS_SHA256="2e0a3f3bb9441811333bb124f7874730877eb029da4246aa690dc60ddd46f8e0"
+TAG="v0.7.7-presenter-ai-examples"
+HELPER_SHA256="2b71b48c70ddd60bb8ee84d859cc3db6a591e23a9cded6a31913428a41255bb0"
+MANIFEST_SHA256="675a092a93be4288e8bb1f5dbfc4142396cf01ac97edb9e9ab3ae23f143ff11b"
+VERSION_STATUS_SHA256="3802fadda509a9133ce9ffc989850b895df399e6cf1327919ea73b8affa5d349"
 BASE="https://raw.githubusercontent.com/Sohaware/rpi/${TAG}"
 echo "CodyNick core bootstrap ${VERSION} (public gadget tests)"
 if [[ $EUID -ne 0 ]]; then
@@ -28,7 +28,7 @@ flock -n 8 || { echo "An application installer is already running." >&2; exit 1;
 temp=$(mktemp -d)
 trap 'rm -rf -- "$temp"' EXIT
 wget --timeout=60 --tries=3 -O "$temp/app_setup.py" "$BASE/installer/app_setup.py"
-wget --timeout=60 --tries=3 -O "$temp/core-manifest.json" "$BASE/releases/core-0.7.6.json"
+wget --timeout=60 --tries=3 -O "$temp/core-manifest.json" "$BASE/releases/core-0.7.7.json"
 wget --timeout=60 --tries=3 -O "$temp/version_status.py" "$BASE/installer/version_status.py"
 wget --timeout=60 --tries=3 -O "$temp/vision_setup.py" "$BASE/installer/vision_setup.py"
 wget --timeout=60 --tries=3 -O "$temp/speech_setup.py" "$BASE/installer/speech_setup.py"
@@ -47,24 +47,24 @@ if os_info.get('ID') != 'ubuntu' or os_info.get('VERSION_ID') != '26.04' or plat
 state = pathlib.Path('/var/lib/codynick/network-setup.json')
 if not state.exists() or json.loads(state.read_text()).get('stage') != 'network-ready':
     raise SystemExit('Complete and confirm network setup first')
-if json.loads(pathlib.Path(sys.argv[1]).read_text()).get('version') != '0.7.6':
+if json.loads(pathlib.Path(sys.argv[1]).read_text()).get('version') != '0.7.7':
     raise SystemExit('Incorrect release manifest')
 PY
-install -d -m 0755 /usr/local/lib/codynick/core-0.7.6
-install -m 0644 "$temp/app_setup.py" /usr/local/lib/codynick/core-0.7.6/app_setup.py
-install -m 0644 "$temp/core-manifest.json" /usr/local/lib/codynick/core-0.7.6/core-manifest.json
-install -m 0644 "$temp/version_status.py" /usr/local/lib/codynick/core-0.7.6/version_status.py
-install -m 0644 "$temp/vision_setup.py" /usr/local/lib/codynick/core-0.7.6/vision_setup.py
-install -m 0644 "$temp/speech_setup.py" /usr/local/lib/codynick/core-0.7.6/speech_setup.py
-install -m 0644 "$temp/ocr_setup.py" /usr/local/lib/codynick/core-0.7.6/ocr_setup.py
-install -m 0644 "$temp/tts_setup.py" /usr/local/lib/codynick/core-0.7.6/tts_setup.py
+install -d -m 0755 /usr/local/lib/codynick/core-0.7.7
+install -m 0644 "$temp/app_setup.py" /usr/local/lib/codynick/core-0.7.7/app_setup.py
+install -m 0644 "$temp/core-manifest.json" /usr/local/lib/codynick/core-0.7.7/core-manifest.json
+install -m 0644 "$temp/version_status.py" /usr/local/lib/codynick/core-0.7.7/version_status.py
+install -m 0644 "$temp/vision_setup.py" /usr/local/lib/codynick/core-0.7.7/vision_setup.py
+install -m 0644 "$temp/speech_setup.py" /usr/local/lib/codynick/core-0.7.7/speech_setup.py
+install -m 0644 "$temp/ocr_setup.py" /usr/local/lib/codynick/core-0.7.7/ocr_setup.py
+install -m 0644 "$temp/tts_setup.py" /usr/local/lib/codynick/core-0.7.7/tts_setup.py
 systemctl reset-failed codynick-install.service 2>/dev/null || true
 # A transient unit survives SSH disconnection, but intentionally does not survive reboot.
 flock -u 8
 systemd-run --unit=codynick-install --collect --property=Type=exec \
-    /usr/bin/python3 -u /usr/local/lib/codynick/core-0.7.6/app_setup.py --worker
+    /usr/bin/python3 -u /usr/local/lib/codynick/core-0.7.7/app_setup.py --worker
 echo
 echo 'Installation is running in the background. Do not reboot until it finishes.'
 echo 'Follow progress: sudo journalctl -fu codynick-install'
-echo 'Success ends with: CodyNick 0.7.6: READY'
+echo 'Success ends with: CodyNick 0.7.7: READY'
 echo 'After success, open http://10.42.0.1/code/'

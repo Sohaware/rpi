@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.7-presenter-ai-examples - Complete first presentation path
+
+- Correct presenter Step 9 to include CodyJoy Pro get-ready and shutter sounds.
+- Add presenter Step 10 for camera object detection and annotated-image viewing.
+- Add presenter Step 11 for offline voice control of the RGB LEDs.
+- Add `temperature_color_display.py` to managed CodyNick Examples, matching the
+  simple temperature/display/color program from presenter Step 7.
+
 ## 0.7.6-camera-presenter-step - First AI bridge
 
 - Add presenter-guide Step 9: connect the USB camera for the first time, capture a
