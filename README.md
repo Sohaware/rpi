@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.7.4; application: 0.7.4 (public gadget tests). Network component: 0.1.2.**
+**Unified setup: 0.7.5; application: 0.7.5 (checksum repair). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -42,6 +42,8 @@ multi-device selection yet.
 Version 0.7.4 adds public, copyable test pages for eleven gadget groups, keeps their
 Markdown sources in a separately managed on-device folder, revises the temperature
 presenter guide, removes seven-segment debug noise, and improves multi-LED reliability.
+Version 0.7.5 repairs the 0.7.4 Windows line-ending checksum defect and makes release
+sealing checksum Git-normalized text, while preserving the same user-facing features.
 
 The matching CodyPi firmware source is `firmware/CodyPi/CodyPi.ino`, version 1.19.4.
 Its former blocking `delay(2000)` remains disabled while joystick initialization and
@@ -57,7 +59,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, and repeats of 0.7.4. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, and repeats of 0.7.5. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -127,7 +129,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.7.4**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.7.5**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -318,7 +320,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -327,7 +329,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.7.4/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.7.5/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -372,6 +374,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.7.5-checksum-repair** | Local validation complete; Raspberry Pi retry pending | Repairs the 0.7.4 CRLF checksum mismatch and seals checksums from Git-normalized text. |
 | **0.7.3-usb-serial-detection** | Local validation passed; modified CodyPi firmware acceptance pending | Probes USB serial devices only, uses a fixed two-second post-open wait, validates the exact CodyJoy Pro identity, and deliberately defers caching, retries, and multi-device selection. Requires the CodyPi test firmware without its blocking setup delay. |
 | **0.7.4-gadget-tests** | Local validation complete; Raspberry Pi hardware acceptance pending | Adds public managed gadget tests, copy controls, presenter-guide corrections, quieter seven-segment output, and a tested 5 ms RGB settling interval. |
 | **0.7.2-teacher-guides** | Local validation passed; Pi acceptance pending | Adds the protected offline teacher portal, first progressive presenter guide, password-change command, current homepage version/date, and normal-user `codynick-version` repair. |

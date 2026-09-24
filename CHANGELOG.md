@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.5-checksum-repair - Portable release sealing
+
+- Repair the 0.7.4 teacher-guide checksum mismatch caused by Windows CRLF
+  line endings in the sealing workspace.
+- Calculate checksums from Git-normalized text so tagged files and manifests
+  agree across Windows and Linux.
+- Preserve all public gadget tests and teaching improvements from 0.7.4.
+
 ## 0.7.4-gadget-tests - Public hardware checks and teaching polish
 
 - Add a public `/gadget-tests/` portal backed by the managed
