@@ -175,17 +175,24 @@ class AppTests(unittest.TestCase):
              patch.object(m, "run"), patch.object(m.shutil, "disk_usage", return_value=MagicMock(free=4 * 1024 ** 3)):
             m.check_platform()
 
+    def test_077_upgrade_is_accepted(self):
+        with patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
+             patch.object(m.platform, "machine", return_value="aarch64"), \
+             patch.object(m, "read_json", side_effect=[{"stage": "network-ready"}, {"version": "0.7.7", "stage": "ready"}]), \
+             patch.object(m, "run"), patch.object(m.shutil, "disk_usage", return_value=MagicMock(free=4 * 1024 ** 3)):
+            m.check_platform()
+
     def test_ready_clears_stale_failure(self):
         with patch.object(m, "read_json", return_value={"error": "old failure"}), patch.object(m, "write") as write:
             m.save_state("ready")
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.7.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.8.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(release_sha(ROOT / name), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.7.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.8.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, release_sha(ROOT / name))
 
@@ -221,7 +228,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.7.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.7.8.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
@@ -319,6 +326,20 @@ class AppTests(unittest.TestCase):
         self.assertIn("if temperature < 20:", source)
         self.assertIn("elif temperature <= 30:", source)
         self.assertIn("for led in range(16):", source)
+        self.assertIn('Joystick.click(cody, "CJP")', source)
+        self.assertIn("alarm_enabled = not alarm_enabled", source)
+        for note in ("C6", "E6", "G6"):
+            self.assertIn(f'play_until_done(cody, "{note}", 120)', source)
+
+    def test_codyjoy_led_sound_example_uses_approved_high_notes(self):
+        example = ROOT / "components/examples/codyjoy_pro_led_sound_test.py"
+        source = example.read_text(encoding="utf-8")
+        compile(source, str(example), "exec")
+        for note in ("C7", "E7", "G7", "B7", "C8"):
+            self.assertIn(f'note = "{note}"', source)
+        gadget_test = (ROOT / "components/gadget-tests/01-codyjoy-pro.md").read_text(encoding="utf-8")
+        for note in ("C7", "E7", "G7", "B7", "C8"):
+            self.assertIn(note, gadget_test)
 
     def test_gadget_library_output_and_rgb_timing(self):
         library = (ROOT / "components/client/CodyNick.py").read_text(encoding="utf-8")
@@ -342,7 +363,7 @@ class AppTests(unittest.TestCase):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
         homepage = (ROOT / "components/ide/index.php").read_text(encoding="utf-8")
         self.assertIn('write(STATE, json.dumps(data, indent=2) + "\\n", 0o644)', installer)
-        self.assertIn('"software_version" => "0.7.7"', homepage)
+        self.assertIn('"software_version" => "0.7.8"', homepage)
         self.assertIn('"production_date" => "2026-09-23"', homepage)
         self.assertNotIn("1675-01-01", homepage)
 

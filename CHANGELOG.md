@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.8-gadget-alarm-examples - Tested classroom hardware routines
+
+- Upgrade `temperature_color_display.py` with the hot-temperature alarm melody and
+  joystick click control for inhibiting and re-enabling the sound.
+- Add `codyjoy_pro_led_sound_test.py` as a managed example for joystick directions,
+  RGB matrix regions, and the high `C7/E7/G7/B7/C8` note sequence.
+- Align the public CodyJoy Pro gadget test with the same approved high notes.
+
 ## 0.7.7-presenter-ai-examples - Complete first presentation path
 
 - Correct presenter Step 9 to include CodyJoy Pro get-ready and shutter sounds.
