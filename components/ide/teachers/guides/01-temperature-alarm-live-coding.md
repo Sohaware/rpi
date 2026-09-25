@@ -571,6 +571,97 @@ main()
 - Reduce nearby conversation and music while demonstrating recognition.
 - If a command is rejected, move closer to the microphone and repeat it normally.
 
+---
+
+## Step 12: Hold a Voice Conversation
+
+### Ask before starting
+
+> The system can recognize one spoken command. Could it stay awake, understand several
+> different questions, and answer us with a different response each time?
+
+Watch the completed demonstration before presenting this step:
+
+<video controls preload="metadata" style="width:100%;max-width:900px;">
+  <source src="https://download.codynick.com/uploads/Videos/demo/voice_conversation_demo.mp4" type="video/mp4">
+  Your browser cannot play this video. Use the download link below.
+</video>
+
+[Open or download the voice conversation demo video](https://download.codynick.com/uploads/Videos/demo/voice_conversation_demo.mp4)
+
+Connect a USB microphone and speaker. Keep CodyJoy Pro connected for the LED and
+buzzer feedback.
+
+### Prepare the answers once
+
+In the IDE, open **CodyNick Examples → `generate_conversation_answers.py`** and select
+**Run This File**. Wait until all 27 messages have been generated. They are stored in:
+
+```text
+/home/client/audio/conversation_answers
+```
+
+The answers are generated in advance so the live conversation can respond immediately.
+Running the generator again safely builds a complete replacement set before replacing
+the old files. It does not delete unrelated recordings.
+
+### Start the live conversation
+
+Open **CodyNick Examples → `voice_conversation.py`** and select **Run This File**.
+Wait for `Ready. Say: wake up`, then demonstrate this sequence:
+
+1. Say `wake up` or `please wake up`.
+2. Wait for the ready sound and a spoken response such as `I am listening`.
+3. Ask several questions without saying the wake phrase again.
+4. Say `sleep` or `go to sleep` to return immediately to wake mode.
+5. Say `wake up` again and continue the conversation.
+6. Stop speaking for ten seconds and show that it returns to wake mode automatically.
+
+Try questions from these groups:
+
+| Topic | Example phrases |
+| --- | --- |
+| Greeting | `hello`, `hi`, `good morning`, `good afternoon`, `good evening`, `good night` |
+| Identity | `what is your name`, `who are you`, `tell me about yourself` |
+| Well-being | `how are you`, `how are you today`, `are you okay` |
+| Capabilities | `what can you do`, `how can you help me`, `what do you do` |
+| Favorite color | `what is your favorite color`, `which color do you like` |
+| Feelings | `are you happy`, `how do you feel`, `are you sad` |
+| Goodbye | `goodbye`, `bye`, `see you later` |
+
+### Watch the gadget emotions
+
+| State | CodyJoy Pro feedback |
+| --- | --- |
+| Waiting | One dim blue LED |
+| Wake phrase accepted | Green LEDs and two rising notes |
+| Listening | Four cyan center LEDs; buzzer remains silent |
+| Processing | Yellow side LEDs |
+| Answering | Green pattern and a short opening note |
+| Question not understood | Two orange flashes and descending notes |
+| Goodbye | Purple LEDs and a farewell melody |
+
+### Point out
+
+- The speech recognition and generated answers work offline after installation.
+- Each topic has three prerecorded answers, selected without immediately repeating the
+  previous answer.
+- Unique playback names prevent the audio cache from replaying an earlier response.
+- The microphone stops while the buzzer or speaker is active, so the program does not
+  recognize its own sounds.
+- The program remains awake across several questions and sleeps only after a command,
+  goodbye, or ten seconds of silence.
+- Pressing **Stop** releases the microphone, speech worker, serial connection, and LEDs.
+
+### Demonstration tips
+
+- Run the answer generator before the audience arrives; it loads the large TTS model
+  and is intentionally slower than normal playback.
+- Keep the microphone away from the speaker and reduce nearby conversation.
+- Pause after the wake phrase so the ready response can finish before asking a question.
+- Ask one short supported question at a time and wait for the answer.
+- If a question is not recognized, repeat it clearly using one of the listed phrases.
+
 ## Closing audience questions
 
 - Which thresholds would you use for a refrigerator, greenhouse, or classroom?
@@ -580,6 +671,7 @@ main()
 - What could an AI model discover in the picture we just captured?
 - How could the program react when it recognizes a particular object?
 - What other spoken commands could control a CodyNick project?
+- What new questions and emotions would you add to the conversation?
 
 ## Presenter reminder
 

@@ -13,9 +13,9 @@ import sys
 import time
 import urllib.request
 
-VERSION = "0.7.8"
-TAG = "v0.7.8-gadget-alarm-examples"
-RELEASE_DATE = "2026-09-23"
+VERSION = "0.7.9"
+TAG = "v0.7.9-voice-conversation"
+RELEASE_DATE = "2026-09-24"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -143,7 +143,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -415,13 +415,15 @@ def install():
     health_check()
     save_state("ready", completed_version=VERSION, ai_installed=True,
                ai_scope=["usb-camera", "yolo", "speech-to-text", "voice-commands",
-                         "ocr-en", "tts-en", "saved-audio-playback"])
+                         "ocr-en", "tts-en", "saved-audio-playback",
+                         "offline-voice-conversation"])
     run("/usr/local/bin/codynick-version")
     print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/"
           "\nUSB vision, English STT/OCR/TTS: runtime/model checks passed"
           "\nMicrophone capture: test with voice_led_colors.py"
           "\nCamera OCR: test with camera_read_text.py"
           "\nGenerate speech once with create_speech_file.py; replay it with play_saved_audio.py"
+          "\nConversation demo: run generate_conversation_answers.py once, then voice_conversation.py"
           "\nGadget tests: http://10.42.0.1/gadget-tests/"
           "\nTeacher guides: http://10.42.0.1/teachers/ (initial login teacher / codynick)"
           "\nFace features and chapter 8: NOT INSTALLED"

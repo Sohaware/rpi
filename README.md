@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.7.8; application: 0.7.8 (gadget alarm examples). Network component: 0.1.2.**
+**Unified setup: 0.7.9; application: 0.7.9 (offline voice conversation). Network component: 0.1.2.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -50,6 +50,9 @@ Version 0.7.7 completes the first presenter path with camera sounds, object dete
 voice-controlled LEDs, and a managed temperature/color display example.
 Version 0.7.8 adds the tested temperature alarm/inhibit behavior and a managed
 CodyJoy Pro joystick, LED-region, and high-note hardware test.
+Version 0.7.9 adds a wake-phrase conversation demo, overwrite-safe prerecorded answer
+generation, multi-question sessions, sleep commands, expressive gadget feedback, and
+an offline compact platform knowledge base for AI coding agents.
 
 The matching CodyPi firmware source is `firmware/CodyPi/CodyPi.ino`, version 1.19.4.
 Its former blocking `delay(2000)` remains disabled while joystick initialization and
@@ -65,7 +68,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, and repeats of 0.7.8. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, 0.7.8, and repeats of 0.7.9. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -135,7 +138,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.7.8**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.7.9**; its pinned network component still reports **0.1.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -171,7 +174,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.6.1: READY`
+same entry point starts application installation. Wait for `CodyNick 0.7.9: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -220,7 +223,7 @@ wget -O /tmp/codynick-setup.sh https://raw.githubusercontent.com/Sohaware/rpi/ma
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.6.1: READY`**, then press
+Wait for **`CodyNick 0.7.9: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -326,7 +329,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8/0.7.9 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -335,7 +338,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.7.8/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.7.9/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -380,6 +383,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.7.9-voice-conversation** | Local validation passed; Pi conversation retest pending | Adds answer generation, wake/sleep conversation sessions, expressive gadget feedback, and offline agent knowledge. |
 | **0.7.8-gadget-alarm-examples** | Local validation pending | Adds the tested temperature alarm/inhibit example and high-note CodyJoy Pro hardware test. |
 | **0.7.7-presenter-ai-examples** | Local validation pending | Adds tested camera sounds, object detection, voice-controlled LEDs, and the managed Step 7 temperature/color example. |
 | **0.7.6-camera-presenter-step** | Local validation pending | Adds a beginner camera-capture Step 9 and IDE image-preview instructions to the presenter guide. |

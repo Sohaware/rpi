@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.7.9-voice-conversation - Offline wake-phrase conversation
+
+- Add a generator for 27 prerecorded ready, answer, farewell, and recovery messages,
+  stored separately under `/home/client/audio/conversation_answers`.
+- Regeneration replaces only the dedicated conversation response set and prefixes
+  every TTS sentence with a short pause marker.
+- Add an offline conversation example with `wake up`/`please wake up`, three varied
+  answers per topic, no immediate answer repetition, and common time-of-day greetings.
+- Keep each conversation awake across multiple questions until ten seconds of silence;
+  add `sleep` and `go to sleep` for immediate return to wake mode.
+- Stop microphone capture around gadget sounds and speaker playback, and use unique
+  playback identities so cached audio cannot substitute the wrong response.
+- Add LED/buzzer feedback for waiting, waking, listening, processing, answering,
+  unrecognized speech, and goodbye states.
+- Add an offline conversation guide and compact complete-platform knowledge base for
+  AI coding agents. Update release identity, homepage date, manifests, and checks.
+- Extend the protected presenter guide with Step 12 for the complete conversation
+  demonstration, including the published demo video and classroom presentation flow.
+
 ## 0.7.8-gadget-alarm-examples - Tested classroom hardware routines
 
 - Upgrade `temperature_color_display.py` with the hot-temperature alarm melody and

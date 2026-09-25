@@ -322,6 +322,42 @@ class ExampleTests(unittest.TestCase):
         ai.speak.assert_called_once_with("welcome_message")
         ai.close.assert_called_once()
 
+    def test_conversation_generator_replaces_27_paused_answers(self):
+        modules = {
+            "codynick_ai": types.SimpleNamespace(CodyNickAI=MagicMock())
+        }
+        with patch.dict("sys.modules", modules):
+            script = runpy.run_path(
+                str(EXAMPLES / "generate_conversation_answers.py")
+            )
+        answers = script["ANSWERS"]
+        self.assertEqual(sum(len(items) for items in answers.values()), 27)
+        self.assertTrue(all(text.startswith(";;;")
+                            for items in answers.values() for text in items))
+        source = (EXAMPLES / "generate_conversation_answers.py").read_text()
+        self.assertIn("STAGING_FOLDER.replace(ANSWER_FOLDER)", source)
+        self.assertIn("shutil.rmtree(ANSWER_FOLDER, ignore_errors=True)", source)
+        self.assertIn("ai.delete_audio(name)", source)
+        self.assertIn("shutil.copy2(source, destination)", source)
+
+    def test_voice_conversation_session_and_cache_rules(self):
+        modules = {
+            "codynick_ai": types.SimpleNamespace(CodyNickAI=MagicMock()),
+            "CodyNick": types.SimpleNamespace(),
+        }
+        with patch.dict("sys.modules", modules):
+            script = runpy.run_path(str(EXAMPLES / "voice_conversation.py"))
+        self.assertEqual(script["QUESTION_TIMEOUT"], 10.0)
+        self.assertEqual(script["QUESTION_TOPICS"]["sleep"], "sleep")
+        self.assertEqual(script["QUESTION_TOPICS"]["go to sleep"], "sleep")
+        for phrase in ("good morning", "good afternoon", "good evening", "good night"):
+            self.assertEqual(script["QUESTION_TOPICS"][phrase], "greeting")
+        source = (EXAMPLES / "voice_conversation.py").read_text()
+        self.assertIn('playback_name = f"{PLAYBACK_PREFIX}{selected.stem}"', source)
+        self.assertIn("No speech for 10 seconds", source)
+        self.assertIn('if topic == "sleep":', source)
+        self.assertIn("while True:\n                listening_effect(cody)", source)
+
 
 if __name__ == '__main__':
     unittest.main()
