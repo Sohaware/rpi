@@ -13,9 +13,9 @@ import sys
 import time
 import urllib.request
 
-VERSION = "0.7.10"
-TAG = "v0.7.10-adaptive-cjp-detection"
-RELEASE_DATE = "2026-10-05"
+VERSION = "0.7.11"
+TAG = "v0.7.11-cjp-migration-repair"
+RELEASE_DATE = "2026-10-06"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -143,7 +143,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")

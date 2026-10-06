@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.11-cjp-migration-repair - Upgrade gate correction
+
+- Accept a ready 0.7.9 installation when upgrading to adaptive CJP detection.
+- Accept and repair the failed 0.7.10 state written by the migration-gate failure.
+- Add regression coverage for both real-world upgrade states.
+- Retain the fast, five-second adaptive CodyJoy Pro identification window from 0.7.10.
+
 ## 0.7.10-adaptive-cjp-detection - Fast and tolerant controller startup
 
 - Remove the mandatory two-second delay before identifying CodyJoy Pro.

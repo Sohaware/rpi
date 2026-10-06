@@ -10,9 +10,9 @@ $jsonFile = "/device_info.json";
 $device = [
     "devicename" => "CodyNick",
     "serial_number" => "unknown",
-    "production_date" => "2026-10-05",
-    "description" => "CodyNick 0.7.10",
-    "software_version" => "0.7.10",
+    "production_date" => "2026-10-06",
+    "description" => "CodyNick 0.7.11",
+    "software_version" => "0.7.11",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];
