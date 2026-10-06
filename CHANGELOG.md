@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.1-local-llm - Explicitly loaded offline questions
+
+- Add the checksummed Gemma 3 1B Instruct `Q4_K_M` model and pinned llama.cpp
+  ARM64 runtime for Ubuntu 26.04 on Raspberry Pi 5.
+- Add explicit `load_llm()`, `ask()`, and `unload_llm()` methods to `CodyNickAI`.
+- Keep the model loaded for all questions within one Python run and release it on
+  `unload_llm()` or `close()`.
+- Add the beginner `ask_local_ai.py` interactive example and offline API reference.
+- Preserve one fixed setup command for installation, repair, and upgrades, with a
+  per-run cache-busting query to avoid stale `main` downloads.
+
 ## 0.7.11-cjp-migration-repair - Upgrade gate correction
 
 - Accept a ready 0.7.9 installation when upgrading to adaptive CJP detection.

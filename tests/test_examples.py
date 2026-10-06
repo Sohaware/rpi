@@ -11,6 +11,21 @@ EXAMPLES = Path(__file__).resolve().parents[1] / 'components/examples'
 
 
 class ExampleTests(unittest.TestCase):
+    def test_local_ai_example_loads_once_and_reuses_model(self):
+        ai = MagicMock()
+        ai.ask.side_effect = ["First answer.", "Second answer."]
+        factory = MagicMock(return_value=ai)
+        output = io.StringIO()
+        with patch.dict('sys.modules', {
+            'codynick_ai': types.SimpleNamespace(CodyNickAI=factory),
+        }), patch('builtins.input', side_effect=['First?', 'Second?', 'exit']), \
+             contextlib.redirect_stdout(output):
+            runpy.run_path(str(EXAMPLES / 'ask_local_ai.py'))
+        ai.load_llm.assert_called_once_with()
+        self.assertEqual(ai.ask.call_count, 2)
+        ai.close.assert_called_once_with()
+        self.assertIn("AI is ready", output.getvalue())
+
     def execute(self, name, detections=None, failure=False, nodes=True):
         ai = MagicMock()
         ai.detect_objects.return_value = {

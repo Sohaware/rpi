@@ -182,10 +182,11 @@ class AppTests(unittest.TestCase):
              patch.object(m, "run"), patch.object(m.shutil, "disk_usage", return_value=MagicMock(free=4 * 1024 ** 3)):
             m.check_platform()
 
-    def test_079_and_failed_0710_are_accepted(self):
+    def test_recent_releases_and_failed_0710_are_accepted(self):
         for previous in (
             {"version": "0.7.9", "stage": "ready"},
             {"version": "0.7.10", "stage": "failed"},
+            {"version": "0.7.11", "stage": "ready"},
         ):
             with self.subTest(previous=previous), \
                  patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
@@ -201,11 +202,11 @@ class AppTests(unittest.TestCase):
             self.assertNotIn("error", json.loads(write.call_args.args[1]))
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.11.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.8.1.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(release_sha(ROOT / name), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.7.11.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.8.1.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py"), ("LLM", "installer/llm_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, release_sha(ROOT / name))
 
@@ -241,7 +242,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.7.11.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.8.1.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
@@ -251,6 +252,8 @@ class AppTests(unittest.TestCase):
         self.assertIn("components/gadget-tests/01-codyjoy-pro.md", files)
         self.assertIn("components/ide/blocks/vendor/blockly/blockly.min.js", files)
         self.assertIn("components/ide/blocks/vendor/blockly/media/sprites.svg", files)
+        self.assertIn("components/ide/docs/docs/07-AI-Tools/12-Local-LLM.md", files)
+        self.assertIn("components/examples/ask_local_ai.py", files)
         blockly = (ROOT / "components/ide/blocks/index.php").read_text(
             encoding="utf-8"
         )
@@ -376,9 +379,21 @@ class AppTests(unittest.TestCase):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
         homepage = (ROOT / "components/ide/index.php").read_text(encoding="utf-8")
         self.assertIn('write(STATE, json.dumps(data, indent=2) + "\\n", 0o644)', installer)
-        self.assertIn('"software_version" => "0.7.11"', homepage)
+        self.assertIn('"software_version" => "0.8.1"', homepage)
         self.assertIn('"production_date" => "2026-10-06"', homepage)
         self.assertNotIn("1675-01-01", homepage)
+
+    def test_llm_release_is_pinned_and_installed(self):
+        installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
+        manifest = json.loads((ROOT / "releases/core-0.8.1.json").read_text())
+        self.assertIn("llm_setup.install(manifest, run)", installer)
+        self.assertIn("llm_setup.health_check(run)", installer)
+        assets = {item["kind"]: item for item in manifest["llm_assets"]}
+        self.assertEqual(assets["model"]["size"], 806058240)
+        self.assertEqual(
+            assets["model"]["sha256"],
+            "8ccc5cd1f1b3602548715ae25a66ed73fd5dc68a210412eea643eb20eb75a135",
+        )
 
 
 if __name__ == "__main__":

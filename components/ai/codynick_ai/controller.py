@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 import hashlib
+import json
 import os
 import queue
 import re
@@ -14,6 +15,8 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -141,6 +144,8 @@ class CodyNickAI:
         stt_python: str | Path | None = None,
         vosk_model_root: str | Path | None = None,
         tts_python: str | Path | None = None,
+        llm_server: str | Path | None = None,
+        llm_model: str | Path | None = None,
         load_timeout: float = 120.0,
         request_timeout: float = 120.0,
     ):
@@ -221,6 +226,20 @@ class CodyNickAI:
                 "~/.codynick-ai/envs/tts/bin/python",
             )
         ).expanduser().absolute()
+        self.llm_server = Path(
+            llm_server
+            or os.environ.get(
+                "CODYNICK_LLM_SERVER",
+                "/opt/codynick/llama-b10689/llama-server",
+            )
+        ).expanduser().absolute()
+        self.llm_model = Path(
+            llm_model
+            or os.environ.get(
+                "CODYNICK_LLM_MODEL",
+                "~/.codynick-ai/models/llm/gemma-3-1b-it-Q4_K_M.gguf",
+            )
+        ).expanduser().absolute()
         self.load_timeout = float(load_timeout)
         self.request_timeout = float(request_timeout)
 
@@ -243,6 +262,9 @@ class CodyNickAI:
         self._request_id = 0
         self._camera = None
         self._closed = False
+        self._llm_process: subprocess.Popen | None = None
+        self._llm_port: int | None = None
+        self._llm_log = None
         atexit.register(self.close)
 
     def __enter__(self):
@@ -267,6 +289,134 @@ class CodyNickAI:
     @property
     def listening_is_active(self) -> bool:
         return self._active_app == "stt" and self._listening
+
+    @property
+    def llm_is_loaded(self) -> bool:
+        return self._llm_process is not None and self._llm_process.poll() is None
+
+    def load_llm(
+        self,
+        *,
+        context_size: int = 2048,
+        threads: int = 4,
+    ) -> dict:
+        """Load the local Gemma model once for this Python process."""
+        if self.llm_is_loaded:
+            return {"already_loaded": True, "model": str(self.llm_model)}
+        if not self.llm_server.is_file():
+            raise AppLoadError(f"LLM runtime is missing: {self.llm_server}")
+        if not self.llm_model.is_file():
+            raise AppLoadError(f"LLM model is missing: {self.llm_model}")
+        if int(context_size) < 256 or int(context_size) > 4096:
+            raise ValueError("context_size must be between 256 and 4096")
+        if int(threads) < 1 or int(threads) > 8:
+            raise ValueError("threads must be between 1 and 8")
+
+        self.unload_llm()
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(("127.0.0.1", 0))
+        self._llm_port = probe.getsockname()[1]
+        probe.close()
+        log_path = Path(tempfile.gettempdir()) / f"codynick-llm-{os.getpid()}.log"
+        self._llm_log = log_path.open("a", encoding="utf-8")
+        environment = dict(os.environ)
+        runtime_library = str(self.llm_server.parent)
+        environment["LD_LIBRARY_PATH"] = runtime_library + (
+            ":" + environment["LD_LIBRARY_PATH"]
+            if environment.get("LD_LIBRARY_PATH") else ""
+        )
+        started = time.monotonic()
+        self._llm_process = subprocess.Popen(
+            [
+                str(self.llm_server), "-m", str(self.llm_model),
+                "-c", str(int(context_size)), "-t", str(int(threads)),
+                "--host", "127.0.0.1", "--port", str(self._llm_port),
+                "--parallel", "1",
+            ],
+            stdout=self._llm_log,
+            stderr=subprocess.STDOUT,
+            env=environment,
+            start_new_session=True,
+        )
+        deadline = started + self.load_timeout
+        while time.monotonic() < deadline:
+            if not self.llm_is_loaded:
+                self.unload_llm()
+                raise AppLoadError(f"Local LLM stopped while loading; see {log_path}")
+            try:
+                with urllib.request.urlopen(
+                    f"http://127.0.0.1:{self._llm_port}/health", timeout=1.0
+                ) as response:
+                    if response.status == 200:
+                        return {
+                            "already_loaded": False,
+                            "model": str(self.llm_model),
+                            "loading_seconds": round(time.monotonic() - started, 2),
+                        }
+            except (urllib.error.URLError, TimeoutError):
+                pass
+            time.sleep(0.1)
+        self.unload_llm()
+        raise AppLoadError(f"Local LLM did not become ready within {self.load_timeout:.0f} seconds")
+
+    def ask(
+        self,
+        question: str,
+        *,
+        system_prompt: str = (
+            "You are a friendly offline assistant. Answer with one brief natural "
+            "sentence of no more than 20 words. If uncertain, say: I do not know "
+            "that yet. Do not invent facts."
+        ),
+        max_tokens: int = 40,
+        temperature: float = 0.2,
+    ) -> str:
+        """Ask the explicitly loaded local LLM and return its answer text."""
+        if not self.llm_is_loaded or self._llm_port is None:
+            raise AppNotLoadedError("LLM_NOT_LOADED: Call load_llm() before ask().")
+        question = str(question).strip()
+        if not question:
+            raise ValueError("question must not be empty")
+        payload = json.dumps({
+            "model": "gemma-3-1b-it",
+            "messages": [
+                {"role": "system", "content": str(system_prompt)},
+                {"role": "user", "content": question},
+            ],
+            "max_tokens": int(max_tokens),
+            "temperature": float(temperature),
+        }).encode("utf-8")
+        request = urllib.request.Request(
+            f"http://127.0.0.1:{self._llm_port}/v1/chat/completions",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=self.request_timeout) as response:
+                result = json.loads(response.read().decode("utf-8"))
+            return str(result["choices"][0]["message"]["content"]).strip()
+        except (KeyError, IndexError, TypeError, ValueError, urllib.error.URLError, TimeoutError) as exc:
+            raise WorkerCrashedError(f"Local LLM request failed: {exc}") from exc
+
+    def unload_llm(self) -> None:
+        """Stop the local LLM and release its memory."""
+        process = self._llm_process
+        if process is not None and process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=3.0)
+        if self._llm_log is not None:
+            try:
+                self._llm_log.close()
+            except Exception:
+                pass
+        self._llm_process = None
+        self._llm_port = None
+        self._llm_log = None
 
     def open_camera(
         self,
@@ -1614,6 +1764,7 @@ class CodyNickAI:
             return
         self._closed = True
         self.close_camera()
+        self.unload_llm()
         self.unload_app()
 
     def _start_event_reader(self) -> None:
