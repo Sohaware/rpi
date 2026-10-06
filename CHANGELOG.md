@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.7.10-adaptive-cjp-detection - Fast and tolerant controller startup
+
+- Remove the mandatory two-second delay before identifying CodyJoy Pro.
+- Poll the same open USB serial connection in short intervals and return as soon as
+  the controller responds.
+- Allow up to five seconds for slower controller hardware without delaying fast units.
+- Keep USB-only port filtering and close rejected serial devices safely.
+- Add regression coverage for immediate, delayed, rejected, and non-USB devices.
+
 ## 0.7.9-voice-conversation - Offline wake-phrase conversation
 
 - Add a generator for 27 prerecorded ready, answer, farewell, and recovery messages,

@@ -13,9 +13,9 @@ import sys
 import time
 import urllib.request
 
-VERSION = "0.7.9"
-TAG = "v0.7.9-voice-conversation"
-RELEASE_DATE = "2026-09-24"
+VERSION = "0.7.10"
+TAG = "v0.7.10-adaptive-cjp-detection"
+RELEASE_DATE = "2026-10-05"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")

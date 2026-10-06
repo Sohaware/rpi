@@ -54,7 +54,7 @@ class SerialDetectionTests(unittest.TestCase):
         self.assertFalse(m.CN._is_usb_serial_port(port("/dev/ttyAMA0")))
         self.assertFalse(m.CN._is_usb_serial_port(port("/dev/ttyS0")))
 
-    def test_uses_fixed_delay_and_first_exact_identity(self):
+    def test_fast_device_returns_without_fixed_startup_delay(self):
         wrong = MagicMock()
         wrong.read_line.return_value = "CN@@SOMETHING-ELSE"
         valid = MagicMock()
@@ -64,7 +64,7 @@ class SerialDetectionTests(unittest.TestCase):
         with patch.object(m.serial.tools.list_ports, "comports", return_value=ports), \
              patch.object(m, "SerialPort", side_effect=[wrong, valid]) as serial_port, \
              patch.object(m.time, "sleep") as sleep, \
-             patch.object(m.time, "monotonic", side_effect=[10.0, 12.0, 14.1]):
+             patch.object(m.time, "monotonic", side_effect=[10.0, 10.0, 15.1, 20.0, 20.0, 20.1, 20.2]):
             result = self.detector()._auto_detect_serial()
 
         self.assertIs(result, valid)
@@ -72,10 +72,24 @@ class SerialDetectionTests(unittest.TestCase):
             [call.kwargs["port"] for call in serial_port.call_args_list],
             ["/dev/ttyUSB0", "/dev/ttyACM0"],
         )
-        self.assertEqual([call.args[0] for call in sleep.call_args_list], [2.0, 2.0])
+        sleep.assert_not_called()
         wrong.close_serial.assert_called_once_with()
         valid.close_serial.assert_not_called()
-        valid.read_line.assert_called_once_with(timeout=1.0, max_bytes=64)
+        valid.read_line.assert_called_once_with(timeout=0.25, max_bytes=64)
+
+    def test_slow_device_is_polled_until_it_identifies(self):
+        candidate = MagicMock()
+        candidate.read_line.side_effect = [None, None, "CN@@CJP-Neo"]
+
+        with patch.object(m.serial.tools.list_ports, "comports", return_value=[port("/dev/ttyUSB0")]), \
+             patch.object(m, "SerialPort", return_value=candidate), \
+             patch.object(m.time, "monotonic", side_effect=[10.0, 10.0, 10.3, 10.6, 10.9, 11.0]):
+            result = self.detector()._auto_detect_serial()
+
+        self.assertIs(result, candidate)
+        self.assertEqual(candidate.send_line.call_count, 3)
+        self.assertEqual(candidate.read_line.call_count, 3)
+        candidate.close_serial.assert_not_called()
 
     def test_rejected_device_is_closed_and_no_port_is_cached(self):
         candidate = MagicMock()
@@ -87,6 +101,7 @@ class SerialDetectionTests(unittest.TestCase):
             with patch.object(m.serial.tools.list_ports, "comports", return_value=[usb]), \
                  patch.object(m, "SerialPort", return_value=candidate), \
                  patch.object(m.time, "sleep"), \
+                 patch.object(m.time, "monotonic", side_effect=[0.0, 0.0, 6.0]), \
                  self.assertRaisesRegex(RuntimeError, "No CodyJoy Pro"):
                 detector._auto_detect_serial()
 

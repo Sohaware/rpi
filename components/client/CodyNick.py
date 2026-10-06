@@ -9,7 +9,7 @@ from typing import Optional
 import requests, shutil
 from datetime import datetime
 
-__version__ = "1.21.1"
+__version__ = "1.22.0"
 
 # update 18-11-2025 03
 
@@ -134,8 +134,8 @@ class SerialPort:
 
 class CN:
     RECONNECT_INTERVAL = 1.0
-    USB_STARTUP_DELAY = 2.0
-    IDENTIFY_TIMEOUT = 1.0
+    IDENTIFY_WINDOW = 5.0
+    IDENTIFY_POLL_TIMEOUT = 0.25
     IDENTIFY_COMMAND = "CN@@IDENTIFY--------"
     IDENTIFY_RESPONSE_PREFIX = "CN@@CJP-Neo"
 
@@ -184,20 +184,21 @@ class CN:
             try:
                 started = time.monotonic()
                 candidate = SerialPort(port=port_name)
-                time.sleep(self.USB_STARTUP_DELAY)
-
-                # Clear buffers
                 candidate.flush()
 
-                # Send EXACTLY 20 bytes (no newline)
-                # (IDENTIFY_COMMAND length is already 20)
-                candidate.send_line(self.IDENTIFY_COMMAND, add_newline=False)
-
-                # Read response character-wise
-                response = candidate.read_line(
-                    timeout=self.IDENTIFY_TIMEOUT,
-                    max_bytes=MAX_RESPONSE_BYTES,
-                )
+                # Some controllers answer immediately while others need several
+                # seconds after the serial port opens. Poll the same open port so
+                # fast hardware is not held back by a fixed startup sleep.
+                response = None
+                deadline = time.monotonic() + self.IDENTIFY_WINDOW
+                while time.monotonic() < deadline:
+                    candidate.send_line(self.IDENTIFY_COMMAND, add_newline=False)
+                    response = candidate.read_line(
+                        timeout=self.IDENTIFY_POLL_TIMEOUT,
+                        max_bytes=MAX_RESPONSE_BYTES,
+                    )
+                    if response and response.startswith(self.IDENTIFY_RESPONSE_PREFIX):
+                        break
 
                 # Check if it looks like a CodyNick device
                 if response and response.startswith(self.IDENTIFY_RESPONSE_PREFIX):
