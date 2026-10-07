@@ -44,7 +44,7 @@ sudo codynick-setup --check
 ```
 
 Existing devices keep their active hotspot while upgrading. Reboot once after a
-successful 0.9.0 installation to activate the selector. Client devices must support
+successful 0.9.1 installation to activate the selector. Client devices must support
 5 GHz Wi-Fi.
 
 ## Installation status

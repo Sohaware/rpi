@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="0.2.0"
-REF="v0.9.0-ai-network"
-HELPER_SHA256="47d70178d7a7608ff85c8b2d6adad609a57290c867c382523f80c3affbe3c794"
+VERSION="0.2.1"
+REF="v0.9.1-hotspot-fix"
+HELPER_SHA256="37655b186a231ade19266b09d31de943bea77e931b7aa14ec264de4c449da3ee"
 BASE_URL="https://raw.githubusercontent.com/Sohaware/rpi/$REF"
 
 echo "CodyNick network setup $VERSION"

@@ -182,6 +182,13 @@ BSS bb:bb:bb:bb:bb:bb(on wlan0)
         self.assertEqual(channel, 36)
         self.assertTrue(all(score == 0 for score in scores.values()))
 
+    def test_decimal_iw_frequencies_are_permitted(self):
+        info = '\n'.join(
+            f' * {frequency}.0 MHz [{channel}] (17.0 dBm)'
+            for channel, frequency in m.CHANNELS.items()
+        )
+        self.assertEqual(m.permitted_5ghz_channels(info), [36, 40, 44, 48])
+
     def test_hostapd_is_5ghz_non_dfs_and_20mhz(self):
         text = m.hostapd_text(
             {'ap': 'wlan0', 'ssid': 'codynick-12345678', 'country': 'OM'}, 44

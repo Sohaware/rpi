@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.9.0; application: 0.9.0; network component: 0.2.0.**
+**Unified setup: 0.9.1; application: 0.9.1; network component: 0.2.1.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -57,6 +57,8 @@ the IDE, and prefers IPv4 for setup downloads.
 Version 0.9.0 adds the tested local-AI voice conversation and migrates the hotspot to
 boot-time selection among non-DFS 5 GHz channels. Cloned images receive a unique
 hardware-derived identity and hotspot name.
+Version 0.9.1 fixes hotspot startup on Ubuntu 26.04, whose `iw` output reports
+5 GHz frequencies with a decimal suffix such as `5180.0 MHz`.
 Version 0.7.11 repaired the upgrade gate for devices coming from 0.7.9 or the failed
 0.7.10 attempt. Version 0.7.10 replaced the fixed controller startup delay with adaptive polling: fast
 units connect immediately, while slower CodyJoy Pro units have up to five seconds to
@@ -78,7 +80,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, 0.7.8, 0.7.9, failed 0.7.10, 0.7.11, 0.8.1, 0.8.2, and repeats of 0.9.0. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, 0.7.8, 0.7.9, failed 0.7.10, 0.7.11, 0.8.1, 0.8.2, 0.9.0, and repeats of 0.9.1. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -148,7 +150,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.9.0** and its pinned network component reports **0.2.0**.
+The entry banner is **0.9.1** and its pinned network component reports **0.2.1**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -184,7 +186,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.9.0: READY`
+same entry point starts application installation. Wait for `CodyNick 0.9.1: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -237,7 +239,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.9.0: READY`**, then press
+Wait for **`CodyNick 0.9.1: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -343,7 +345,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8/0.7.9/0.7.10/0.7.11/0.8.1/0.8.2/0.9.0 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8/0.7.9/0.7.10/0.7.11/0.8.1/0.8.2/0.9.0/0.9.1 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -352,7 +354,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.9.0/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.9.1/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -397,6 +399,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.9.1-hotspot-fix** | Regression tested against Raspberry Pi output; hardware retry pending | Accepts Ubuntu 26.04 decimal `iw` frequencies and restores automatic non-DFS 5 GHz hotspot selection. |
 | **0.9.0-ai-network** | Automated tests; Raspberry Pi network migration pending | Adds local-AI voice conversation, adaptive non-DFS 5 GHz hotspot selection, and clone-safe identity. |
 | **0.8.2-stt-preload** | Automated installer/API tests; Raspberry Pi acceptance pending | Adds explicit STT preparation, an IDE-compatible Local AI example, and IPv4 setup downloads. |
 | **0.8.1-local-llm** | Automated installer/API tests passed; Raspberry Pi acceptance pending | Adds explicitly loaded Gemma 3 1B Q4 questions, cleanup, docs, and the initial example. |
@@ -430,7 +433,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 | 0.1.1 | Superseded; do not install | Reuses a correct working dongle profile, targets USB preparation instead of global Netplan application, arms rollback earlier, and retries recovery. Fresh-install testing subsequently found the permissions defect fixed in 0.1.2. |
 | 0.1.0 | Superseded; do not install | Introduced adapter detection, internet checks, hotspot handover, confirmation, rollback, and version/state reporting. Global Netplan application could disconnect SSH during preparation. |
 
-The unified 0.9.0 setup updates both the core application and network component.
+The unified 0.9.1 setup updates both the core application and network component.
 See [CHANGELOG.md](CHANGELOG.md) for technical details.
 
 **For every future published version**, update this table, current-version section,
@@ -519,7 +522,7 @@ than later playback.
 - Selects only permitted non-DFS 5 GHz channels 36, 40, 44, and 48 at boot.
 - Pins a tag and verifies the helper SHA256: HTTPS/checksum integrity, not release signing.
 
-Automated tests cover the 0.9.0 application and 0.2.0 network migration:
+Automated tests cover the 0.9.1 application and 0.2.1 network migration:
 
 ```bash
 python -m unittest discover -s tests -v

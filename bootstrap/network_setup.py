@@ -13,7 +13,7 @@ import subprocess
 import sys
 import time
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 STATE = Path('/var/lib/codynick/network-setup.json')
 BASE = Path('/etc/codynick')
 SELF = '/usr/local/lib/codynick/network_setup.py'
@@ -109,7 +109,7 @@ def permitted_5ghz_channels(info):
     permitted = []
     for channel, frequency in CHANNELS.items():
         match = re.search(
-            rf'^\s*\*\s*{frequency}\s+MHz\s+\[{channel}\](.*)$',
+            rf'^\s*\*\s*{frequency}(?:\.0+)?\s+MHz\s+\[{channel}\](.*)$',
             info,
             re.M,
         )

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1-hotspot-fix - Ubuntu 26.04 5 GHz compatibility
+
+- Accepts the decimal frequency format (`5180.0 MHz`) emitted by Ubuntu 26.04 `iw`.
+- Restores automatic selection of non-DFS 5 GHz channels 36, 40, 44, and 48.
+- Adds a regression test based on the observed Raspberry Pi 5 output.
+
 ## 0.9.0-ai-network - Local AI voice and adaptive 5 GHz hotspot
 
 - Add the tested `local_ai_voice_conversation.py` example with preloaded STT, TTS,
