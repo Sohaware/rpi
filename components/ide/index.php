@@ -11,8 +11,8 @@ $device = [
     "devicename" => "CodyNick",
     "serial_number" => "unknown",
     "production_date" => "2026-10-06",
-    "description" => "CodyNick 0.8.2",
-    "software_version" => "0.8.2",
+    "description" => "CodyNick 0.9.0",
+    "software_version" => "0.9.0",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];

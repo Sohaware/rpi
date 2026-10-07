@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.0-ai-network - Local AI voice and adaptive 5 GHz hotspot
+
+- Add the tested `local_ai_voice_conversation.py` example with preloaded STT, TTS,
+  and Gemma; wake/sleep behavior; nine-word answers; TTS pause prefix; and CodyJoy
+  Pro LED and sound feedback.
+- Expand the offline reference, examples, AI-agent knowledge base, and presenter guide
+  with the complete local voice-AI workflow.
+- Upgrade the network component to 0.2.0 and select the least-congested permitted
+  non-DFS 5 GHz channel from 36, 40, 44, and 48 at every boot.
+- Detect cloned Pi images from hardware identity, derive a unique default hotspot
+  name, and regenerate duplicated hostname, SSH keys, and machine ID.
+- Install network changes without restarting the active hotspot; existing devices
+  activate the new network configuration after reboot.
+
 ## 0.8.2-stt-preload - Explicit speech preparation
 
 - Add `load_stt()` so voice programs load the offline recognition model before

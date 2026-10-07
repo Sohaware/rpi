@@ -2,7 +2,7 @@
 
 ## Current version
 
-**Unified setup: 0.8.2; application: 0.8.2 (explicit STT preload). Network component: 0.1.2.**
+**Unified setup: 0.9.0; application: 0.9.0; network component: 0.2.0.**
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -54,6 +54,9 @@ Version 0.8.1 adds a pinned local Gemma 3 1B Q4 model, explicit model loading,
 short-question generation and cleanup controls. Version 0.8.2 adds `load_stt()`,
 updates the voice examples and references, makes the Local AI example compatible with
 the IDE, and prefers IPv4 for setup downloads.
+Version 0.9.0 adds the tested local-AI voice conversation and migrates the hotspot to
+boot-time selection among non-DFS 5 GHz channels. Cloned images receive a unique
+hardware-derived identity and hotspot name.
 Version 0.7.11 repaired the upgrade gate for devices coming from 0.7.9 or the failed
 0.7.10 attempt. Version 0.7.10 replaced the fixed controller startup delay with adaptive polling: fast
 units connect immediately, while slower CodyJoy Pro units have up to five seconds to
@@ -75,7 +78,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, 0.7.8, 0.7.9, failed 0.7.10, 0.7.11, 0.8.1, and repeats of 0.8.2. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, 0.7.8, 0.7.9, failed 0.7.10, 0.7.11, 0.8.1, 0.8.2, and repeats of 0.9.0. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -145,7 +148,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.8.2**; its pinned network component still reports **0.1.2**.
+The entry banner is **0.9.0** and its pinned network component reports **0.2.0**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -181,9 +184,13 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.8.2: READY`
+same entry point starts application installation. Wait for `CodyNick 0.9.0: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
+
+When upgrading an existing device, the active hotspot remains unchanged until the
+installation reaches `READY`. Reboot afterward to activate automatic 5 GHz channel
+selection. A cloned image receives the new Pi's serial suffix and new SSH host keys.
 
 Without confirmation, the timer is intended to restore the previous network.
 A reboot before confirmation restarts its 15-minute interval. The original
@@ -230,7 +237,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.8.2: READY`**, then press
+Wait for **`CodyNick 0.9.0: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -336,7 +343,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8/0.7.9/0.7.10/0.7.11/0.8.1/0.8.2 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8/0.7.9/0.7.10/0.7.11/0.8.1/0.8.2/0.9.0 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -345,7 +352,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.8.2/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.9.0/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -390,6 +397,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.9.0-ai-network** | Automated tests; Raspberry Pi network migration pending | Adds local-AI voice conversation, adaptive non-DFS 5 GHz hotspot selection, and clone-safe identity. |
 | **0.8.2-stt-preload** | Automated installer/API tests; Raspberry Pi acceptance pending | Adds explicit STT preparation, an IDE-compatible Local AI example, and IPv4 setup downloads. |
 | **0.8.1-local-llm** | Automated installer/API tests passed; Raspberry Pi acceptance pending | Adds explicitly loaded Gemma 3 1B Q4 questions, cleanup, docs, and the initial example. |
 | **0.7.11-cjp-migration-repair** | Automated migration and serial tests passed; Pi retry pending | Repairs upgrades from 0.7.9 and failed 0.7.10 while retaining adaptive CJP detection. |
@@ -417,11 +425,12 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 | 0.2.2-core | Fresh-OS, IDE/run/live-output, and RGB hardware tests passed on user's Pi | Replaced the failing external test -w gate with actual file/folder operations. Baseline for 0.3.0 upgrade. |
 | 0.2.1-core | Superseded: test -w still failed on Pi | Added explicit ACLs and diagnostics. The log confirmed correct file modes, ACLs, and group membership, but the preliminary test prevented the real-open probe from running. |
 | 0.2.0-core | Superseded: Pi health check failed on www-data write access | Introduced detached core installation, IDE/live terminal, Blockly, dashboard, dependencies, and script/watchdog services. Python/database checks passed on the Pi, but READY was not reached. |
-| **0.1.2** | Current network trial; fresh-install and reboot tests passed on the tested hardware | Corrects inherited file-creation permissions so networkd can read generated Netplan files. Fixes the fallback networking and unintended DHCP address changes caused by unreadable files. |
+| **0.2.0** | Automated migration/channel tests; Pi acceptance pending | Selects a permitted non-DFS 5 GHz channel at boot and repairs identity after image cloning. |
+| **0.1.2** | Superseded after fresh-install and reboot tests | Corrects inherited file-creation permissions so networkd can read generated Netplan files. |
 | 0.1.1 | Superseded; do not install | Reuses a correct working dongle profile, targets USB preparation instead of global Netplan application, arms rollback earlier, and retries recovery. Fresh-install testing subsequently found the permissions defect fixed in 0.1.2. |
 | 0.1.0 | Superseded; do not install | Introduced adapter detection, internet checks, hotspot handover, confirmation, rollback, and version/state reporting. Global Netplan application could disconnect SSH during preparation. |
 
-The core application stage does not change the network installer version 0.1.2.
+The unified 0.9.0 setup updates both the core application and network component.
 See [CHANGELOG.md](CHANGELOG.md) for technical details.
 
 **For every future published version**, update this table, current-version section,
@@ -507,9 +516,10 @@ than later playback.
 - Setup state: `/var/lib/codynick/network-setup.json`.
 - Disables only cloud-init network generation, not cloud-init itself.
 - Keeps credential configuration and backups private on the device.
+- Selects only permitted non-DFS 5 GHz channels 36, 40, 44, and 48 at boot.
 - Pins a tag and verifies the helper SHA256: HTTPS/checksum integrity, not release signing.
 
-Local tests and GitHub Linux checks passed (17 tests for v0.1.2):
+Automated tests cover the 0.9.0 application and 0.2.0 network migration:
 
 ```bash
 python -m unittest discover -s tests -v
@@ -519,6 +529,6 @@ python -m unittest discover -s tests -v
 bash -n bootstrap/codynick-setup.sh
 ```
 
-Tests cover configuration preservation, interface detection, HTTPS binding, confirmation,
-rollback, and subprocess permissions. Hardware results apply to the tested Pi/dongle,
-not every adapter or failure scenario.
+Tests cover configuration preservation, interface detection, channel scoring and
+fallback, clone identity, HTTPS binding, confirmation, rollback, and subprocess
+permissions. Hardware acceptance remains required on the target Pi and client devices.

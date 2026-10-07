@@ -52,3 +52,15 @@ Success keys include `audio_file`, `playback_file`, `playback_cache_reused`, `de
 Generate reusable messages once, then call `speak()` in later programs without loading
 the large TTS model.
 
+## Live generated answers
+
+For conversation, use a separate `CodyNickAI` controller for TTS and load it once
+before listening begins. Reuse one output name such as `llm_answer` so the Audio folder
+does not accumulate temporary responses. Stop the microphone listener before playback
+to prevent the device from recognizing its own voice. Prefix generated conversation
+text with `;;;` when a short pause before speech is desired:
+
+```python
+speech_out.tts(";;;" + answer, "llm_answer", speaker="speaker1")
+speech_out.speak("llm_answer")
+```

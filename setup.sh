@@ -2,9 +2,9 @@
 # Stable public entry point. Every published update pins immutable stage scripts.
 set -euo pipefail
 umask 022
-VERSION="0.8.2"
-NETWORK_SHA256="9f4d334da0561f97d51c7f6ee14eb6b123ec75d93d398bafb69ac35c2a6d82ae"
-APPS_SHA256="a10af9d13476b69caaec27b86cec0030807bb30318e3cde38245ee35d9923e86"
+VERSION="0.9.0"
+NETWORK_SHA256="6cfc2ddc811fb99af2197962c71f4ff939fd5c81292646865ba7905bc7f5b28e"
+APPS_SHA256="9a07d0de098649610384346632aa8788de3ced9b8262f9707f91c57695aeb407"
 [[ $EUID -eq 0 ]] || { echo 'Run this setup command using sudo.'; exit 1; }
 echo "CodyNick setup ${VERSION}: install / repair / upgrade"
 exec 7>/run/lock/codynick-setup-entry.lock
@@ -22,10 +22,10 @@ p=pathlib.Path('/var/lib/codynick/network-setup.json')
 print(json.loads(p.read_text()).get('stage','') if p.exists() else '')
 PY
 }
+fetch network.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.9.0-ai-network/bootstrap/codynick-setup.sh "$NETWORK_SHA256"
 state=$(stage)
 initial_state=$state
 if [[ "$state" != network-ready ]]; then
-    fetch network.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.1.2-network/bootstrap/codynick-setup.sh "$NETWORK_SHA256"
     bash "$temp/network.sh"
     state=$(stage)
     if [[ "$state" == pending || "$state" == applying ]]; then
@@ -38,6 +38,8 @@ if [[ "$state" != network-ready ]]; then
         fi
     fi
     [[ $(stage) == network-ready ]] || { echo 'Network stage is incomplete. Rerun this same setup command after resolving the reported problem.'; exit 1; }
+else
+    bash "$temp/network.sh" --upgrade
 fi
 # Do not restart a working hotspot. Recover stopped existing units without rewriting settings.
 for service in ssh codynick-ap codynick-dhcp codynick-nat; do
@@ -45,7 +47,7 @@ for service in ssh codynick-ap codynick-dhcp codynick-nat; do
         systemctl start "$service" || { echo "Network service $service needs recovery; application installation was not started."; exit 1; }
     fi
 done
-fetch apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.8.2-stt-preload/bootstrap/codynick-apps.sh "$APPS_SHA256"
+fetch apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.9.0-ai-network/bootstrap/codynick-apps.sh "$APPS_SHA256"
 bash "$temp/apps.sh"
 echo 'Progress follows. Ctrl+C closes this display only; background installation continues.'
 flock -u 7

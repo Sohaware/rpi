@@ -30,7 +30,7 @@ if cmd=='control': cmd=sys.argv[1]
 with (root/'trace.txt').open('a') as log: log.write(cmd+' '+ ' '.join(sys.argv[1:])+'\\n')
 if cmd=='wget':
  target=sys.argv[sys.argv.index('-O')+1]
- shutil.copyfile(root/('network.sh' if '/v0.1.2-network/' in sys.argv[-1] else 'apps.sh'),target)
+ shutil.copyfile(root/('network.sh' if 'codynick-setup.sh' in sys.argv[-1] else 'apps.sh'),target)
 elif cmd=='network':
  if not state.exists(): state.write_text(json.dumps({'stage':'pending'}))
 elif cmd=='codynick-setup': state.write_text(json.dumps({'stage':'network-ready'}))
@@ -39,7 +39,7 @@ elif cmd=='systemctl' and os.environ.get('MISSING_SERVICE')=='1': raise SystemEx
         for name in ('control', 'wget', 'systemctl', 'journalctl', 'codynick-setup'):
             path=self.bin/name; path.write_text(control); path.chmod(0o755)
         for name in ('network', 'apps'):
-            (self.root/(name+'.sh')).write_text('#!/bin/bash\n"$FAKE_ROOT/bin/control" '+name+'\n')
+            (self.root/(name+'.sh')).write_text('#!/bin/bash\n"$FAKE_ROOT/bin/control" '+name+' "$@"\n')
         script=(ROOT/'setup.sh').read_text()
         script=script.replace('[[ $EUID -eq 0 ]]','[[ 1 -eq 1 ]]')
         script=script.replace('/run/lock/', str(self.root)+'/')
@@ -70,7 +70,7 @@ elif cmd=='systemctl' and os.environ.get('MISSING_SERVICE')=='1': raise SystemEx
             result=self.invoke()
             self.assertEqual(result.returncode,0,result.stderr)
         trace=self.trace.read_text()
-        self.assertNotIn('/v0.1.2-network/',trace)
+        self.assertEqual(trace.count('network --upgrade'), 2)
         self.assertNotIn('systemctl start',trace)
         self.assertEqual(trace.count('\napps '),2)
 

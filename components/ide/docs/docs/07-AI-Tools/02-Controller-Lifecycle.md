@@ -69,3 +69,22 @@ with CodyNickAI(workspace="/home/client") as ai:
 
 The context manager calls `close()` even when an exception occurs. For programs that
 also use CodyNick gadgets, place both cleanup calls in `finally`.
+
+## Multiple simultaneous models
+
+One controller owns one worker. A program that keeps STT and TTS loaded together uses
+two controllers; the local LLM has its own process and may use a third controller.
+Load all models before the user interaction begins and close every controller:
+
+```python
+speech_in = CodyNickAI()
+speech_out = CodyNickAI()
+local_ai = CodyNickAI()
+
+speech_in.load_stt(model="small", language="en")
+speech_out.load_app("tts", model="fast", language="en")
+local_ai.load_llm()
+```
+
+This combination is memory intensive on a 4 GB Pi. Do not start duplicate model
+instances, and stop microphone capture while playing generated speech.

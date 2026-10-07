@@ -33,6 +33,20 @@ The built-in `wlan0` should serve the Pi hotspot at `10.42.0.1`. Ethernet or a U
 Wi-Fi interface beginning with `wlx` should provide internet. A 2.4 GHz-only dongle
 cannot see a 5 GHz-only phone hotspot.
 
+## Hotspot quality or missing hotspot
+
+The CodyNick hotspot uses the built-in radio at 5 GHz. At every boot it scans the
+permitted non-DFS channels 36, 40, 44, and 48 and selects the least congested one.
+Display the selected channel, frequency, services, and addresses with:
+
+```bash
+sudo codynick-setup --check
+```
+
+Existing devices keep their active hotspot while upgrading. Reboot once after a
+successful 0.9.0 installation to activate the selector. Client devices must support
+5 GHz Wi-Fi.
+
 ## Installation status
 
 ```bash

@@ -96,6 +96,7 @@ Joystick event: `states=CodyNick.Joystick.states(cody,"CJP"); if "UP" in states:
 Camera-to-YOLO: `ai.take_picture("camera",cody=cody,get_ready_sound=True);ai.load_app("yolo",model="nano");r=ai.detect_objects("camera")`.
 Camera-to-OCR: `ai.take_picture("ocr",cody=cody,get_ready_sound=True);ai.load_app("ocr",model="standard",languages=["en"]);r=ai.read_text("ocr",preprocessing="scene")`.
 Voice command: `ai.load_stt(model="small",language="en");listener=ai.listen(commands=["red","green","blue","lights off"],min_confidence=.6)`; react only when `event["accepted"]`.
+Local voice AI: use separate `speech_in`, `speech_out`, `local_ai` controllers; load STT, TTS, and LLM once before interaction; wake with constrained command mode; ask with free speech (`commands=None`); stop listener before buzzer/TTS; constrain/trim answer to 9 words; synthesize `";;;"+answer` to stable name `llm_answer`; replay; resume listening; close all controllers. Do not retain history unless explicitly implemented.
 Cloud sensor: ensure Wi-Fi/IoT keep-alive succeeds, then `write_float(cody,0,t)`; throttle loop.
 Dashboard sensor: create once, then `card.set(t)`; do not create a new card every sample.
 

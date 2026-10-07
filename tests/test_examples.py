@@ -374,6 +374,18 @@ class ExampleTests(unittest.TestCase):
         self.assertIn("while True:\n                listening_effect(cody)", source)
         self.assertIn('ai.load_stt(model="small", language="en")', source)
 
+    def test_local_ai_voice_conversation_loads_once_and_reuses_audio(self):
+        source = (EXAMPLES / "local_ai_voice_conversation.py").read_text()
+        compile(source, "local_ai_voice_conversation.py", "exec")
+        self.assertEqual(source.count('load_stt(model="small", language="en")'), 1)
+        self.assertEqual(source.count('local_ai.load_llm()'), 1)
+        self.assertEqual(source.count('load_app("tts", model="fast", language="en")'), 1)
+        self.assertIn('WAKE_PHRASES = ["wake up"]', source)
+        self.assertIn('";;;" + answer', source)
+        self.assertIn('"llm_answer"', source)
+        self.assertIn('commands=None', source)
+        self.assertIn('len(answer.split()) > 9', source)
+
 
 if __name__ == '__main__':
     unittest.main()

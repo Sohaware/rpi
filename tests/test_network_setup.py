@@ -151,5 +151,61 @@ class NetworkTests(unittest.TestCase):
         cfg = m.yaml_module().safe_load(files['/etc/netplan/95-codynick-route-priority.yaml'])
         self.assertEqual(cfg['network']['ethernets']['eth0']['dhcp4-overrides']['route-metric'], 100)
         self.assertEqual(cfg['network']['wifis']['wlx123']['dhcp4-overrides']['route-metric'], 200)
+        ap_unit = files['/etc/systemd/system/codynick-ap.service']
+        self.assertIn('--select-channel', ap_unit)
+        self.assertIn(str(m.RUNTIME_HOSTAPD), ap_unit)
+
+    def test_5ghz_selection_uses_least_congested_permitted_channel(self):
+        info = '''
+            * 5180 MHz [36] (20.0 dBm)
+            * 5200 MHz [40] (20.0 dBm)
+            * 5220 MHz [44] (disabled)
+            * 5240 MHz [48] (20.0 dBm)
+        '''
+        scan = '''
+BSS aa:aa:aa:aa:aa:aa(on wlan0)
+        freq: 5180
+        signal: -35.00 dBm
+BSS bb:bb:bb:bb:bb:bb(on wlan0)
+        freq: 5200
+        signal: -80.00 dBm
+'''
+        channel, scores = m.choose_5ghz_channel(info, scan)
+        self.assertEqual(channel, 48)
+        self.assertGreater(scores[36], scores[40])
+        self.assertNotIn(44, scores)
+
+    def test_empty_scan_falls_back_to_lowest_permitted_channel(self):
+        info = '\n'.join(f' * {frequency} MHz [{channel}] (20.0 dBm)'
+                         for channel, frequency in m.CHANNELS.items())
+        channel, scores = m.choose_5ghz_channel(info, '')
+        self.assertEqual(channel, 36)
+        self.assertTrue(all(score == 0 for score in scores.values()))
+
+    def test_hostapd_is_5ghz_non_dfs_and_20mhz(self):
+        text = m.hostapd_text(
+            {'ap': 'wlan0', 'ssid': 'codynick-12345678', 'country': 'OM'}, 44
+        )
+        self.assertIn('hw_mode=a', text)
+        self.assertIn('channel=44', text)
+        self.assertIn('vht_oper_chwidth=0', text)
+
+    def test_clone_detection_regenerates_identity_and_default_ssid(self):
+        state = {
+            'stage': 'network-ready', 'version': '0.1.2',
+            'hardware_serial': 'aaaaaaaa11111111',
+            'ssid': 'codynick-11111111', 'files': {}, 'backup': 'backup',
+        }
+        with patch.object(m, 'load', return_value=state), \
+             patch.object(m, 'hardware_serial', return_value='bbbbbbbb22222222'), \
+             patch.object(m, 'regenerate_clone_identity') as identity, \
+             patch.object(m, 'configure_services'), patch.object(m, 'run'), \
+             patch.object(m, 'save'), patch.object(m.Path, 'mkdir'), \
+             patch.object(m, 'show'):
+            m.upgrade_network()
+        identity.assert_called_once_with('bbbbbbbb22222222')
+        self.assertEqual(state['ssid'], 'codynick-22222222')
+        self.assertTrue(state['clone_identity_regenerated'])
+        self.assertTrue(state['reboot_required'])
 
 if __name__ == '__main__': unittest.main()

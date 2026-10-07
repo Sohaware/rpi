@@ -13,12 +13,14 @@ import subprocess
 import sys
 import time
 
-VERSION = "0.1.2"
+VERSION = "0.2.0"
 STATE = Path('/var/lib/codynick/network-setup.json')
 BASE = Path('/etc/codynick')
 SELF = '/usr/local/lib/codynick/network_setup.py'
 AP_ADDRESS = '10.42.0.1'
 SERVICES = ['codynick-ap.service', 'codynick-dhcp.service', 'codynick-nat.service']
+CHANNELS = {36: 5180, 40: 5200, 44: 5220, 48: 5240}
+RUNTIME_HOSTAPD = Path('/run/codynick/hostapd.conf')
 
 def run(*args, check=True, capture=False):
     # Netplan sets its own private/public modes. A inherited 077 umask strips
@@ -93,6 +95,84 @@ def interfaces():
                             usb=any(re.fullmatch(r'usb\d+', part) for part in dev.parts)))
     return choose_interfaces(records)
 
+def hardware_serial():
+    path = Path('/sys/firmware/devicetree/base/serial-number')
+    serial = path.read_text().strip('\x00\n') if path.exists() else ''
+    if not re.fullmatch('[0-9a-fA-F]{8,32}', serial):
+        raise RuntimeError('Could not identify Raspberry Pi hardware serial.')
+    return serial.lower()
+
+def default_ssid(serial):
+    return 'codynick-' + serial[-8:]
+
+def permitted_5ghz_channels(info):
+    permitted = []
+    for channel, frequency in CHANNELS.items():
+        match = re.search(
+            rf'^\s*\*\s*{frequency}\s+MHz\s+\[{channel}\](.*)$',
+            info,
+            re.M,
+        )
+        if match and not re.search(r'disabled|no IR', match.group(1), re.I):
+            permitted.append(channel)
+    return permitted
+
+def channel_scores(scan, candidates):
+    scores = {channel: 0.0 for channel in candidates}
+    blocks = re.split(r'(?=^BSS\s)', scan, flags=re.M)
+    frequency_to_channel = {frequency: channel for channel, frequency in CHANNELS.items()}
+    for block in blocks:
+        frequency = re.search(r'^\s*freq:\s*(\d+)\s*$', block, re.M)
+        signal = re.search(r'^\s*signal:\s*(-?\d+(?:\.\d+)?)\s*dBm', block, re.M)
+        if not frequency:
+            continue
+        channel = frequency_to_channel.get(int(frequency.group(1)))
+        if channel not in scores:
+            continue
+        strength = float(signal.group(1)) if signal else -100.0
+        scores[channel] += max(1.0, 100.0 + strength)
+    return scores
+
+def choose_5ghz_channel(info, scan):
+    candidates = permitted_5ghz_channels(info)
+    if not candidates:
+        raise RuntimeError('Built-in Wi-Fi has no permitted non-DFS 5 GHz AP channel.')
+    scores = channel_scores(scan, candidates)
+    return min(candidates, key=lambda channel: (scores[channel], channel)), scores
+
+def hostapd_text(state, channel):
+    return (
+        f"interface={state['ap']}\ndriver=nl80211\nssid={state['ssid']}\n"
+        f"country_code={state['country']}\nhw_mode=a\nchannel={channel}\n"
+        'ieee80211d=1\nieee80211n=1\nieee80211ac=1\n'
+        'vht_oper_chwidth=0\nwmm_enabled=1\nauth_algs=1\n'
+        'wpa=2\nwpa_passphrase=CodyNick12345\n'
+        'wpa_key_mgmt=WPA-PSK\nrsn_pairwise=CCMP\n'
+    )
+
+def select_channel():
+    state = load()
+    if state.get('stage') not in ('applying', 'network-ready'):
+        raise RuntimeError('Hotspot channel selection requires a ready network.')
+    run('iw', 'reg', 'set', state['country'])
+    phy = Path('/sys/class/net', state['ap'], 'phy80211').resolve().name
+    info = run('iw', 'phy', phy, 'info', capture=True).stdout
+    run('ip', 'link', 'set', state['ap'], 'down', check=False)
+    run('iw', 'dev', state['ap'], 'set', 'type', 'managed', check=False)
+    run('ip', 'link', 'set', state['ap'], 'up', check=False)
+    scanned = run('iw', 'dev', state['ap'], 'scan', check=False, capture=True)
+    scan = scanned.stdout if scanned.returncode == 0 else ''
+    channel, scores = choose_5ghz_channel(info, scan)
+    write(RUNTIME_HOSTAPD, hostapd_text(state, channel), 0o600)
+    state['band'] = '5 GHz'
+    state['channel'] = channel
+    state['frequency_mhz'] = CHANNELS[channel]
+    state['channel_selection'] = 'automatic-at-boot' if scan else 'fallback'
+    state['channel_scores'] = {str(key): round(value, 1) for key, value in scores.items()}
+    state['reboot_required'] = False
+    save(state)
+    print(f'Selected 5 GHz channel {channel} ({CHANNELS[channel]} MHz).', flush=True)
+
 def dongle_config(country):
     return {'renderer': 'networkd', 'optional': True, 'dhcp4': True,
             'dhcp6': False, 'accept-ra': False,
@@ -161,7 +241,15 @@ def show(state):
         print('Hotspot:', state['ssid'])
         print('Password: CodyNick12345')
         print(f"Reconnect: ssh {state['login']}@{AP_ADDRESS}")
-    print('Application installer: not included in this network trial')
+    if state.get('band'):
+        print('Band:', state['band'])
+    if state.get('channel'):
+        print('Channel:', state['channel'])
+        print('Frequency:', str(state.get('frequency_mhz', 'unknown')) + ' MHz')
+        print('Channel selection:', state.get('channel_selection', 'unknown'))
+    if state.get('reboot_required'):
+        print('Network update: reboot required')
+    print('Network component status; unified setup continues to applications separately.')
 
 def preflight():
     if os.geteuid() != 0:
@@ -269,11 +357,11 @@ def prepare():
         rollback()
         raise RuntimeError('Interrupted preparation restored. Rerun to try again.')
     if not active('systemd-networkd') or active('NetworkManager'):
-        raise RuntimeError('This first trial requires systemd-networkd without NetworkManager.')
+        raise RuntimeError('This setup requires systemd-networkd without NetworkManager.')
     if not active('systemd-resolved'):
-        raise RuntimeError('This trial requires systemd-resolved for hotspot DNS forwarding.')
+        raise RuntimeError('This setup requires systemd-resolved for hotspot DNS forwarding.')
     if active('hostapd') or active('dnsmasq') or Path('/root/codynick/service.py').exists():
-        raise RuntimeError('Existing CodyNick/hotspot installation: use a future migration release, not this fresh-OS trial.')
+        raise RuntimeError('Existing unmanaged CodyNick/hotspot installation requires manual migration review.')
     ufw = Path('/etc/ufw/ufw.conf')
     if ufw.exists() and re.search(r'^ENABLED=yes$', ufw.read_text(), re.M):
         raise RuntimeError('Active UFW needs a reviewed hotspot rule set before this trial.')
@@ -303,11 +391,8 @@ def prepare():
         country = input('Two-letter Wi-Fi country code (your actual location): ').strip().upper()
     if not re.fullmatch('[A-Z]{2}', str(country)):
         raise RuntimeError('Invalid Wi-Fi country code.')
-    serial_file = Path('/sys/firmware/devicetree/base/serial-number')
-    serial = serial_file.read_text().strip('\x00\n') if serial_file.exists() else ''
-    if not re.fullmatch('[0-9a-fA-F]{8,32}', serial):
-        raise RuntimeError('Could not identify Raspberry Pi hardware serial.')
-    ssid = 'codynick-' + serial[-8:].lower()
+    serial = hardware_serial()
+    ssid = default_ssid(serial)
     routes = json.loads(run('ip', '-j', '-4', 'route', 'show', 'table', 'all', capture=True).stdout)
     subnet = ipaddress.ip_network('10.42.0.0/24')
     for route in routes:
@@ -325,13 +410,14 @@ def prepare():
         raise RuntimeError('SSH must listen on all IPv4 addresses on port 22 for this trial.')
     run('systemctl', 'enable', '--now', 'ssh')
     print(f'Built-in Wi-Fi: {ap}; USB: {usb}; Ethernet: {wired}')
-    print('Phase 1 only: prepare hotspot/SSH. No application deployment or root-password changes.')
+    print('Preparing hotspot and SSH. No root-password changes are made.')
     if input('Prepare this network handover? [y/N] ').strip().lower() != 'y':
         return
     backup = Path('/var/backups/codynick/network-' + time.strftime('%Y%m%d-%H%M%S'))
     backup.mkdir(parents=True, mode=0o700)
     state = dict(version=VERSION, stage='preparing', backup=str(backup), files={},
                  ap=ap, usb=usb, wired=wired, login=login, ssid=ssid, country=country,
+                 hardware_serial=serial, band='5 GHz', channel_selection='pending',
                  previous_forwarding=Path('/proc/sys/net/ipv4/ip_forward').read_text().strip())
     save(state)
     try:
@@ -378,10 +464,6 @@ def configure_services(state):
     managed_write(state, '/etc/netplan/95-codynick-route-priority.yaml',
                   yaml_module().safe_dump(override, sort_keys=False))
     run('netplan', 'generate')
-    managed_write(state, BASE / 'hostapd.conf',
-                  f"interface={ap}\ndriver=nl80211\nssid={state['ssid']}\ncountry_code={state['country']}\n"
-                  'hw_mode=g\nchannel=6\nieee80211d=1\nwmm_enabled=1\nauth_algs=1\n'
-                  'wpa=2\nwpa_passphrase=CodyNick12345\nwpa_key_mgmt=WPA-PSK\nrsn_pairwise=CCMP\n')
     managed_write(state, BASE / 'dnsmasq.conf',
                   f'interface={ap}\nbind-dynamic\nlisten-address={AP_ADDRESS}\n'
                   'dhcp-range=10.42.0.50,10.42.0.200,255.255.255.0,24h\n'
@@ -397,7 +479,7 @@ def configure_services(state):
     run('nft', '--check', '--file', str(BASE / 'nat.nft'))
     managed_write(state, '/etc/sysctl.d/90-codynick-forward.conf', 'net.ipv4.ip_forward=1\n', 0o644)
     commands = {
-        'codynick-ap.service': '/usr/sbin/hostapd /etc/codynick/hostapd.conf',
+        'codynick-ap.service': f'/usr/sbin/hostapd {RUNTIME_HOSTAPD}',
         'codynick-dhcp.service': '/usr/sbin/dnsmasq --keep-in-foreground --conf-file=/etc/codynick/dnsmasq.conf',
         'codynick-nat.service': '/usr/sbin/nft --file /etc/codynick/nat.nft',
     }
@@ -405,16 +487,88 @@ def configure_services(state):
         nat = name == 'codynick-nat.service'
         extra = ('RemainAfterExit=yes\nExecStartPre=-/usr/sbin/nft delete table ip codynick_setup\n'
                  'ExecStop=-/usr/sbin/nft delete table ip codynick_setup\n') if nat else 'Restart=on-failure\nRestartSec=3\n'
+        if name == 'codynick-ap.service':
+            extra = (f'ExecStartPre=/usr/bin/python3 {SELF} --select-channel\n'
+                     'Restart=on-failure\nRestartSec=3\n')
         managed_write(state, '/etc/systemd/system/' + name,
                       '[Unit]\nDescription=CodyNick network bootstrap\nAfter=systemd-networkd.service\n'
                       f'\n[Service]\nType={"oneshot" if nat else "simple"}\nExecStart={cmd}\n{extra}'
                       '\n[Install]\nWantedBy=multi-user.target\n', 0o644)
     run('dnsmasq', '--test', '--conf-file=' + str(BASE / 'dnsmasq.conf'))
 
+def replace_hostname(hostname):
+    write('/etc/hostname', hostname + '\n', 0o644)
+    hosts = Path('/etc/hosts')
+    if hosts.exists():
+        text = hosts.read_text()
+        if re.search(r'^127\.0\.1\.1\s+', text, re.M):
+            text = re.sub(r'^127\.0\.1\.1\s+.*$', '127.0.1.1\t' + hostname, text, flags=re.M)
+        else:
+            text += '\n127.0.1.1\t' + hostname + '\n'
+        write(hosts, text, 0o644)
+
+def regenerate_clone_identity(serial):
+    suffix = serial[-8:]
+    replace_hostname('codynick-' + suffix)
+    for path in Path('/etc/ssh').glob('ssh_host_*'):
+        if path.is_file():
+            path.unlink()
+    run('ssh-keygen', '-A')
+    write('/etc/machine-id', '', 0o444)
+    dbus_id = Path('/var/lib/dbus/machine-id')
+    if dbus_id.exists() and not dbus_id.is_symlink():
+        dbus_id.unlink()
+    run('systemd-machine-id-setup')
+    if not dbus_id.exists():
+        write(dbus_id, Path('/etc/machine-id').read_text(), 0o444)
+
+def upgrade_network():
+    state = load()
+    if state.get('stage') != 'network-ready':
+        raise RuntimeError('Confirm the current hotspot before upgrading its network component.')
+    serial = hardware_serial()
+    expected_ssid = default_ssid(serial)
+    saved_serial = state.get('hardware_serial')
+    default_named = bool(re.fullmatch(r'codynick-[0-9a-fA-F]{8}', state.get('ssid', '')))
+    cloned = bool(saved_serial and saved_serial != serial)
+    if not saved_serial and default_named and state.get('ssid') != expected_ssid:
+        cloned = True
+
+    if (state.get('version') == VERSION
+            and state.get('configured_version') == VERSION
+            and saved_serial == serial):
+        show(state)
+        return
+
+    if cloned:
+        state['ssid'] = expected_ssid
+        regenerate_clone_identity(serial)
+        state['clone_identity_regenerated'] = True
+        state['hardware_serial'] = serial
+        save(state)
+
+    state['hardware_serial'] = serial
+    state['band'] = '5 GHz'
+    state['channel_selection'] = 'automatic-at-boot'
+    state['reboot_required'] = True
+    state.setdefault('files', {})
+    state.setdefault('backup', '/var/backups/codynick/network-migration')
+    Path(state['backup']).mkdir(parents=True, exist_ok=True)
+    save(state)
+    configure_services(state)
+    run('systemctl', 'daemon-reload')
+    state['version'] = VERSION
+    state['configured_version'] = VERSION
+    save(state)
+    show(state)
+    if cloned:
+        print('Cloned hardware detected; device identity and SSH host keys were regenerated.')
+    print('Current SSH remains active. Reboot after application installation to activate 5 GHz.')
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group()
-    for flag in ('check', 'confirm', 'rollback', 'apply', 'version'):
+    for flag in ('check', 'confirm', 'rollback', 'apply', 'upgrade', 'select-channel', 'version'):
         group.add_argument('--' + flag, action='store_true')
     args = parser.parse_args()
     if args.version:
@@ -428,6 +582,8 @@ def main():
         elif args.confirm: confirm()
         elif args.rollback: rollback()
         elif args.apply: apply_handover()
+        elif args.upgrade: upgrade_network()
+        elif args.select_channel: select_channel()
         else: prepare()
 
 if __name__ == '__main__':

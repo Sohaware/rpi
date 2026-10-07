@@ -23,25 +23,22 @@ ai.close()
 `load_llm()` loads the model explicitly. Loading takes several seconds, but the
 model remains available for every later `ask()` call in the same program.
 
-## Interactive questions
+## IDE question example
 
 ```python
 from codynick_ai import CodyNickAI
 
+question = "Explain an RGB LED in one short sentence."
 ai = CodyNickAI()
-ai.load_llm()
-
-while True:
-    question = input("You: ").strip()
-
-    if question.lower() == "exit":
-        break
-
-    if question:
-        print("AI:", ai.ask(question))
-
-ai.close()
+try:
+    ai.load_llm()
+    print(ai.ask(question))
+finally:
+    ai.close()
 ```
+
+The IDE does not provide terminal input to background student scripts. Edit the
+`question` value and run the file again, or use the bundled voice conversation.
 
 ## API reference
 
@@ -81,3 +78,12 @@ The model occupies approximately 1.35 GB while loaded. Avoid loading multiple
 copies or combining it with several other large AI models on a 4 GB Pi. Answers
 come from the model's training and can be incorrect. This release does not include
 RAG or internet search.
+
+## Local AI voice conversation
+
+`local_ai_voice_conversation.py` loads separate STT and TTS workers plus Gemma before
+conversation begins. Say `wake up`, ask unrestricted short questions, say `sleep` to
+return to wake mode, or say `stop listening` to exit. It constrains answers to fewer
+than ten words, pauses microphone capture during speech, reuses `llm_answer.wav`, and
+uses CodyJoy Pro LEDs and notes for each interaction state. Conversation history is
+not retained between questions.

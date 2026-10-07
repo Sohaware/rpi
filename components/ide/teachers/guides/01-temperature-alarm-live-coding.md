@@ -662,6 +662,29 @@ Try questions from these groups:
 - Ask one short supported question at a time and wait for the answer.
 - If a question is not recognized, repeat it clearly using one of the listed phrases.
 
+## Step 13: Talk with Local AI
+
+### Ask before starting
+
+> What changes when the device creates a new answer instead of selecting a saved one?
+
+Connect CodyJoy Pro, a USB microphone, and a speaker. Open **CodyNick Examples →
+`local_ai_voice_conversation.py`** and select **Run This File**.
+
+1. Wait until TTS, speech recognition, and Local AI all report ready.
+2. Say `wake up`.
+3. Ask one short question and wait for the spoken answer.
+4. Ask more questions without repeating the wake phrase.
+5. Say `sleep`, then wake it again.
+6. Say `stop listening` to finish.
+
+Point out that the three models load only once, the microphone stops while CodyJoy or
+the speaker makes sound, and each generated answer is restricted to nine words. The
+program prefixes TTS text with `;;;`, overwrites `llm_answer.wav`, and uses the same
+waiting, listening, processing, answering, and goodbye effects as Step 12. Unlike the
+saved-answer demonstration, this version accepts unrestricted questions, but it does
+not remember earlier questions.
+
 ## Closing audience questions
 
 - Which thresholds would you use for a refrigerator, greenhouse, or classroom?
