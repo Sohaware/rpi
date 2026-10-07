@@ -3,7 +3,7 @@
 Load STT, then start a background listener:
 
 ```python
-ai.load_app("stt", model="small", language="en")
+ai.load_stt(model="small", language="en")
 listener = ai.listen(
     commands=["red", "green", "blue", "lights off"],
     min_confidence=0.60,
@@ -57,4 +57,3 @@ listener.stop()                 # stop microphone capture
 
 Iteration waits for events until stopped. Always call `stop()` in `finally`; `ai.close()`
 also stops listening while unloading the STT worker.
-

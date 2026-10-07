@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.2-stt-preload - Explicit speech preparation
+
+- Add `load_stt()` so voice programs load the offline recognition model before
+  microphone capture or listening begins.
+- Update the voice-command and conversation examples, teacher guide, and AI reference
+  to use the explicit loader while preserving `load_app("stt", ...)` compatibility.
+- Replace the Local AI example's unsupported terminal `input()` loop with one editable
+  question suitable for **Run This File** in the IDE.
+- Prefer IPv4 for the fixed setup command and bootstrap downloads after an observed
+  unstable IPv6 TLS connection.
+
 ## 0.8.1-local-llm - Explicitly loaded offline questions
 
 - Add the checksummed Gemma 3 1B Instruct `Q4_K_M` model and pinned llama.cpp

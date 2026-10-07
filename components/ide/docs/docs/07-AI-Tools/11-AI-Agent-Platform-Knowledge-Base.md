@@ -78,7 +78,7 @@ Load: `ai.load_app("ocr",model="standard",languages=["en"])`. Call: `read_text(i
 `list_audio()->list[str]` including extensions; `audio_exists(name)->bool`; `delete_audio(name)`.
 
 ## 16. Speech-to-text and live commands
-Load: `ai.load_app("stt",model="small",language="en")`.
+Load before recording/listening: `ai.load_stt(model="small",language="en")`. This explicitly pays the model startup cost before the first recognition call; repeated matching loads return `already_loaded=True`. Generic `ai.load_app("stt",...)` remains compatible.
 File STT: `transcribe(audio=None,*,mode="free",commands=None,min_confidence=0.0,output_suffix="stt",save_json=True)->dict`; audio None=current; mode `free|commands`; command mode normalizes text and requires exact command match plus threshold. Result keys: `text,accepted,matched_command,confidence,words,audio_duration_sec,transcription_sec,json_result`; each word has `word,confidence,start_sec,end_sec`.
 Live: `listener=ai.listen(*,commands=None,min_confidence=0.0,device="auto")`; nonempty commands enables command mode, None free speech. `listener.active`; `listener.get(timeout=0.0)->event|None`; `listener.stop()`; iterable (`for event in listener`). Event: `{"type":"speech","text":str,"accepted":bool,"matched_command":str|None,"confidence":float,"words":[...],"received_at":ISO_str}`. Always stop in `finally`; `ai.close()` also stops it.
 
@@ -95,7 +95,7 @@ All RGB LEDs: `for led in range(16): CodyNick.RGB_Matrix.set(cody,led,"#00FF00")
 Joystick event: `states=CodyNick.Joystick.states(cody,"CJP"); if "UP" in states: ...`.
 Camera-to-YOLO: `ai.take_picture("camera",cody=cody,get_ready_sound=True);ai.load_app("yolo",model="nano");r=ai.detect_objects("camera")`.
 Camera-to-OCR: `ai.take_picture("ocr",cody=cody,get_ready_sound=True);ai.load_app("ocr",model="standard",languages=["en"]);r=ai.read_text("ocr",preprocessing="scene")`.
-Voice command: `ai.load_app("stt",model="small",language="en");listener=ai.listen(commands=["red","green","blue","lights off"],min_confidence=.6)`; react only when `event["accepted"]`.
+Voice command: `ai.load_stt(model="small",language="en");listener=ai.listen(commands=["red","green","blue","lights off"],min_confidence=.6)`; react only when `event["accepted"]`.
 Cloud sensor: ensure Wi-Fi/IoT keep-alive succeeds, then `write_float(cody,0,t)`; throttle loop.
 Dashboard sensor: create once, then `card.set(t)`; do not create a new card every sample.
 

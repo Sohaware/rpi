@@ -518,7 +518,7 @@ def main():
         if not cody.ensure_connected():
             raise RuntimeError("CodyNick gadget not found.")
 
-        ai.load_app("stt", model="small", language="en")
+        ai.load_stt(model="small", language="en")
 
         listener = ai.listen(
             commands=COMMANDS,
@@ -554,7 +554,7 @@ main()
 
 ### Point out
 
-- `load_app("stt", ...)` loads offline speech-to-text. The spoken audio does not need
+- `load_stt(...)` loads offline speech-to-text before listening starts. The spoken audio does not need
   to be sent to an internet service.
 - `COMMANDS` limits recognition to the phrases used by this demonstration.
 - `device="auto"` selects an available USB or camera microphone.

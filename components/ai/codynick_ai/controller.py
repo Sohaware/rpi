@@ -862,6 +862,20 @@ class CodyNickAI:
         """Delete one named audio file from the Audio folder."""
         self.audio_store.delete_audio(name)
 
+    def load_stt(
+        self,
+        *,
+        model: str = "small",
+        language: str = "en",
+        preload: list[str] | None = None,
+    ) -> dict:
+        """Load speech recognition before recording or listening begins."""
+        return self._load_stt(
+            model=model,
+            language=language,
+            preload=preload,
+        )
+
     def load_app(
         self,
         app: str,
@@ -896,7 +910,7 @@ class CodyNickAI:
         if extra:
             raise TypeError("load_app() accepts configuration by keyword")
         if normalized == "stt":
-            return self._load_stt(
+            return self.load_stt(
                 model=model or "small",
                 language=language or "en",
                 preload=preload,

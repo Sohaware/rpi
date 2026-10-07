@@ -33,7 +33,7 @@ extension may be supplied, but no path is allowed.
 ## `transcribe()`
 
 ```python
-ai.load_app("stt", model="small", language="en")
+ai.load_stt(model="small", language="en")
 result = ai.transcribe(
     audio=None,
     mode="free",
@@ -43,6 +43,10 @@ result = ai.transcribe(
     save_json=True,
 )
 ```
+
+`load_stt()` starts the offline recognizer and loads its model immediately. Call it
+before capturing or transcribing speech so the first recognition does not carry the
+model startup delay.
 
 - `audio=None` selects the current recording.
 - `mode` is `free` or `commands`.
@@ -65,4 +69,3 @@ result["json_result"]
 
 In command mode, `accepted` requires recognized text to exactly match a normalized
 command and meet the confidence threshold.
-

@@ -79,3 +79,12 @@ elif cmd=='systemctl' and os.environ.get('MISSING_SERVICE')=='1': raise SystemEx
         result=self.invoke(MISSING_SERVICE='1')
         self.assertNotEqual(result.returncode,0)
         self.assertNotIn('\napps ', '\n'+self.trace.read_text())
+
+    def test_downloads_prefer_ipv4(self):
+        self.state.write_text(json.dumps({'stage':'network-ready'}))
+        result=self.invoke()
+        self.assertEqual(result.returncode,0,result.stderr)
+        wget_lines = [line for line in self.trace.read_text().splitlines()
+                      if line.startswith('wget ')]
+        self.assertTrue(wget_lines)
+        self.assertTrue(all(' -4 ' in f' {line} ' for line in wget_lines))

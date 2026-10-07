@@ -35,8 +35,13 @@ language works only when its data is installed.
 ## Speech-to-text
 
 ```python
-ai.load_app("stt", model="small", language="en")
+status = ai.load_stt(model="small", language="en")
 ```
+
+Call `load_stt()` near the beginning of the script, before recording audio or starting
+`listen()`. This makes the model-loading pause visible and keeps the first recognition
+operation responsive. Calling it again with the active configuration returns
+`already_loaded=True`.
 
 The controller recognizes `small` and `large` models and language keys `en`, `de`,
 `fa`, and `ar-tn`; this release installs only the small English model. Requesting a
@@ -56,4 +61,3 @@ message, ...}` rather than raised.
 
 `preload` is reserved metadata passed through the load result; it does not install
 additional models.
-

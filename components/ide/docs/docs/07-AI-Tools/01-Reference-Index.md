@@ -11,6 +11,7 @@ from codynick_ai import CodyNickAI
 ```python
 ai = CodyNickAI(...)
 ai.load_app(...)
+ai.load_stt(...)
 ai.unload_app()
 ai.close()
 ```
@@ -42,6 +43,7 @@ ai.speak(name, ...)
 ```python
 ai.detect_objects(...)
 ai.read_text(...)
+ai.load_stt(...)
 ai.transcribe(...)
 ai.listen(...)
 ai.tts(...)
@@ -50,4 +52,3 @@ ai.tts(...)
 The installed release supports USB-camera YOLO, English OCR, offline English STT and
 voice commands, offline English TTS, and saved-audio playback. Face analysis, age/race
 estimation, and chapter 8 workflows are not installed.
-

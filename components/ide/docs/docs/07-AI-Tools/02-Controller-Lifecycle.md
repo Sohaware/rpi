@@ -48,9 +48,13 @@ the previous worker. The camera is separate and may be open while a worker runs.
 
 ```python
 status = ai.load_app("yolo", model="nano")
+speech_status = ai.load_stt(model="small", language="en")
 ai.unload_app()
 ai.close()
 ```
+
+`load_stt()` is the explicit speech-recognition loader. Call it near the start of a
+voice program so loading finishes before the microphone begins listening.
 
 `unload_app()` stops only the AI worker. `close()` releases the camera and unloads the
 worker. Repeated cleanup calls are safe.
@@ -65,4 +69,3 @@ with CodyNickAI(workspace="/home/client") as ai:
 
 The context manager calls `close()` even when an exception occurs. For programs that
 also use CodyNick gadgets, place both cleanup calls in `finally`.
-

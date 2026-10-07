@@ -33,6 +33,17 @@ class Response:
 
 
 class LocalLlmTests(unittest.TestCase):
+    def test_explicit_stt_loader_uses_the_existing_worker_loader(self):
+        with tempfile.TemporaryDirectory(dir=ROOT) as temp:
+            ai = CodyNickAI(workspace=temp)
+            expected = {"app": "stt", "model_name": "small"}
+            with patch.object(ai, "_load_stt", return_value=expected) as loader:
+                result = ai.load_stt(model="small", language="en")
+            self.assertEqual(result, expected)
+            loader.assert_called_once_with(
+                model="small", language="en", preload=None
+            )
+
     def test_explicit_load_reuse_ask_and_unload(self):
         with tempfile.TemporaryDirectory(dir=ROOT) as temp:
             base = Path(temp)

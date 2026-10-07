@@ -27,7 +27,7 @@ def main():
         if not cody.ensure_connected():
             raise RuntimeError("CodyNick gadget not found. Connect it and run again.")
         print("Loading offline English speech recognition...", flush=True)
-        ai.load_app("stt", model="small", language="en")
+        ai.load_stt(model="small", language="en")
         print("Say: red, green, blue, yellow, white, purple, lights off, or stop listening.", flush=True)
         listener = ai.listen(commands=COMMANDS, min_confidence=0.45, device="auto")
         for event in listener:

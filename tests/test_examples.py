@@ -11,20 +11,20 @@ EXAMPLES = Path(__file__).resolve().parents[1] / 'components/examples'
 
 
 class ExampleTests(unittest.TestCase):
-    def test_local_ai_example_loads_once_and_reuses_model(self):
+    def test_local_ai_example_loads_once_and_answers_editable_question(self):
         ai = MagicMock()
-        ai.ask.side_effect = ["First answer.", "Second answer."]
+        ai.load_llm.return_value = {"loading_seconds": 2.5}
+        ai.ask.return_value = "A short answer."
         factory = MagicMock(return_value=ai)
         output = io.StringIO()
         with patch.dict('sys.modules', {
             'codynick_ai': types.SimpleNamespace(CodyNickAI=factory),
-        }), patch('builtins.input', side_effect=['First?', 'Second?', 'exit']), \
-             contextlib.redirect_stdout(output):
+        }), contextlib.redirect_stdout(output):
             runpy.run_path(str(EXAMPLES / 'ask_local_ai.py'))
         ai.load_llm.assert_called_once_with()
-        self.assertEqual(ai.ask.call_count, 2)
+        ai.ask.assert_called_once_with("Explain an RGB LED in one short sentence.")
         ai.close.assert_called_once_with()
-        self.assertIn("AI is ready", output.getvalue())
+        self.assertIn("Local AI is ready after 2.5 seconds", output.getvalue())
 
     def execute(self, name, detections=None, failure=False, nodes=True):
         ai = MagicMock()
@@ -251,7 +251,7 @@ class ExampleTests(unittest.TestCase):
         with patch.dict("sys.modules", modules), contextlib.redirect_stdout(output):
             script = runpy.run_path(str(EXAMPLES / "voice_led_colors.py"))
             script["main"]()
-        ai.load_app.assert_called_once_with("stt", model="small", language="en")
+        ai.load_stt.assert_called_once_with(model="small", language="en")
         ai.listen.assert_called_once()
         self.assertEqual(matrix.set.call_count, 16)
         self.assertEqual(matrix.set.call_args.args[2], "#00FF00")
@@ -263,7 +263,7 @@ class ExampleTests(unittest.TestCase):
 
     def test_voice_demo_releases_resources_after_failure(self):
         ai = MagicMock()
-        ai.load_app.side_effect = RuntimeError("speech failure")
+        ai.load_stt.side_effect = RuntimeError("speech failure")
         cody = MagicMock()
         cody.ensure_connected.return_value = True
         matrix = MagicMock()
@@ -372,6 +372,7 @@ class ExampleTests(unittest.TestCase):
         self.assertIn("No speech for 10 seconds", source)
         self.assertIn('if topic == "sleep":', source)
         self.assertIn("while True:\n                listening_effect(cody)", source)
+        self.assertIn('ai.load_stt(model="small", language="en")', source)
 
 
 if __name__ == '__main__':
