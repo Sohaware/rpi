@@ -1,8 +1,10 @@
 {
   "devicename": "CodyNick",
   "serial_number": "unknown",
-  "production_date": "2026-10-06",
-  "software_version": "0.9.1",
+  "device_code": "unknown",
+  "hotspot_ssid": "unknown",
+  "production_date": "2026-10-11",
+  "software_version": "0.9.2",
   "description": "None",
   "support_link": "https://support.codynick.com"
 }

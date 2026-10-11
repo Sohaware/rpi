@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.9.2-reliable-upgrades - Resilient updates and synchronized identity
+
+- Disables automatic Ubuntu package updates and safely waits for package locks.
+- Repairs interrupted DPKG state and corrupted Perl/Debconf files before installation.
+- Adds persistent installer logs plus `codynick-install-status` and `codynick-install-log`.
+- Synchronizes device code and hotspot SSID with the web panel through public network state.
+- Adds the tested CodyJoy Pro HEX-programming guide to offline documentation.
+
 ## 0.9.1-hotspot-fix - Ubuntu 26.04 5 GHz compatibility
 
 - Accepts the decimal frequency format (`5180.0 MHz`) emitted by Ubuntu 26.04 `iw`.

@@ -5,14 +5,17 @@
 
 // JSON file path
 $jsonFile = "/device_info.json";
+$networkFile = "/var/lib/codynick/network-public.json";
 
 // Default values
 $device = [
     "devicename" => "CodyNick",
     "serial_number" => "unknown",
-    "production_date" => "2026-10-06",
-    "description" => "CodyNick 0.9.1",
-    "software_version" => "0.9.1",
+    "device_code" => "unknown",
+    "hotspot_ssid" => "unknown",
+    "production_date" => "2026-10-11",
+    "description" => "CodyNick 0.9.2",
+    "software_version" => "0.9.2",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];
@@ -23,6 +26,17 @@ if (file_exists($jsonFile)) {
 
     if (is_array($jsonData)) {
         $device = array_merge($device, $jsonData);
+    }
+}
+
+// Network identity is regenerated after cloning an SD image. Read its public,
+// non-secret state dynamically so this page cannot retain an old hotspot name.
+if (file_exists($networkFile)) {
+    $networkData = json_decode(file_get_contents($networkFile), true);
+    if (is_array($networkData)) {
+        $device["device_code"] = $networkData["device_code"] ?? $device["device_code"];
+        $device["serial_number"] = $device["device_code"];
+        $device["hotspot_ssid"] = $networkData["hotspot_ssid"] ?? $device["hotspot_ssid"];
     }
 }
 
@@ -281,8 +295,13 @@ function e($value) {
 
             <div class="info-grid">
                 <div class="info-box">
-                    <div class="label">Serial Number</div>
-                    <div class="value"><?php echo e($device["serial_number"]); ?></div>
+                    <div class="label">Device Code</div>
+                    <div class="value"><?php echo e($device["device_code"]); ?></div>
+                </div>
+
+                <div class="info-box">
+                    <div class="label">Hotspot SSID</div>
+                    <div class="value"><?php echo e($device["hotspot_ssid"]); ?></div>
                 </div>
 
                 <div class="info-box">

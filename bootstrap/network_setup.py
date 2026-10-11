@@ -13,8 +13,9 @@ import subprocess
 import sys
 import time
 
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 STATE = Path('/var/lib/codynick/network-setup.json')
+PUBLIC_STATE = Path('/var/lib/codynick/network-public.json')
 BASE = Path('/etc/codynick')
 SELF = '/usr/local/lib/codynick/network_setup.py'
 AP_ADDRESS = '10.42.0.1'
@@ -32,6 +33,17 @@ def run(*args, check=True, capture=False):
 def active(name):
     return run('systemctl', 'is-active', '--quiet', name, check=False).returncode == 0
 
+def disable_automatic_updates():
+    for unit in ('apt-daily.timer', 'apt-daily-upgrade.timer', 'unattended-upgrades.service'):
+        run('systemctl', 'disable', unit, check=False)
+        run('timeout', '90', 'systemctl', 'stop', unit, check=False)
+    for unit in ('apt-daily.service', 'apt-daily-upgrade.service'):
+        run('timeout', '90', 'systemctl', 'stop', unit, check=False)
+        run('systemctl', 'reset-failed', unit, check=False)
+    write('/etc/apt/apt.conf.d/20auto-upgrades',
+          'APT::Periodic::Update-Package-Lists "0";\n'
+          'APT::Periodic::Unattended-Upgrade "0";\n', 0o644)
+
 def write(path, text, mode=0o600):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -47,6 +59,17 @@ def load():
 
 def save(state):
     write(STATE, json.dumps(state, indent=2) + '\n')
+    public = {
+        'version': VERSION,
+        'device_code': state.get('hardware_serial', '')[-8:],
+        'hotspot_ssid': state.get('ssid', 'unknown'),
+        'band': state.get('band', 'unknown'),
+        'channel': state.get('channel'),
+        'frequency_mhz': state.get('frequency_mhz'),
+        'stage': state.get('stage', 'unknown'),
+        'reboot_required': bool(state.get('reboot_required', False)),
+    }
+    write(PUBLIC_STATE, json.dumps(public, indent=2) + '\n', 0o644)
 
 def snapshot(state, path):
     path = Path(path)
@@ -373,8 +396,11 @@ def prepare():
     ap, usb, wired = interfaces()
     if not wired and not usb:
         raise RuntimeError('Connect Ethernet or a supported USB Wi-Fi adapter first.')
-    run('apt-get', 'update')
-    run('apt-get', 'install', '-y', 'python3-yaml', 'curl', 'hostapd', 'dnsmasq-base',
+    disable_automatic_updates()
+    apt = ('apt-get', '-o', 'DPkg::Lock::Timeout=600', '-o', 'Acquire::Retries=5',
+           '-o', 'Acquire::ForceIPv4=true')
+    run(*apt, 'update')
+    run(*apt, 'install', '-y', 'python3-yaml', 'curl', 'hostapd', 'dnsmasq-base',
         'nftables', 'openssh-server', 'iw', 'net-tools')
     docs = configs()
     country = None

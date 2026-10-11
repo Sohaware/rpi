@@ -2,9 +2,9 @@
 # Stable public entry point. Every published update pins immutable stage scripts.
 set -euo pipefail
 umask 022
-VERSION="0.9.1"
-NETWORK_SHA256="3f0d2c1858c773fa251b734fc20aefb44a08851970d26fb6b9771a43190f2c8e"
-APPS_SHA256="640174f33eb429fac9f324f1f5fbca7a1e3190340fb54141ef643e87b7cbf289"
+VERSION="0.9.2"
+NETWORK_SHA256="256eb91d0907404d71e09ef1ec1ce237944aba777def3b8944d6061cded46c00"
+APPS_SHA256="94268bd12805f48bc920384b239be761fd5a3191a96d047663ce8707fce4998b"
 [[ $EUID -eq 0 ]] || { echo 'Run this setup command using sudo.'; exit 1; }
 echo "CodyNick setup ${VERSION}: install / repair / upgrade"
 exec 7>/run/lock/codynick-setup-entry.lock
@@ -22,7 +22,7 @@ p=pathlib.Path('/var/lib/codynick/network-setup.json')
 print(json.loads(p.read_text()).get('stage','') if p.exists() else '')
 PY
 }
-fetch network.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.9.1-hotspot-fix/bootstrap/codynick-setup.sh "$NETWORK_SHA256"
+fetch network.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.9.2-reliable-upgrades/bootstrap/codynick-setup.sh "$NETWORK_SHA256"
 state=$(stage)
 initial_state=$state
 if [[ "$state" != network-ready ]]; then
@@ -47,9 +47,9 @@ for service in ssh codynick-ap codynick-dhcp codynick-nat; do
         systemctl start "$service" || { echo "Network service $service needs recovery; application installation was not started."; exit 1; }
     fi
 done
-fetch apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.9.1-hotspot-fix/bootstrap/codynick-apps.sh "$APPS_SHA256"
+fetch apps.sh https://raw.githubusercontent.com/Sohaware/rpi/v0.9.2-reliable-upgrades/bootstrap/codynick-apps.sh "$APPS_SHA256"
 bash "$temp/apps.sh"
-echo 'Progress follows. Ctrl+C closes this display only; background installation continues.'
+echo 'Progress follows from the persistent CodyNick log. Ctrl+C closes this display only.'
 flock -u 7
 exec 7>&-
-journalctl -fu codynick-install
+exec /usr/local/bin/codynick-install-log --follow

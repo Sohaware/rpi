@@ -36,7 +36,7 @@ elif cmd=='network':
 elif cmd=='codynick-setup': state.write_text(json.dumps({'stage':'network-ready'}))
 elif cmd=='systemctl' and os.environ.get('MISSING_SERVICE')=='1': raise SystemExit(1)
 '''
-        for name in ('control', 'wget', 'systemctl', 'journalctl', 'codynick-setup'):
+        for name in ('control', 'wget', 'systemctl', 'codynick-setup', 'codynick-install-log'):
             path=self.bin/name; path.write_text(control); path.chmod(0o755)
         for name in ('network', 'apps'):
             (self.root/(name+'.sh')).write_text('#!/bin/bash\n"$FAKE_ROOT/bin/control" '+name+' "$@"\n')
@@ -45,6 +45,7 @@ elif cmd=='systemctl' and os.environ.get('MISSING_SERVICE')=='1': raise SystemEx
         script=script.replace('/run/lock/', str(self.root)+'/')
         script=script.replace('/var/lib/codynick/network-setup.json', str(self.state))
         script=script.replace('/usr/local/sbin/codynick-setup', str(self.bin/'codynick-setup'))
+        script=script.replace('/usr/local/bin/codynick-install-log', str(self.bin/'codynick-install-log'))
         for key,name in (('NETWORK','network'),('APPS','apps')):
             digest=hashlib.sha256((self.root/(name+'.sh')).read_bytes()).hexdigest()
             script=re.sub(key+r'_SHA256="[^"]+"',key+'_SHA256="'+digest+'"',script)

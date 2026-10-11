@@ -10,15 +10,17 @@ import platform
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.request
 
-VERSION = "0.9.1"
-TAG = "v0.9.1-hotspot-fix"
-RELEASE_DATE = "2026-10-07"
+VERSION = "0.9.2"
+TAG = "v0.9.2-reliable-upgrades"
+RELEASE_DATE = "2026-10-11"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
+NETWORK_PUBLIC = Path("/var/lib/codynick/network-public.json")
 # Student code uses the image-matched controller runtime; old core envs are retained.
 VENV = Path("/home/client/.codynick-ai/envs/controller")
 SERVICES = ("ssh", "codynick-ap", "codynick-dhcp", "codynick-nat")
@@ -29,7 +31,9 @@ GADGET_TESTS_ROOT = Path("/home/client/CodyNick Gadget Tests")
 
 def run(*args, **kwargs):
     print("+", " ".join(str(a) for a in args), flush=True)
-    return subprocess.run([str(a) for a in args], check=True, umask=0o022, **kwargs)
+    kwargs.setdefault("check", True)
+    kwargs.setdefault("umask", 0o022)
+    return subprocess.run([str(a) for a in args], **kwargs)
 
 
 def read_json(path):
@@ -62,6 +66,78 @@ def save_state(stage, **extra):
     # This state contains release metadata, not credentials, and powers the
     # administrator-facing version command.
     write(STATE, json.dumps(data, indent=2) + "\n", 0o644)
+
+
+def set_operation(name):
+    save_state("installing", operation=name)
+    print(f"\n[{datetime.datetime.now().isoformat(timespec='seconds')}] {name}", flush=True)
+
+
+def disable_automatic_updates():
+    set_operation("Disabling automatic Ubuntu package updates")
+    for unit in ("apt-daily.timer", "apt-daily-upgrade.timer", "unattended-upgrades.service"):
+        run("systemctl", "disable", unit, check=False)
+        run("timeout", "90", "systemctl", "stop", unit, check=False)
+    for unit in ("apt-daily.service", "apt-daily-upgrade.service"):
+        run("timeout", "90", "systemctl", "stop", unit, check=False)
+        run("systemctl", "reset-failed", unit, check=False)
+    write("/etc/apt/apt.conf.d/20auto-upgrades", """APT::Periodic::Update-Package-Lists "0";
+APT::Periodic::Unattended-Upgrade "0";
+""")
+
+
+def apt_run(*args, check=True):
+    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive", NEEDRESTART_MODE="l")
+    return run(
+        "apt-get", "-o", "DPkg::Lock::Timeout=600", "-o", "Acquire::Retries=5",
+        "-o", "Acquire::ForceIPv4=true", *args, env=env, check=check,
+    )
+
+
+def package_preflight():
+    disable_automatic_updates()
+    set_operation("Checking package-manager integrity")
+    verify = run("dpkg", "--verify", "perl-base", capture_output=True, text=True, check=False)
+    debconf = run(
+        "env", "DEBIAN_FRONTEND=noninteractive", "/usr/share/debconf/frontend", "/bin/true",
+        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+    )
+    damaged_perl = any("/usr/bin/perl" in line for line in verify.stdout.splitlines())
+    if damaged_perl or debconf.returncode:
+        with tempfile.TemporaryDirectory(prefix="codynick-package-repair-") as temp:
+            apt_env = dict(os.environ, DEBIAN_FRONTEND="noninteractive")
+            run("apt-get", "-o", "Acquire::Retries=5", "-o", "Acquire::ForceIPv4=true",
+                "download", "perl-base", "debconf", cwd=temp, env=apt_env)
+            packages = [*sorted(Path(temp).glob("perl-base_*.deb")),
+                        *sorted(Path(temp).glob("debconf_*.deb"))]
+            if len(packages) != 2:
+                raise RuntimeError("Could not download verified Perl/Debconf repair packages")
+            run("dpkg", "--unpack", *packages)
+        debconf = run(
+            "env", "DEBIAN_FRONTEND=noninteractive", "/usr/share/debconf/frontend", "/bin/true",
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False,
+        )
+        if debconf.returncode:
+            raise RuntimeError("Debconf still fails after repairing Perl and Debconf")
+    run("dpkg", "--configure", "-a")
+    apt_run("-f", "install", "-y")
+
+
+def install_packages(packages):
+    set_operation("Updating Ubuntu package indexes")
+    apt_run("update")
+    set_operation("Installing required Ubuntu packages")
+    for attempt in range(1, 3):
+        try:
+            apt_run("install", "-y", *packages)
+            return
+        except subprocess.CalledProcessError:
+            run("pkill", "-TERM", "-f", "/usr/share/apport/apport", check=False)
+            if attempt == 2:
+                raise
+            print("Package installation was interrupted; repairing package state and retrying.", flush=True)
+            run("dpkg", "--configure", "-a")
+            apt_run("-f", "install", "-y")
 
 
 def verify_manifest(manifest):
@@ -143,7 +219,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", "0.9.1", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -319,6 +395,28 @@ def configure_teacher_access():
     password_file.chmod(0o640)
 
 
+def sync_device_info():
+    info = Path("/device_info.json")
+    device = read_json(info)
+    network = read_json(NETWORK)
+    public_network = read_json(NETWORK_PUBLIC)
+    code = public_network.get("device_code", network.get("hardware_serial", "")[-8:] or "unknown")
+    ssid = public_network.get("hotspot_ssid", network.get("ssid", "unknown"))
+    device.setdefault("devicename", "CodyNick")
+    device.setdefault("support_link", "https://support.codynick.com")
+    device.setdefault("logo_path", "/assets/logo.png")
+    device.update(
+        serial_number=code,
+        device_code=code,
+        hotspot_ssid=ssid,
+        description=f"CodyNick core {VERSION}",
+        production_date=RELEASE_DATE,
+        software_version=VERSION,
+    )
+    write(info, json.dumps(device, indent=2) + "\n")
+    return code, ssid
+
+
 def health_check():
     import ocr_setup
     import vision_setup
@@ -347,6 +445,9 @@ def health_check():
         raise RuntimeError("Main page does not show the current CodyNick version")
     if RELEASE_DATE not in root_page:
         raise RuntimeError("Main page does not show the current release date")
+    expected_ssid = read_json(NETWORK).get("ssid")
+    if expected_ssid and expected_ssid not in root_page:
+        raise RuntimeError("Main page does not show the current hotspot SSID")
     teacher_status = subprocess.run(
         ["curl", "--silent", "--output", "/dev/null", "--write-out", "%{http_code}",
          "--max-time", "20", "http://127.0.0.1/teachers/"],
@@ -370,13 +471,13 @@ def install():
     backup = Path("/var/backups/codynick") / ("core-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"))
     backup.mkdir(parents=True, mode=0o700)
     save_state("installing", backup=str(backup), components=manifest["components"])
-    env = dict(os.environ, DEBIAN_FRONTEND="noninteractive", NEEDRESTART_MODE="l")
-    run("apt-get", "update", env=env)
-    run("apt-get", "install", "-y", "apache2", "apache2-utils", "libapache2-mod-php", "php-mysql", "php-mbstring",
+    package_preflight()
+    install_packages(("apache2", "apache2-utils", "libapache2-mod-php", "php-mysql", "php-mbstring",
         "mariadb-server", "python3-venv", "python3-pip", "python3-requests", "python3-serial", "curl", "net-tools", "acl",
         "v4l-utils", "libgomp1", "libglib2.0-0t64", "libgl1",
         "alsa-utils", "ffmpeg", "espeak-ng", "libsndfile1",
-        "tesseract-ocr", "tesseract-ocr-eng", env=env)
+        "tesseract-ocr", "tesseract-ocr-eng"))
+    set_operation("Preparing CodyNick accounts and services")
     prepare_accounts()
     configure_database()
     repair_web_access()
@@ -405,23 +506,18 @@ def install():
         for item in folder.iterdir():
             if item.is_file() and not item.is_symlink():
                 run("chown", "www-data:www-data", item)
-    info = Path("/device_info.json")
-    device = read_json(info)
-    device.setdefault("devicename", "CodyNick")
-    device.setdefault("serial_number", read_json(NETWORK).get("ssid", "unknown"))
-    device.setdefault("support_link", "https://support.codynick.com")
-    device.setdefault("logo_path", "/assets/logo.png")
-    device.update(description=f"CodyNick core {VERSION}", production_date=RELEASE_DATE,
-                  software_version=VERSION)
-    write(info, json.dumps(device, indent=2) + "\n")
+    set_operation("Synchronizing device identity and web applications")
+    network = read_json(NETWORK)
+    sync_device_info()
     configure_teacher_access()
     install_units()
+    set_operation("Running final CodyNick health checks")
     health_check()
     save_state("ready", completed_version=VERSION, ai_installed=True,
                ai_scope=["usb-camera", "yolo", "speech-to-text", "voice-commands",
                          "ocr-en", "tts-en", "saved-audio-playback",
                          "offline-voice-conversation", "local-llm",
-                         "local-ai-voice-conversation"])
+                         "local-ai-voice-conversation"], operation="Complete", reboot_required=bool(network.get("reboot_required")))
     run("/usr/local/bin/codynick-version")
     print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/"
           "\nUSB vision, English STT/OCR/TTS, local Gemma LLM: runtime/model checks passed"

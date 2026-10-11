@@ -52,6 +52,15 @@ class NetworkTests(unittest.TestCase):
             run.return_value.returncode = 7
             self.assertFalse(m.internet('wlx123'))
 
+    def test_automatic_updates_are_disabled_before_network_packages(self):
+        with patch.object(m, 'run') as run, patch.object(m, 'write') as write:
+            m.disable_automatic_updates()
+        calls = [call.args for call in run.call_args_list]
+        self.assertIn(('systemctl', 'disable', 'apt-daily.timer'), calls)
+        self.assertIn(('systemctl', 'disable', 'apt-daily-upgrade.timer'), calls)
+        self.assertIn(('systemctl', 'disable', 'unattended-upgrades.service'), calls)
+        self.assertEqual(write.call_args.args[0], '/etc/apt/apt.conf.d/20auto-upgrades')
+
     def test_working_dongle_is_not_reconfigured(self):
         state = dict(usb=['wlx123'], country='AE')
         docs = {Path('/etc/netplan/90-codynick-usb.yaml'):
@@ -114,6 +123,21 @@ class NetworkTests(unittest.TestCase):
                 p.write_text('changed')
                 m.snapshot(state, p)
                 self.assertEqual(cp.call_count, 1)
+
+    def test_save_publishes_current_non_secret_identity(self):
+        state = {
+            'hardware_serial': '10000000abcdef12', 'ssid': 'codynick-abcdef12',
+            'band': '5 GHz', 'channel': 44, 'frequency_mhz': 5220,
+            'stage': 'network-ready', 'reboot_required': False,
+        }
+        with patch.object(m, 'write') as write:
+            m.save(state)
+        self.assertEqual(write.call_args_list[1].args[0], m.PUBLIC_STATE)
+        public = __import__('json').loads(write.call_args_list[1].args[1])
+        self.assertEqual(public['device_code'], 'abcdef12')
+        self.assertEqual(public['hotspot_ssid'], 'codynick-abcdef12')
+        self.assertNotIn('password', public)
+        self.assertEqual(write.call_args_list[1].args[2], 0o644)
 
     def test_rollback_does_nothing_after_confirmation(self):
         with patch.object(m, 'load', return_value={'stage': 'network-ready'}), patch.object(m, 'run') as run:
