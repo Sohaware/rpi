@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.3-dashboard-styles - Dashboard typography and new demos
+
+- Adds optional font size, offline font name, horizontal alignment, and vertical alignment to every dashboard card.
+- Migrates existing dashboard tables without changing the appearance or values of existing cards.
+- Adds a styled live counter under `CodyNick examples/dashboard`.
+- Adds the live LED-matrix temperature and RGB color demonstration.
+
 ## 0.9.2-reliable-upgrades - Resilient updates and synchronized identity
 
 - Disables automatic Ubuntu package updates and safely waits for package locks.

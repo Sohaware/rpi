@@ -118,15 +118,18 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    font-family: var(--widget-font-family, inherit);
 }
 
 .card-body {
     flex: 1;
     min-height: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: var(--widget-horizontal-flex, center);
+    justify-content: var(--widget-vertical-flex, center);
     flex-direction: column;
+    text-align: var(--widget-text-align, center);
+    font-family: var(--widget-font-family, inherit);
 }
 
 .card-description {
@@ -139,10 +142,11 @@ body {
 }
 
 .value-text {
-    font-size: 20px;
+    font-size: var(--widget-font-size, 20px);
     font-weight: 700;
     margin-top: 10px;
-    text-align: center;
+    text-align: var(--widget-text-align, center);
+    font-family: var(--widget-font-family, inherit);
 }
 
 .small-note {
@@ -212,12 +216,23 @@ body {
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px;
-    font-size: 15px;
+    font-size: var(--widget-font-size, 15px);
     outline: none;
-    font-family: inherit;
+    font-family: var(--widget-font-family, inherit);
     background: #fff;
+    text-align: var(--widget-text-align, left);
 }
-.dash-info { background: #f9fafb; color: #374151; }
+.dash-info {
+    background: #f9fafb;
+    color: #374151;
+    display: flex;
+    flex-direction: column;
+    justify-content: var(--widget-vertical-flex, flex-start);
+    align-items: stretch;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
 .dash-textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-soft); }
 
 /* Button and switch */
@@ -229,7 +244,8 @@ body {
     border-radius: 14px;
     color: white;
     background: var(--blue);
-    font-size: 17px;
+    font-size: var(--widget-font-size, 17px);
+    font-family: var(--widget-font-family, inherit);
     font-weight: 700;
     cursor: pointer;
 }
@@ -276,7 +292,7 @@ body {
 .card-blue .dash-switch-on { background: var(--blue); }
 .card-yellow .dash-switch-on { background: var(--yellow); }
 .dash-switch-on::after { transform: translateX(44px); }
-.switch-state { font-size: 13px; color: var(--muted); font-weight: 700; }
+.switch-state { font-size: var(--widget-font-size, 13px); color: var(--muted); font-weight: 700; }
 
 /* Slider */
 .dash-slider { width: 100%; cursor: pointer; }
@@ -331,7 +347,8 @@ body {
 .data-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: var(--widget-font-size, 13px);
+    font-family: var(--widget-font-family, inherit);
 }
 .data-table th, .data-table td {
     padding: 7px 8px;
@@ -421,6 +438,48 @@ function normalizeColor(color) {
     return ['red', 'green', 'blue', 'yellow'].includes(color) ? color : 'blue';
 }
 
+function widgetStyle(card) {
+    const fonts = {
+        'Arial': 'Arial, sans-serif',
+        'Verdana': 'Verdana, sans-serif',
+        'Tahoma': 'Tahoma, sans-serif',
+        'Georgia': 'Georgia, serif',
+        'Courier New': 'Courier New, monospace',
+        'monospace': 'monospace'
+    };
+    const horizontal = {
+        left: ['left', 'flex-start'],
+        center: ['center', 'center'],
+        right: ['right', 'flex-end']
+    };
+    const vertical = { top: 'flex-start', center: 'center', bottom: 'flex-end' };
+    const declarations = [];
+    const size = Number(card.font_size);
+
+    if (Number.isFinite(size) && size >= 12 && size <= 96) {
+        declarations.push(`--widget-font-size:${Math.round(size)}px`);
+    }
+    if (fonts[card.font_name]) {
+        declarations.push(`--widget-font-family:${fonts[card.font_name]}`);
+    }
+    if (horizontal[card.horizontal_alignment]) {
+        declarations.push(`--widget-text-align:${horizontal[card.horizontal_alignment][0]}`);
+        declarations.push(`--widget-horizontal-flex:${horizontal[card.horizontal_alignment][1]}`);
+    }
+    if (vertical[card.vertical_alignment]) {
+        declarations.push(`--widget-vertical-flex:${vertical[card.vertical_alignment]}`);
+    }
+    return declarations.join(';');
+}
+
+function canvasFont(cardEl) {
+    const styles = getComputedStyle(cardEl);
+    const requested = parseFloat(styles.getPropertyValue('--widget-font-size'));
+    const size = Number.isFinite(requested) ? Math.min(requested, 18) : 11;
+    const family = styles.getPropertyValue('--widget-font-family').trim() || 'Arial, sans-serif';
+    return `${size}px ${family}`;
+}
+
 function numeric(value, fallback = 0) {
     const n = parseFloat(value);
     return Number.isFinite(n) ? n : fallback;
@@ -461,9 +520,10 @@ function renderCardShell(card) {
     const title = escapeHtml(card.title || `Card ${id}`);
     const description = card.description ? `<div class="card-description">${escapeHtml(card.description)}</div>` : '';
     const isValid = card.valid !== false;
+    const style = escapeHtml(widgetStyle(card));
 
     return `
-        <div class="card ${isValid ? `card-${color}` : 'card-error'}" data-card-id="${id}" data-card-type="${escapeHtml(type)}">
+        <div class="card ${isValid ? `card-${color}` : 'card-error'}" data-card-id="${id}" data-card-type="${escapeHtml(type)}"${style ? ` style="${style}"` : ''}>
             <div class="card-title">${title}</div>
             <div class="card-body">${renderCardBody(card)}</div>
             ${description}
@@ -521,7 +581,7 @@ function renderCardBody(card) {
     }
 
     if (type === 'info') {
-        return `<textarea class="dash-info" data-role="info" readonly>${escapeHtml(value)}</textarea>`;
+        return `<div class="dash-info" data-role="info">${escapeHtml(value)}</div>`;
     }
 
     if (type === 'button') {
@@ -666,7 +726,7 @@ function updateCardValues(card) {
 
     if (type === 'info') {
         const info = cardEl.querySelector('[data-role="info"]');
-        if (info) info.value = value;
+        if (info) info.textContent = value;
     }
 
     if (type === 'button') {
@@ -790,7 +850,7 @@ function drawGraph(cardEl, rawValue) {
     const w = canvas.width;
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
-    ctx.font = '11px Arial';
+    ctx.font = canvasFont(cardEl);
     ctx.textBaseline = 'middle';
 
     let seriesList = [];
@@ -944,7 +1004,7 @@ function drawBarChart(cardEl, rawValue) {
     const w = canvas.width;
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
-    ctx.font = '11px Arial';
+    ctx.font = canvasFont(cardEl);
     ctx.textBaseline = 'middle';
 
     let items = [];
@@ -1034,7 +1094,7 @@ function drawPieChart(cardEl, rawValue) {
     const w = canvas.width;
     const h = canvas.height;
     ctx.clearRect(0, 0, w, h);
-    ctx.font = '11px Arial';
+    ctx.font = canvasFont(cardEl);
     ctx.textBaseline = 'middle';
 
     let items = [];

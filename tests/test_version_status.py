@@ -20,14 +20,19 @@ class VersionStatusTests(unittest.TestCase):
             examples = Path(temp)
             current = examples / "current.py"
             modified = examples / "modified.py"
+            nested = examples / "dashboard" / "nested.py"
+            nested.parent.mkdir()
             current.write_text("current")
             modified.write_text("changed")
+            nested.write_text("nested")
             (examples / "extra.py").write_text("unexpected")
             manifest = {"files": {
                 "components/examples/current.py": hashlib.sha256(
                     current.read_bytes()).hexdigest(),
                 "components/examples/modified.py": "a" * 64,
                 "components/examples/missing.py": "b" * 64,
+                "components/examples/dashboard/nested.py": hashlib.sha256(
+                    nested.read_bytes()).hexdigest(),
                 "components/client/CodyNick.py": "c" * 64,
             }}
             with patch.object(status, "EXAMPLES", examples):
@@ -35,6 +40,7 @@ class VersionStatusTests(unittest.TestCase):
                            for item in status.example_statuses(manifest)}
         self.assertEqual(results, {
             "current.py": "current",
+            "dashboard/nested.py": "current",
             "extra.py": "unexpected",
             "missing.py": "missing",
             "modified.py": "modified",

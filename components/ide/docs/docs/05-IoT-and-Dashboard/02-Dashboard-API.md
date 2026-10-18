@@ -51,6 +51,10 @@ card = Dashboard.Card(
     max_value=None,
     value=None,
     description=None,
+    font_size=None,
+    font_name=None,
+    horizontal_alignment=None,
+    vertical_alignment=None,
     auto_delete=True,
 )
 ```
@@ -64,6 +68,10 @@ card = Dashboard.Card(
 | `max_value` | Upper gauge/slider limit |
 | `value` | Initial scalar, boolean, text, list, or dictionary |
 | `description` | Optional text below the title |
+| `font_size` | Optional widget text size from `12` to `96` pixels |
+| `font_name` | `Arial`, `Verdana`, `Tahoma`, `Georgia`, `Courier New`, or `monospace` |
+| `horizontal_alignment` | `left`, `center`, or `right` |
+| `vertical_alignment` | `top`, `center`, or `bottom` |
 | `auto_delete` | Delete the database row when the Python object is destroyed |
 
 Construction immediately inserts a database row and sets `card.id` to its integer ID.
@@ -71,8 +79,31 @@ Unknown types/colors are stored but may not render usefully.
 
 ## Card attributes
 
-`id`, `type`, `title`, `color`, `min_value`, `max_value`, `value`, `description`, and
+`id`, `type`, `title`, `color`, `min_value`, `max_value`, `value`, `description`,
+`font_size`, `font_name`, `horizontal_alignment`, `vertical_alignment`, and
 `auto_delete` are public. Changing an attribute only changes memory until `save()`.
+
+## Widget typography and alignment
+
+All card types accept the four optional style settings. Existing cards keep their
+original appearance because omitted settings remain `None`. Chart label sizes are
+limited to 18 pixels so labels continue to fit inside their fixed canvas.
+
+```python
+counter = Dashboard.Card(
+    "info",
+    "Counter",
+    color="green",
+    value=0,
+    font_size=64,
+    font_name="Arial",
+    horizontal_alignment="center",
+    vertical_alignment="center"
+)
+```
+
+The dashboard rejects unsupported fonts and alignments and constrains font sizes to
+the supported range. All listed fonts are available without an Internet connection.
 
 ## Card methods
 

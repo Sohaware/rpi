@@ -43,6 +43,10 @@ CREATE TABLE iot_cards (
     max_value FLOAT DEFAULT 100,
     value TEXT DEFAULT NULL,
     description TEXT DEFAULT NULL,
+    font_size SMALLINT DEFAULT NULL,
+    font_name VARCHAR(50) DEFAULT NULL,
+    horizontal_alignment VARCHAR(10) DEFAULT NULL,
+    vertical_alignment VARCHAR(10) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -54,6 +58,15 @@ ORDER BY id ASC
 ```
 
 So the display order is the database insertion order unless you manually change IDs or later add a custom order column.
+
+## Typography and alignment
+
+Every card can optionally set `font_size` (`12` to `96`), `font_name` (`Arial`,
+`Verdana`, `Tahoma`, `Georgia`, `Courier New`, or `monospace`),
+`horizontal_alignment` (`left`, `center`, or `right`), and `vertical_alignment`
+(`top`, `center`, or `bottom`). Null values preserve the original card appearance.
+The API sanitizes these values before they reach CSS. Chart labels use the selected
+font but cap their size at 18 pixels so they remain readable inside the canvas.
 
 ## Supported Card Types
 

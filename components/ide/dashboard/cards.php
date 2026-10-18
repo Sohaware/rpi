@@ -69,6 +69,10 @@ function ensure_schema(PDO $pdo): void {
             `max_value` FLOAT DEFAULT 100,
             `value` TEXT DEFAULT NULL,
             `description` TEXT DEFAULT NULL,
+            `font_size` SMALLINT DEFAULT NULL,
+            `font_name` VARCHAR(50) DEFAULT NULL,
+            `horizontal_alignment` VARCHAR(10) DEFAULT NULL,
+            `vertical_alignment` VARCHAR(10) DEFAULT NULL,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         return;
@@ -85,6 +89,22 @@ function ensure_schema(PDO $pdo): void {
 
     if (!column_exists($pdo, $cards_table, 'description')) {
         $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `description` TEXT DEFAULT NULL AFTER `value`");
+    }
+
+    if (!column_exists($pdo, $cards_table, 'font_size')) {
+        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `font_size` SMALLINT DEFAULT NULL AFTER `description`");
+    }
+
+    if (!column_exists($pdo, $cards_table, 'font_name')) {
+        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `font_name` VARCHAR(50) DEFAULT NULL AFTER `font_size`");
+    }
+
+    if (!column_exists($pdo, $cards_table, 'horizontal_alignment')) {
+        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `horizontal_alignment` VARCHAR(10) DEFAULT NULL AFTER `font_name`");
+    }
+
+    if (!column_exists($pdo, $cards_table, 'vertical_alignment')) {
+        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `vertical_alignment` VARCHAR(10) DEFAULT NULL AFTER `horizontal_alignment`");
     }
 
     // If the old table used ENUM color values, convert to VARCHAR so yellow and future colors work.
@@ -119,6 +139,31 @@ function normalize_color(?string $color): string {
     $color = strtolower(trim((string)$color));
     $allowed = ['red', 'green', 'blue', 'yellow'];
     return in_array($color, $allowed, true) ? $color : 'blue';
+}
+
+function normalize_font_size($fontSize): ?int {
+    if ($fontSize === null || $fontSize === '' || !is_numeric($fontSize)) {
+        return null;
+    }
+    return max(12, min(96, (int)$fontSize));
+}
+
+function normalize_font_name(?string $fontName): ?string {
+    $fonts = [
+        'arial' => 'Arial',
+        'verdana' => 'Verdana',
+        'tahoma' => 'Tahoma',
+        'georgia' => 'Georgia',
+        'courier new' => 'Courier New',
+        'monospace' => 'monospace',
+    ];
+    $key = strtolower(trim((string)$fontName));
+    return $key === '' ? null : ($fonts[$key] ?? null);
+}
+
+function normalize_alignment(?string $alignment, array $allowed): ?string {
+    $alignment = strtolower(trim((string)$alignment));
+    return in_array($alignment, $allowed, true) ? $alignment : null;
 }
 
 function validate_card(array $card): array {
@@ -251,13 +296,23 @@ function get_cards(): array {
     global $cards_table;
     $pdo = db();
 
-    $stmt = $pdo->query("SELECT id, type, title, color, min_value, max_value, value, description FROM `{$cards_table}` ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT id, type, title, color, min_value, max_value, value, description, font_size, font_name, horizontal_alignment, vertical_alignment FROM `{$cards_table}` ORDER BY id ASC");
     $cards = $stmt->fetchAll();
 
     foreach ($cards as &$card) {
         $validation = validate_card($card);
         $card['type'] = normalize_type($card['type']);
         $card['color'] = normalize_color($card['color']);
+        $card['font_size'] = normalize_font_size($card['font_size'] ?? null);
+        $card['font_name'] = normalize_font_name($card['font_name'] ?? null);
+        $card['horizontal_alignment'] = normalize_alignment(
+            $card['horizontal_alignment'] ?? null,
+            ['left', 'center', 'right']
+        );
+        $card['vertical_alignment'] = normalize_alignment(
+            $card['vertical_alignment'] ?? null,
+            ['top', 'center', 'bottom']
+        );
         $card['valid'] = $validation['valid'];
         $card['errors'] = $validation['errors'];
     }

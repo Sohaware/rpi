@@ -190,6 +190,7 @@ class AppTests(unittest.TestCase):
             {"version": "0.8.1", "stage": "ready"},
             {"version": "0.8.2", "stage": "ready"},
             {"version": "0.9.1", "stage": "failed"},
+            {"version": "0.9.2", "stage": "ready"},
         ):
             with self.subTest(previous=previous), \
                  patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
@@ -225,11 +226,11 @@ class AppTests(unittest.TestCase):
         self.assertEqual(saved["hotspot_ssid"], "codynick-abcdef12")
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.9.2.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.9.3.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(release_sha(ROOT / name), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.9.2.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py"), ("LLM", "installer/llm_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.9.3.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py"), ("LLM", "installer/llm_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, release_sha(ROOT / name))
 
@@ -265,7 +266,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.9.2.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.9.3.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
@@ -373,6 +374,44 @@ class AppTests(unittest.TestCase):
         for note in ("C6", "E6", "G6"):
             self.assertIn(f'play_until_done(cody, "{note}", 120)', source)
 
+    def test_new_temperature_and_dashboard_examples(self):
+        temperature = ROOT / "components/examples/temperature_on_ledmat.py"
+        source = temperature.read_text(encoding="utf-8")
+        compile(source, str(temperature), "exec")
+        self.assertIn("Temperature_Sensor.read(cody)", source)
+        self.assertIn('LED_Matrix.display_text(', source)
+        self.assertIn('"fast"', source)
+        self.assertIn("if temperature < 20:", source)
+        self.assertIn("elif temperature <= 30:", source)
+        self.assertIn("for led in range(16):", source)
+
+        dashboard = ROOT / "components/examples/dashboard/simple_dashboard_test.py"
+        source = dashboard.read_text(encoding="utf-8")
+        compile(source, str(dashboard), "exec")
+        self.assertIn('Dashboard.Card(', source)
+        self.assertIn('font_size=64', source)
+        self.assertIn('horizontal_alignment="center"', source)
+        self.assertIn('vertical_alignment="center"', source)
+        self.assertIn('time.sleep(2.5)', source)
+
+    def test_dashboard_style_schema_api_and_safe_rendering(self):
+        library = (ROOT / "components/client/Dashboard.py").read_text(encoding="utf-8")
+        api = (ROOT / "components/ide/dashboard/cards.php").read_text(encoding="utf-8")
+        page = (ROOT / "components/ide/dashboard/index.php").read_text(encoding="utf-8")
+        docs = (ROOT / "components/ide/docs/docs/05-IoT-and-Dashboard/02-Dashboard-API.md").read_text(encoding="utf-8")
+        for field in ("font_size", "font_name", "horizontal_alignment", "vertical_alignment"):
+            self.assertIn(field, library)
+            self.assertIn(field, api)
+            self.assertIn(field, page)
+            self.assertIn(field, docs)
+        self.assertIn("max(12, min(96", api)
+        self.assertIn("normalize_font_name", api)
+        self.assertIn("normalize_alignment", api)
+        self.assertIn("--widget-font-size", page)
+        self.assertIn("--widget-font-family", page)
+        self.assertIn("canvasFont(cardEl)", page)
+        self.assertIn("info.textContent = value", page)
+
     def test_codyjoy_led_sound_example_uses_approved_high_notes(self):
         example = ROOT / "components/examples/codyjoy_pro_led_sound_test.py"
         source = example.read_text(encoding="utf-8")
@@ -405,15 +444,15 @@ class AppTests(unittest.TestCase):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
         homepage = (ROOT / "components/ide/index.php").read_text(encoding="utf-8")
         self.assertIn('write(STATE, json.dumps(data, indent=2) + "\\n", 0o644)', installer)
-        self.assertIn('"software_version" => "0.9.2"', homepage)
-        self.assertIn('"production_date" => "2026-10-11"', homepage)
+        self.assertIn('"software_version" => "0.9.3"', homepage)
+        self.assertIn('"production_date" => "2026-10-18"', homepage)
         self.assertIn('"hotspot_ssid"', homepage)
         self.assertIn("network-public.json", homepage)
         self.assertNotIn("1675-01-01", homepage)
 
     def test_llm_release_is_pinned_and_installed(self):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
-        manifest = json.loads((ROOT / "releases/core-0.9.2.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.9.3.json").read_text())
         self.assertIn("llm_setup.install(manifest, run)", installer)
         self.assertIn("llm_setup.health_check(run)", installer)
         assets = {item["kind"]: item for item in manifest["llm_assets"]}

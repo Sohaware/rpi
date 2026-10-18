@@ -8,6 +8,7 @@ Main features:
 - Card.sync() reloads the card from MySQL.
 - Card.save() writes local property changes to MySQL.
 - Card properties can be accessed/modified directly, e.g. card.title = "New Title".
+- Cards support optional font size, font name, and horizontal/vertical alignment.
 - Card destructor removes the card from the database.
 - clear() truncates the iot_cards table.
 - Database and table are created automatically if they do not exist.
@@ -152,6 +153,10 @@ def ensure_table() -> None:
                     max_value FLOAT DEFAULT NULL,
                     value TEXT DEFAULT NULL,
                     description TEXT DEFAULT NULL,
+                    font_size SMALLINT DEFAULT NULL,
+                    font_name VARCHAR(50) DEFAULT NULL,
+                    horizontal_alignment VARCHAR(10) DEFAULT NULL,
+                    vertical_alignment VARCHAR(10) DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
@@ -164,6 +169,10 @@ def ensure_table() -> None:
                 "max_value": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN max_value FLOAT DEFAULT NULL AFTER min_value",
                 "value": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN value TEXT DEFAULT NULL AFTER max_value",
                 "description": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN description TEXT DEFAULT NULL AFTER value",
+                "font_size": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN font_size SMALLINT DEFAULT NULL AFTER description",
+                "font_name": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN font_name VARCHAR(50) DEFAULT NULL AFTER font_size",
+                "horizontal_alignment": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN horizontal_alignment VARCHAR(10) DEFAULT NULL AFTER font_name",
+                "vertical_alignment": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN vertical_alignment VARCHAR(10) DEFAULT NULL AFTER horizontal_alignment",
                 "created_at": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             }
 
@@ -227,6 +236,36 @@ def _normalize_color(color: Any) -> str:
     Keeps unknown colors, so the frontend can decide how to display them.
     """
     return str(color).strip().lower()
+
+
+def _normalize_font_size(font_size: Any) -> Optional[int]:
+    if font_size is None or font_size == "":
+        return None
+    try:
+        return max(12, min(96, int(font_size)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_font_name(font_name: Any) -> Optional[str]:
+    if font_name is None:
+        return None
+    fonts = {
+        "arial": "Arial",
+        "verdana": "Verdana",
+        "tahoma": "Tahoma",
+        "georgia": "Georgia",
+        "courier new": "Courier New",
+        "monospace": "monospace",
+    }
+    return fonts.get(str(font_name).strip().lower())
+
+
+def _normalize_alignment(alignment: Any, allowed: set) -> Optional[str]:
+    if alignment is None:
+        return None
+    alignment = str(alignment).strip().lower()
+    return alignment if alignment in allowed else None
 
 
 def _encode_value(value: Any) -> Optional[str]:
@@ -294,6 +333,10 @@ class Card:
         max_value: Optional[Union[int, float]] = None,
         value: Any = None,
         description: Optional[str] = None,
+        font_size: Optional[int] = None,
+        font_name: Optional[str] = None,
+        horizontal_alignment: Optional[str] = None,
+        vertical_alignment: Optional[str] = None,
         *,
         auto_delete: bool = True,
     ) -> None:
@@ -307,6 +350,14 @@ class Card:
         self.max_value = max_value
         self.value = value
         self.description = description
+        self.font_size = _normalize_font_size(font_size)
+        self.font_name = _normalize_font_name(font_name)
+        self.horizontal_alignment = _normalize_alignment(
+            horizontal_alignment, {"left", "center", "right"}
+        )
+        self.vertical_alignment = _normalize_alignment(
+            vertical_alignment, {"top", "center", "bottom"}
+        )
         self.auto_delete = auto_delete
 
         self._insert()
@@ -319,9 +370,10 @@ class Card:
                 cur.execute(
                     f"""
                     INSERT INTO `{_TABLE_NAME}`
-                        (type, title, color, min_value, max_value, value, description)
+                        (type, title, color, min_value, max_value, value, description,
+                         font_size, font_name, horizontal_alignment, vertical_alignment)
                     VALUES
-                        (%s, %s, %s, %s, %s, %s, %s)
+                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         self.type,
@@ -331,6 +383,10 @@ class Card:
                         self.max_value,
                         _encode_value(self.value),
                         self.description,
+                        self.font_size,
+                        self.font_name,
+                        self.horizontal_alignment,
+                        self.vertical_alignment,
                     ),
                 )
                 conn.commit()
@@ -357,7 +413,8 @@ class Card:
                 cur = conn.cursor(dictionary=True)
                 cur.execute(
                     f"""
-                    SELECT id, type, title, color, min_value, max_value, value, description
+                    SELECT id, type, title, color, min_value, max_value, value, description,
+                           font_size, font_name, horizontal_alignment, vertical_alignment
                     FROM `{_TABLE_NAME}`
                     WHERE id = %s
                     LIMIT 1
@@ -376,6 +433,10 @@ class Card:
                 self.max_value = row["max_value"]
                 self.value = _decode_value(row["value"])
                 self.description = row["description"]
+                self.font_size = row["font_size"]
+                self.font_name = row["font_name"]
+                self.horizontal_alignment = row["horizontal_alignment"]
+                self.vertical_alignment = row["vertical_alignment"]
 
                 return True
             finally:
@@ -397,6 +458,14 @@ class Card:
 
         self.type = _normalize_type(self.type)
         self.color = _normalize_color(self.color)
+        self.font_size = _normalize_font_size(self.font_size)
+        self.font_name = _normalize_font_name(self.font_name)
+        self.horizontal_alignment = _normalize_alignment(
+            self.horizontal_alignment, {"left", "center", "right"}
+        )
+        self.vertical_alignment = _normalize_alignment(
+            self.vertical_alignment, {"top", "center", "bottom"}
+        )
 
         ensure_table()
 
@@ -414,7 +483,11 @@ class Card:
                         min_value = %s,
                         max_value = %s,
                         value = %s,
-                        description = %s
+                        description = %s,
+                        font_size = %s,
+                        font_name = %s,
+                        horizontal_alignment = %s,
+                        vertical_alignment = %s
                     WHERE id = %s
                     """,
                     (
@@ -425,6 +498,10 @@ class Card:
                         self.max_value,
                         _encode_value(self.value),
                         self.description,
+                        self.font_size,
+                        self.font_name,
+                        self.horizontal_alignment,
+                        self.vertical_alignment,
                         self.id,
                     ),
                 )
