@@ -73,6 +73,7 @@ function ensure_schema(PDO $pdo): void {
             `font_name` VARCHAR(50) DEFAULT NULL,
             `horizontal_alignment` VARCHAR(10) DEFAULT NULL,
             `vertical_alignment` VARCHAR(10) DEFAULT NULL,
+            `column_span` SMALLINT DEFAULT 1,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         return;
@@ -105,6 +106,10 @@ function ensure_schema(PDO $pdo): void {
 
     if (!column_exists($pdo, $cards_table, 'vertical_alignment')) {
         $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `vertical_alignment` VARCHAR(10) DEFAULT NULL AFTER `horizontal_alignment`");
+    }
+
+    if (!column_exists($pdo, $cards_table, 'column_span')) {
+        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `column_span` SMALLINT DEFAULT 1 AFTER `vertical_alignment`");
     }
 
     // If the old table used ENUM color values, convert to VARCHAR so yellow and future colors work.
@@ -164,6 +169,10 @@ function normalize_font_name(?string $fontName): ?string {
 function normalize_alignment(?string $alignment, array $allowed): ?string {
     $alignment = strtolower(trim((string)$alignment));
     return in_array($alignment, $allowed, true) ? $alignment : null;
+}
+
+function normalize_column_span($columnSpan): int {
+    return is_numeric($columnSpan) ? max(1, min(4, (int)$columnSpan)) : 1;
 }
 
 function validate_card(array $card): array {
@@ -296,7 +305,7 @@ function get_cards(): array {
     global $cards_table;
     $pdo = db();
 
-    $stmt = $pdo->query("SELECT id, type, title, color, min_value, max_value, value, description, font_size, font_name, horizontal_alignment, vertical_alignment FROM `{$cards_table}` ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT id, type, title, color, min_value, max_value, value, description, font_size, font_name, horizontal_alignment, vertical_alignment, column_span FROM `{$cards_table}` ORDER BY id ASC");
     $cards = $stmt->fetchAll();
 
     foreach ($cards as &$card) {
@@ -313,6 +322,7 @@ function get_cards(): array {
             $card['vertical_alignment'] ?? null,
             ['top', 'center', 'bottom']
         );
+        $card['column_span'] = normalize_column_span($card['column_span'] ?? 1);
         $card['valid'] = $validation['valid'];
         $card['errors'] = $validation['errors'];
     }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.4-dashboard-layout - Responsive card widths and temperature history
+
+- Adds responsive `column_span=1..4` dashboard card widths.
+- Adds `dashboard/temperature_on_dashboard.py` with live temperature and a 20-reading history graph.
+
 ## 0.9.3-dashboard-styles - Dashboard typography and new demos
 
 - Adds optional font size, offline font name, horizontal alignment, and vertical alignment to every dashboard card.

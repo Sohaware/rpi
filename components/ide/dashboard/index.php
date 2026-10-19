@@ -105,6 +105,10 @@ body {
     overflow: hidden;
 }
 
+.card-span-2 { grid-column: span 2; }
+.card-span-3 { grid-column: span 3; }
+.card-span-4 { grid-column: span 4; }
+
 .card-red { border-top-color: var(--red); }
 .card-green { border-top-color: var(--green); }
 .card-blue { border-top-color: var(--blue); }
@@ -380,13 +384,20 @@ body {
     line-height: 1.4;
 }
 
-@media (max-width: 1200px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 900px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1200px) {
+    .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card-span-4 { grid-column: span 3; }
+}
+@media (max-width: 900px) {
+    .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card-span-3, .card-span-4 { grid-column: span 2; }
+}
 @media (max-width: 560px) {
     .header { padding: 12px 16px; }
     .header-title { font-size: 18px; }
     .container { padding: 16px; }
     .grid { grid-template-columns: 1fr; }
+    .card-span-2, .card-span-3, .card-span-4 { grid-column: span 1; }
     .card { height: 230px; min-height: 230px; }
 }
 </style>
@@ -521,9 +532,10 @@ function renderCardShell(card) {
     const description = card.description ? `<div class="card-description">${escapeHtml(card.description)}</div>` : '';
     const isValid = card.valid !== false;
     const style = escapeHtml(widgetStyle(card));
+    const columnSpan = Math.max(1, Math.min(4, Math.round(Number(card.column_span) || 1)));
 
     return `
-        <div class="card ${isValid ? `card-${color}` : 'card-error'}" data-card-id="${id}" data-card-type="${escapeHtml(type)}"${style ? ` style="${style}"` : ''}>
+        <div class="card card-span-${columnSpan} ${isValid ? `card-${color}` : 'card-error'}" data-card-id="${id}" data-card-type="${escapeHtml(type)}"${style ? ` style="${style}"` : ''}>
             <div class="card-title">${title}</div>
             <div class="card-body">${renderCardBody(card)}</div>
             ${description}

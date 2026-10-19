@@ -55,6 +55,7 @@ card = Dashboard.Card(
     font_name=None,
     horizontal_alignment=None,
     vertical_alignment=None,
+    column_span=1,
     auto_delete=True,
 )
 ```
@@ -72,6 +73,7 @@ card = Dashboard.Card(
 | `font_name` | `Arial`, `Verdana`, `Tahoma`, `Georgia`, `Courier New`, or `monospace` |
 | `horizontal_alignment` | `left`, `center`, or `right` |
 | `vertical_alignment` | `top`, `center`, or `bottom` |
+| `column_span` | Card width from `1` to `4` dashboard columns; responsive screens reduce it automatically |
 | `auto_delete` | Delete the database row when the Python object is destroyed |
 
 Construction immediately inserts a database row and sets `card.id` to its integer ID.
@@ -80,7 +82,7 @@ Unknown types/colors are stored but may not render usefully.
 ## Card attributes
 
 `id`, `type`, `title`, `color`, `min_value`, `max_value`, `value`, `description`,
-`font_size`, `font_name`, `horizontal_alignment`, `vertical_alignment`, and
+`font_size`, `font_name`, `horizontal_alignment`, `vertical_alignment`, `column_span`, and
 `auto_delete` are public. Changing an attribute only changes memory until `save()`.
 
 ## Widget typography and alignment
@@ -88,6 +90,9 @@ Unknown types/colors are stored but may not render usefully.
 All card types accept the four optional style settings. Existing cards keep their
 original appearance because omitted settings remain `None`. Chart label sizes are
 limited to 18 pixels so labels continue to fit inside their fixed canvas.
+
+Use `column_span=2`, `3`, or `4` for wide graphs and tables. On narrower screens,
+the dashboard automatically reduces the span so the page never needs horizontal scrolling.
 
 ```python
 counter = Dashboard.Card(

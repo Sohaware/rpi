@@ -47,6 +47,7 @@ CREATE TABLE iot_cards (
     font_name VARCHAR(50) DEFAULT NULL,
     horizontal_alignment VARCHAR(10) DEFAULT NULL,
     vertical_alignment VARCHAR(10) DEFAULT NULL,
+    column_span SMALLINT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -67,6 +68,8 @@ Every card can optionally set `font_size` (`12` to `96`), `font_name` (`Arial`,
 (`top`, `center`, or `bottom`). Null values preserve the original card appearance.
 The API sanitizes these values before they reach CSS. Chart labels use the selected
 font but cap their size at 18 pixels so they remain readable inside the canvas.
+Set `column_span` from `1` to `4` to make a card wider. The responsive layout
+automatically reduces wide cards to fit tablet and phone screens.
 
 ## Supported Card Types
 

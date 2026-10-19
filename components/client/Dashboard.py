@@ -157,6 +157,7 @@ def ensure_table() -> None:
                     font_name VARCHAR(50) DEFAULT NULL,
                     horizontal_alignment VARCHAR(10) DEFAULT NULL,
                     vertical_alignment VARCHAR(10) DEFAULT NULL,
+                    column_span SMALLINT DEFAULT 1,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
@@ -173,6 +174,7 @@ def ensure_table() -> None:
                 "font_name": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN font_name VARCHAR(50) DEFAULT NULL AFTER font_size",
                 "horizontal_alignment": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN horizontal_alignment VARCHAR(10) DEFAULT NULL AFTER font_name",
                 "vertical_alignment": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN vertical_alignment VARCHAR(10) DEFAULT NULL AFTER horizontal_alignment",
+                "column_span": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN column_span SMALLINT DEFAULT 1 AFTER vertical_alignment",
                 "created_at": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             }
 
@@ -268,6 +270,13 @@ def _normalize_alignment(alignment: Any, allowed: set) -> Optional[str]:
     return alignment if alignment in allowed else None
 
 
+def _normalize_column_span(column_span: Any) -> int:
+    try:
+        return max(1, min(4, int(column_span)))
+    except (TypeError, ValueError):
+        return 1
+
+
 def _encode_value(value: Any) -> Optional[str]:
     """
     Convert Python values to DB strings.
@@ -337,6 +346,7 @@ class Card:
         font_name: Optional[str] = None,
         horizontal_alignment: Optional[str] = None,
         vertical_alignment: Optional[str] = None,
+        column_span: int = 1,
         *,
         auto_delete: bool = True,
     ) -> None:
@@ -358,6 +368,7 @@ class Card:
         self.vertical_alignment = _normalize_alignment(
             vertical_alignment, {"top", "center", "bottom"}
         )
+        self.column_span = _normalize_column_span(column_span)
         self.auto_delete = auto_delete
 
         self._insert()
@@ -371,9 +382,10 @@ class Card:
                     f"""
                     INSERT INTO `{_TABLE_NAME}`
                         (type, title, color, min_value, max_value, value, description,
-                         font_size, font_name, horizontal_alignment, vertical_alignment)
+                         font_size, font_name, horizontal_alignment, vertical_alignment,
+                         column_span)
                     VALUES
-                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         self.type,
@@ -387,6 +399,7 @@ class Card:
                         self.font_name,
                         self.horizontal_alignment,
                         self.vertical_alignment,
+                        self.column_span,
                     ),
                 )
                 conn.commit()
@@ -414,7 +427,8 @@ class Card:
                 cur.execute(
                     f"""
                     SELECT id, type, title, color, min_value, max_value, value, description,
-                           font_size, font_name, horizontal_alignment, vertical_alignment
+                           font_size, font_name, horizontal_alignment, vertical_alignment,
+                           column_span
                     FROM `{_TABLE_NAME}`
                     WHERE id = %s
                     LIMIT 1
@@ -437,6 +451,7 @@ class Card:
                 self.font_name = row["font_name"]
                 self.horizontal_alignment = row["horizontal_alignment"]
                 self.vertical_alignment = row["vertical_alignment"]
+                self.column_span = _normalize_column_span(row["column_span"])
 
                 return True
             finally:
@@ -466,6 +481,7 @@ class Card:
         self.vertical_alignment = _normalize_alignment(
             self.vertical_alignment, {"top", "center", "bottom"}
         )
+        self.column_span = _normalize_column_span(self.column_span)
 
         ensure_table()
 
@@ -487,7 +503,8 @@ class Card:
                         font_size = %s,
                         font_name = %s,
                         horizontal_alignment = %s,
-                        vertical_alignment = %s
+                        vertical_alignment = %s,
+                        column_span = %s
                     WHERE id = %s
                     """,
                     (
@@ -502,6 +519,7 @@ class Card:
                         self.font_name,
                         self.horizontal_alignment,
                         self.vertical_alignment,
+                        self.column_span,
                         self.id,
                     ),
                 )
