@@ -2,7 +2,7 @@
 set -euo pipefail
 
 VERSION="0.2.2"
-REF="v0.9.6-dashboard-axes"
+REF="v0.9.7-restore-0.9.5"
 HELPER_SHA256="280a37caf40b4741cacd846c2457e2f4ad56c9d8f1158285a3975742b184667e"
 BASE_URL="https://raw.githubusercontent.com/Sohaware/rpi/$REF"
 

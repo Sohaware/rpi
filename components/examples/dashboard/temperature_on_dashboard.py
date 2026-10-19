@@ -24,17 +24,10 @@ history_card = Dashboard.Card(
     "Temperature History",
     color="blue",
     value=[],
-    column_span=3,
-    height_multiplier=2,
-    y_padding_percent=20,
-    x_axis_label="Sample",
-    y_axis_label="Temperature (°C)"
+    column_span=3
 )
 
 history = []
-
-CodyNick.Temperature_Sensor.read(cody)
-time.sleep(0.5)
 
 while True:
     temperature = CodyNick.Temperature_Sensor.read(cody)

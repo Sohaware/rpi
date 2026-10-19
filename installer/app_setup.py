@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """CodyNick core installer. Network configuration is owned by network_setup.py."""
 import argparse
+import ast
 import datetime
 import hashlib
 import json
@@ -14,8 +15,8 @@ import tempfile
 import time
 import urllib.request
 
-VERSION = "0.9.6"
-TAG = "v0.9.6-dashboard-axes"
+VERSION = "0.9.7"
+TAG = "v0.9.7-restore-0.9.5"
 RELEASE_DATE = "2026-10-19"
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
@@ -219,7 +220,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.6", VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -510,6 +511,7 @@ def install():
     network = read_json(NETWORK)
     sync_device_info()
     configure_teacher_access()
+    restore_rollback_demo(backup)
     install_units()
     set_operation("Running final CodyNick health checks")
     health_check()
@@ -531,6 +533,27 @@ def install():
           "\nTeacher guides: http://10.42.0.1/teachers/ (initial login teacher / codynick)"
           "\nFace features and chapter 8: NOT INSTALLED"
           "\nReboot if the network update reports that it is required.", flush=True)
+
+
+def restore_rollback_demo(backup, active=Path('/home/client/active_script.py'),
+                          example=EXAMPLES_ROOT / 'dashboard/temperature_on_dashboard.py'):
+    if not active.is_file():
+        return False
+    try:
+        fingerprint = hashlib.sha256(ast.dump(ast.parse(active.read_text(encoding='utf-8'))).encode()).hexdigest()
+    except (SyntaxError, UnicodeError):
+        return False
+    known_demos = {
+        '9461042eed972829fc68caf0927813f097709c5b1989a4f674495e01031442bb',
+        'f10d218ea92eca9a32e5dfdcc3ba5490247613a3f2a1267f760bb49a2a26b7a3',
+    }
+    if fingerprint not in known_demos:
+        return False
+    run('systemctl', 'stop', 'codynick', 'script')
+    deploy(example, active, backup)
+    repair_web_access()
+    print('Restored the active managed temperature demo to its 0.9.5 version.', flush=True)
+    return True
 
 
 def main():

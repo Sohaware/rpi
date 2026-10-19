@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.7-restore-0.9.5 - Restore the 0.9.5 application
+
+- Restores the application, dashboard API, graph rendering, examples, and references from 0.9.5.
+- Accepts installations recorded as 0.9.6 and keeps the standard setup command.
+- Backs up and restores the active temperature demo only when it matches the supplied 0.9.6 demo or its missing-reading guard variant.
+- Keeps student data, Git history, existing database columns, and release version tracking intact.
+
 ## 0.9.6-dashboard-axes - Configurable graph axes and card height
 
 - Adds `height_multiplier=1..3`, `y_padding_percent`, `x_axis_label`, and `y_axis_label` to dashboard cards.

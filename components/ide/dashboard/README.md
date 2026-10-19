@@ -48,10 +48,6 @@ CREATE TABLE iot_cards (
     horizontal_alignment VARCHAR(10) DEFAULT NULL,
     vertical_alignment VARCHAR(10) DEFAULT NULL,
     column_span SMALLINT DEFAULT 1,
-    height_multiplier SMALLINT DEFAULT 1,
-    y_padding_percent FLOAT DEFAULT 0,
-    x_axis_label VARCHAR(50) DEFAULT NULL,
-    y_axis_label VARCHAR(50) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
@@ -74,9 +70,6 @@ The API sanitizes these values before they reach CSS. Chart labels use the selec
 font but cap their size at 18 pixels so they remain readable inside the canvas.
 Set `column_span` from `1` to `4` to make a card wider. The responsive layout
 automatically reduces wide cards to fit tablet and phone screens.
-Set `height_multiplier` from `1` to `3` to span dashboard rows. Graph cards can
-also set `y_padding_percent`, `x_axis_label`, and `y_axis_label`. Array samples
-are numbered from 1 and use five horizontal Y-grid lines.
 
 ## Supported Card Types
 

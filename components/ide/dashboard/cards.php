@@ -74,10 +74,6 @@ function ensure_schema(PDO $pdo): void {
             `horizontal_alignment` VARCHAR(10) DEFAULT NULL,
             `vertical_alignment` VARCHAR(10) DEFAULT NULL,
             `column_span` SMALLINT DEFAULT 1,
-            `height_multiplier` SMALLINT DEFAULT 1,
-            `y_padding_percent` FLOAT DEFAULT 0,
-            `x_axis_label` VARCHAR(50) DEFAULT NULL,
-            `y_axis_label` VARCHAR(50) DEFAULT NULL,
             `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
         return;
@@ -114,22 +110,6 @@ function ensure_schema(PDO $pdo): void {
 
     if (!column_exists($pdo, $cards_table, 'column_span')) {
         $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `column_span` SMALLINT DEFAULT 1 AFTER `vertical_alignment`");
-    }
-
-    if (!column_exists($pdo, $cards_table, 'height_multiplier')) {
-        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `height_multiplier` SMALLINT DEFAULT 1 AFTER `column_span`");
-    }
-
-    if (!column_exists($pdo, $cards_table, 'y_padding_percent')) {
-        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `y_padding_percent` FLOAT DEFAULT 0 AFTER `height_multiplier`");
-    }
-
-    if (!column_exists($pdo, $cards_table, 'x_axis_label')) {
-        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `x_axis_label` VARCHAR(50) DEFAULT NULL AFTER `y_padding_percent`");
-    }
-
-    if (!column_exists($pdo, $cards_table, 'y_axis_label')) {
-        $pdo->exec("ALTER TABLE `{$cards_table}` ADD COLUMN `y_axis_label` VARCHAR(50) DEFAULT NULL AFTER `x_axis_label`");
     }
 
     // If the old table used ENUM color values, convert to VARCHAR so yellow and future colors work.
@@ -193,19 +173,6 @@ function normalize_alignment(?string $alignment, array $allowed): ?string {
 
 function normalize_column_span($columnSpan): int {
     return is_numeric($columnSpan) ? max(1, min(4, (int)$columnSpan)) : 1;
-}
-
-function normalize_height_multiplier($heightMultiplier): int {
-    return is_numeric($heightMultiplier) ? max(1, min(3, (int)$heightMultiplier)) : 1;
-}
-
-function normalize_y_padding_percent($padding): float {
-    return is_numeric($padding) ? max(0.0, min(1000.0, (float)$padding)) : 0.0;
-}
-
-function normalize_axis_label($label): ?string {
-    $label = trim((string)$label);
-    return $label === '' ? null : mb_substr($label, 0, 50);
 }
 
 function validate_card(array $card): array {
@@ -338,7 +305,7 @@ function get_cards(): array {
     global $cards_table;
     $pdo = db();
 
-    $stmt = $pdo->query("SELECT id, type, title, color, min_value, max_value, value, description, font_size, font_name, horizontal_alignment, vertical_alignment, column_span, height_multiplier, y_padding_percent, x_axis_label, y_axis_label FROM `{$cards_table}` ORDER BY id ASC");
+    $stmt = $pdo->query("SELECT id, type, title, color, min_value, max_value, value, description, font_size, font_name, horizontal_alignment, vertical_alignment, column_span FROM `{$cards_table}` ORDER BY id ASC");
     $cards = $stmt->fetchAll();
 
     foreach ($cards as &$card) {
@@ -356,10 +323,6 @@ function get_cards(): array {
             ['top', 'center', 'bottom']
         );
         $card['column_span'] = normalize_column_span($card['column_span'] ?? 1);
-        $card['height_multiplier'] = normalize_height_multiplier($card['height_multiplier'] ?? 1);
-        $card['y_padding_percent'] = normalize_y_padding_percent($card['y_padding_percent'] ?? 0);
-        $card['x_axis_label'] = normalize_axis_label($card['x_axis_label'] ?? null);
-        $card['y_axis_label'] = normalize_axis_label($card['y_axis_label'] ?? null);
         $card['valid'] = $validation['valid'];
         $card['errors'] = $validation['errors'];
     }
