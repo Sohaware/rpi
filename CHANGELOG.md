@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.5-dashboard-canvas - Sharp responsive charts
+
+- Redraws graph, bar, and pie canvases at their displayed size and device pixel ratio instead of stretching a fixed bitmap.
+- Centers pie charts correctly inside wide cards.
+
 ## 0.9.4-dashboard-layout - Responsive card widths and temperature history
 
 - Adds responsive `column_span=1..4` dashboard card widths.

@@ -304,9 +304,7 @@ body {
 /* Graphs and charts */
 .graph-canvas, .chart-canvas {
     width: 100%;
-    aspect-ratio: 360 / 155;
-    height: auto;
-    max-height: 155px;
+    height: 155px;
     border: 1px solid var(--border);
     border-radius: 12px;
     background: #ffffff;
@@ -489,6 +487,24 @@ function canvasFont(cardEl) {
     const size = Number.isFinite(requested) ? Math.min(requested, 18) : 11;
     const family = styles.getPropertyValue('--widget-font-family').trim() || 'Arial, sans-serif';
     return `${size}px ${family}`;
+}
+
+function prepareCanvas(canvas) {
+    const width = Math.max(1, Math.round(canvas.clientWidth));
+    const height = Math.max(1, Math.round(canvas.clientHeight));
+    const ratio = Math.max(1, window.devicePixelRatio || 1);
+    const pixelWidth = Math.round(width * ratio);
+    const pixelHeight = Math.round(height * ratio);
+
+    if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+        canvas.width = pixelWidth;
+        canvas.height = pixelHeight;
+    }
+
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    return { ctx, width, height };
 }
 
 function numeric(value, fallback = 0) {
@@ -858,10 +874,10 @@ function drawGraph(cardEl, rawValue) {
     const note = cardEl.querySelector('[data-role="graph-note"]');
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
+    const surface = prepareCanvas(canvas);
+    const ctx = surface.ctx;
+    const w = surface.width;
+    const h = surface.height;
     ctx.font = canvasFont(cardEl);
     ctx.textBaseline = 'middle';
 
@@ -1012,10 +1028,10 @@ function drawBarChart(cardEl, rawValue) {
     const note = cardEl.querySelector('[data-role="chart-note"]');
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
+    const surface = prepareCanvas(canvas);
+    const ctx = surface.ctx;
+    const w = surface.width;
+    const h = surface.height;
     ctx.font = canvasFont(cardEl);
     ctx.textBaseline = 'middle';
 
@@ -1102,10 +1118,10 @@ function drawPieChart(cardEl, rawValue) {
     const note = cardEl.querySelector('[data-role="chart-note"]');
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    ctx.clearRect(0, 0, w, h);
+    const surface = prepareCanvas(canvas);
+    const ctx = surface.ctx;
+    const w = surface.width;
+    const h = surface.height;
     ctx.font = canvasFont(cardEl);
     ctx.textBaseline = 'middle';
 
@@ -1129,9 +1145,9 @@ function drawPieChart(cardEl, rawValue) {
 
     if (note) note.textContent = `${items.length} slices | total: ${niceNumber(total)}`;
 
-    const cx = 86;
-    const cy = 74;
-    const r = 54;
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = Math.max(20, Math.min(54, h / 2 - 10));
     const colors = items.map((item, i) => chartSliceColor(item[0], i));
     let start = -Math.PI / 2;
 
