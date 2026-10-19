@@ -158,6 +158,10 @@ def ensure_table() -> None:
                     horizontal_alignment VARCHAR(10) DEFAULT NULL,
                     vertical_alignment VARCHAR(10) DEFAULT NULL,
                     column_span SMALLINT DEFAULT 1,
+                    height_multiplier SMALLINT DEFAULT 1,
+                    y_padding_percent FLOAT DEFAULT 0,
+                    x_axis_label VARCHAR(50) DEFAULT NULL,
+                    y_axis_label VARCHAR(50) DEFAULT NULL,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             """)
@@ -175,6 +179,10 @@ def ensure_table() -> None:
                 "horizontal_alignment": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN horizontal_alignment VARCHAR(10) DEFAULT NULL AFTER font_name",
                 "vertical_alignment": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN vertical_alignment VARCHAR(10) DEFAULT NULL AFTER horizontal_alignment",
                 "column_span": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN column_span SMALLINT DEFAULT 1 AFTER vertical_alignment",
+                "height_multiplier": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN height_multiplier SMALLINT DEFAULT 1 AFTER column_span",
+                "y_padding_percent": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN y_padding_percent FLOAT DEFAULT 0 AFTER height_multiplier",
+                "x_axis_label": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN x_axis_label VARCHAR(50) DEFAULT NULL AFTER y_padding_percent",
+                "y_axis_label": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN y_axis_label VARCHAR(50) DEFAULT NULL AFTER x_axis_label",
                 "created_at": f"ALTER TABLE `{_TABLE_NAME}` ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             }
 
@@ -277,6 +285,27 @@ def _normalize_column_span(column_span: Any) -> int:
         return 1
 
 
+def _normalize_height_multiplier(height_multiplier: Any) -> int:
+    try:
+        return max(1, min(3, int(height_multiplier)))
+    except (TypeError, ValueError):
+        return 1
+
+
+def _normalize_y_padding_percent(y_padding_percent: Any) -> float:
+    try:
+        return max(0.0, min(1000.0, float(y_padding_percent)))
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _normalize_axis_label(label: Any) -> Optional[str]:
+    if label is None:
+        return None
+    label = str(label).strip()
+    return label[:50] if label else None
+
+
 def _encode_value(value: Any) -> Optional[str]:
     """
     Convert Python values to DB strings.
@@ -347,6 +376,10 @@ class Card:
         horizontal_alignment: Optional[str] = None,
         vertical_alignment: Optional[str] = None,
         column_span: int = 1,
+        height_multiplier: int = 1,
+        y_padding_percent: float = 0,
+        x_axis_label: Optional[str] = None,
+        y_axis_label: Optional[str] = None,
         *,
         auto_delete: bool = True,
     ) -> None:
@@ -369,6 +402,10 @@ class Card:
             vertical_alignment, {"top", "center", "bottom"}
         )
         self.column_span = _normalize_column_span(column_span)
+        self.height_multiplier = _normalize_height_multiplier(height_multiplier)
+        self.y_padding_percent = _normalize_y_padding_percent(y_padding_percent)
+        self.x_axis_label = _normalize_axis_label(x_axis_label)
+        self.y_axis_label = _normalize_axis_label(y_axis_label)
         self.auto_delete = auto_delete
 
         self._insert()
@@ -383,9 +420,10 @@ class Card:
                     INSERT INTO `{_TABLE_NAME}`
                         (type, title, color, min_value, max_value, value, description,
                          font_size, font_name, horizontal_alignment, vertical_alignment,
-                         column_span)
+                         column_span, height_multiplier, y_padding_percent,
+                         x_axis_label, y_axis_label)
                     VALUES
-                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         self.type,
@@ -400,6 +438,10 @@ class Card:
                         self.horizontal_alignment,
                         self.vertical_alignment,
                         self.column_span,
+                        self.height_multiplier,
+                        self.y_padding_percent,
+                        self.x_axis_label,
+                        self.y_axis_label,
                     ),
                 )
                 conn.commit()
@@ -428,7 +470,8 @@ class Card:
                     f"""
                     SELECT id, type, title, color, min_value, max_value, value, description,
                            font_size, font_name, horizontal_alignment, vertical_alignment,
-                           column_span
+                           column_span, height_multiplier, y_padding_percent,
+                           x_axis_label, y_axis_label
                     FROM `{_TABLE_NAME}`
                     WHERE id = %s
                     LIMIT 1
@@ -452,6 +495,10 @@ class Card:
                 self.horizontal_alignment = row["horizontal_alignment"]
                 self.vertical_alignment = row["vertical_alignment"]
                 self.column_span = _normalize_column_span(row["column_span"])
+                self.height_multiplier = _normalize_height_multiplier(row["height_multiplier"])
+                self.y_padding_percent = _normalize_y_padding_percent(row["y_padding_percent"])
+                self.x_axis_label = _normalize_axis_label(row["x_axis_label"])
+                self.y_axis_label = _normalize_axis_label(row["y_axis_label"])
 
                 return True
             finally:
@@ -482,6 +529,10 @@ class Card:
             self.vertical_alignment, {"top", "center", "bottom"}
         )
         self.column_span = _normalize_column_span(self.column_span)
+        self.height_multiplier = _normalize_height_multiplier(self.height_multiplier)
+        self.y_padding_percent = _normalize_y_padding_percent(self.y_padding_percent)
+        self.x_axis_label = _normalize_axis_label(self.x_axis_label)
+        self.y_axis_label = _normalize_axis_label(self.y_axis_label)
 
         ensure_table()
 
@@ -504,7 +555,11 @@ class Card:
                         font_name = %s,
                         horizontal_alignment = %s,
                         vertical_alignment = %s,
-                        column_span = %s
+                        column_span = %s,
+                        height_multiplier = %s,
+                        y_padding_percent = %s,
+                        x_axis_label = %s,
+                        y_axis_label = %s
                     WHERE id = %s
                     """,
                     (
@@ -520,6 +575,10 @@ class Card:
                         self.horizontal_alignment,
                         self.vertical_alignment,
                         self.column_span,
+                        self.height_multiplier,
+                        self.y_padding_percent,
+                        self.x_axis_label,
+                        self.y_axis_label,
                         self.id,
                     ),
                 )

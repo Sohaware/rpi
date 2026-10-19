@@ -1,9 +1,10 @@
 # Changelog
 
-## 0.9.5 rollback - 2026-10-19
+## 0.9.6-dashboard-axes - Configurable graph axes and card height
 
-- Restores the original 0.9.5 application and version number.
-- Adds installer acceptance of 0.9.6 and 0.9.7 device state; pins it to the separate `v0.9.5-rollback` tag.
+- Adds `height_multiplier=1..3`, `y_padding_percent`, `x_axis_label`, and `y_axis_label` to dashboard cards.
+- Graphs use five Y-grid lines and meaningful one-based sample numbers on the X-axis.
+- Updates the temperature dashboard example with double height, 20% Y padding, axis labels, and a discarded startup reading.
 
 ## 0.9.5-dashboard-canvas - Sharp responsive charts
 
