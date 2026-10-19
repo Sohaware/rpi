@@ -161,6 +161,18 @@ card.delete()
 
 Deletes the row and sets `card.id` to `None`. Repeated calls are harmless.
 
+## Temperature history with elapsed time
+
+Run `CodyNick examples/dashboard/temperature_on_dashboard.py` to show a live
+temperature gauge and graph. The example checks for `None` before rounding and
+accepts readings only when they are non-zero and below 120 C. Negative readings
+are accepted by this demo filter. Rejected readings do not update either card.
+
+The graph keeps the latest 20 accepted readings as `[elapsed_seconds, temperature]`
+pairs, timed with `time.monotonic()`. Its `Time (s)` axis shows elapsed time since
+the script started, including gaps caused by rejected readings. It attempts a new
+reading every 2.5 seconds plus the time spent reading and updating the dashboard.
+
 ## Deterministic cleanup
 
 ```python

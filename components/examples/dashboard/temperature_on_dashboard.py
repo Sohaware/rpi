@@ -25,25 +25,29 @@ history_card = Dashboard.Card(
     color="blue",
     value=[],
     column_span=3,
-    height_multiplier=2,
-    y_padding_percent=20,
-    x_axis_label="Sample",
+    x_axis_label="Time (s)",
     y_axis_label="Temperature (°C)"
 )
 
 history = []
-
-CodyNick.Temperature_Sensor.read(cody)
-time.sleep(0.5)
+Cnt = 0
+started = time.monotonic()
 
 while True:
     temperature = CodyNick.Temperature_Sensor.read(cody)
-    temperature = round(temperature, 1)
+    Cnt += 1
 
-    temperature_card.set(temperature)
+    if temperature is not None:
+        temperature = round(temperature, 1)
 
-    history.append(temperature)
-    history = history[-20:]
-    history_card.set(history)
+        if temperature != 0 and temperature < 120:
+            print(f"{Cnt} : {temperature}")
+
+            temperature_card.set(temperature)
+
+            seconds = round(time.monotonic() - started, 1)
+            history.append([seconds, temperature])
+            history = history[-20:]
+            history_card.set(history)
 
     time.sleep(2.5)

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.8-temperature-time - Valid temperature readings and elapsed-time graph
+
+- Updates `dashboard/temperature_on_dashboard.py` with the device-tested example.
+- Checks for missing readings before rounding; rejects zero and values at or above 120 C while retaining negative readings.
+- Plots the latest 20 valid temperatures against elapsed seconds with the X-axis labeled `Time (s)`.
+- Accepts upgrades from 0.9.5, 0.9.6, and 0.9.7.
+
 ## 0.9.6-dashboard-axes - Configurable graph axes and card height
 
 - Adds `height_multiplier=1..3`, `y_padding_percent`, `x_axis_label`, and `y_axis_label` to dashboard cards.
