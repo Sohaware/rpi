@@ -88,6 +88,7 @@ body {
 .grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 240px;
     gap: 18px;
 }
 
@@ -96,8 +97,8 @@ body {
     border: 1px solid var(--border);
     border-top: 5px solid var(--blue);
     border-radius: 16px;
-    min-height: 240px;
-    height: 240px;
+    min-height: 0;
+    height: auto;
     padding: 16px;
     box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
     display: flex;
@@ -108,6 +109,8 @@ body {
 .card-span-2 { grid-column: span 2; }
 .card-span-3 { grid-column: span 3; }
 .card-span-4 { grid-column: span 4; }
+.card-height-2 { grid-row: span 2; }
+.card-height-3 { grid-row: span 3; }
 
 .card-red { border-top-color: var(--red); }
 .card-green { border-top-color: var(--green); }
@@ -305,11 +308,12 @@ body {
 .graph-canvas, .chart-canvas {
     width: 100%;
     height: 155px;
+    min-height: 120px;
     border: 1px solid var(--border);
     border-radius: 12px;
     background: #ffffff;
     display: block;
-    flex: 0 0 auto;
+    flex: 1 1 155px;
 }
 .graph-note, .chart-note {
     font-size: 12px;
@@ -394,9 +398,8 @@ body {
     .header { padding: 12px 16px; }
     .header-title { font-size: 18px; }
     .container { padding: 16px; }
-    .grid { grid-template-columns: 1fr; }
+    .grid { grid-template-columns: 1fr; grid-auto-rows: 230px; }
     .card-span-2, .card-span-3, .card-span-4 { grid-column: span 1; }
-    .card { height: 230px; min-height: 230px; }
 }
 </style>
 </head>
@@ -549,9 +552,13 @@ function renderCardShell(card) {
     const isValid = card.valid !== false;
     const style = escapeHtml(widgetStyle(card));
     const columnSpan = Math.max(1, Math.min(4, Math.round(Number(card.column_span) || 1)));
+    const heightMultiplier = Math.max(1, Math.min(3, Math.round(Number(card.height_multiplier) || 1)));
+    const yPaddingPercent = Math.max(0, Math.min(1000, Number(card.y_padding_percent) || 0));
+    const xAxisLabel = escapeHtml(card.x_axis_label || '');
+    const yAxisLabel = escapeHtml(card.y_axis_label || '');
 
     return `
-        <div class="card card-span-${columnSpan} ${isValid ? `card-${color}` : 'card-error'}" data-card-id="${id}" data-card-type="${escapeHtml(type)}"${style ? ` style="${style}"` : ''}>
+        <div class="card card-span-${columnSpan} card-height-${heightMultiplier} ${isValid ? `card-${color}` : 'card-error'}" data-card-id="${id}" data-card-type="${escapeHtml(type)}" data-y-padding-percent="${yPaddingPercent}" data-x-axis-label="${xAxisLabel}" data-y-axis-label="${yAxisLabel}"${style ? ` style="${style}"` : ''}>
             <div class="card-title">${title}</div>
             <div class="card-body">${renderCardBody(card)}</div>
             ${description}
@@ -846,7 +853,7 @@ function parseGraphSeries(raw) {
     function addSeries(name, source) {
         const points = [];
         if (Array.isArray(source)) {
-            source.forEach((value, index) => points.push(pointFromEntry(index, value)));
+            source.forEach((value, index) => points.push(pointFromEntry(index + 1, value)));
         } else if (source && typeof source === 'object') {
             Object.keys(source).forEach(key => points.push(pointFromEntry(key, source[key])));
         } else {
@@ -903,10 +910,19 @@ function drawGraph(cardEl, rawValue) {
     const ys = allPoints.map(p => p[1]);
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
+    const dataMinY = Math.min(...ys);
+    const dataMaxY = Math.max(...ys);
     const rangeX = maxX > minX ? maxX - minX : 1;
-    const rangeY = maxY > minY ? maxY - minY : 1;
+    const dataRangeY = dataMaxY - dataMinY;
+    const fallbackRangeY = Math.max(Math.abs(dataMaxY) * 0.1, 1);
+    const baseRangeY = dataRangeY > 0 ? dataRangeY : fallbackRangeY;
+    const paddingPercent = Math.max(0, Math.min(1000, Number(cardEl.dataset.yPaddingPercent) || 0));
+    const paddingY = baseRangeY * paddingPercent / 100;
+    const minY = dataRangeY > 0 ? dataMinY - paddingY : dataMinY - baseRangeY / 2 - paddingY;
+    const maxY = dataRangeY > 0 ? dataMaxY + paddingY : dataMaxY + baseRangeY / 2 + paddingY;
+    const rangeY = maxY - minY;
+    const xAxisLabel = cardEl.dataset.xAxisLabel || '';
+    const yAxisLabel = cardEl.dataset.yAxisLabel || '';
 
     if (note) {
         const legend = seriesList.map(series => `<span class="legend-item"><span class="legend-dot" style="background:${escapeHtml(series.color)}"></span>${escapeHtml(series.name)}</span>`).join('');
@@ -914,10 +930,10 @@ function drawGraph(cardEl, rawValue) {
         note.title = `x: ${niceNumber(minX)} to ${niceNumber(maxX)} | y: ${niceNumber(minY)} to ${niceNumber(maxY)} | ${allPoints.length} points`;
     }
 
-    const padLeft = 42;
+    const padLeft = yAxisLabel ? 58 : 42;
     const padRight = 10;
     const padTop = 10;
-    const padBottom = 28;
+    const padBottom = xAxisLabel ? 40 : 28;
     const plotLeft = padLeft;
     const plotRight = w - padRight;
     const plotTop = padTop;
@@ -932,7 +948,7 @@ function drawGraph(cardEl, rawValue) {
     ctx.strokeStyle = '#e5e7eb';
     ctx.fillStyle = '#6b7280';
 
-    const yTicks = [minY, minY + rangeY / 2, maxY];
+    const yTicks = Array.from({ length: 5 }, (_, index) => minY + rangeY * index / 4);
     yTicks.forEach(v => {
         const y = sy(v);
         ctx.beginPath();
@@ -943,7 +959,10 @@ function drawGraph(cardEl, rawValue) {
         ctx.fillText(niceNumber(v), plotLeft - 5, y);
     });
 
-    const xTicks = [minX, minX + rangeX / 2, maxX];
+    const uniqueXs = [...new Set(xs)].sort((a, b) => a - b);
+    const xTicks = uniqueXs.length <= 5
+        ? uniqueXs
+        : Array.from({ length: 5 }, (_, index) => uniqueXs[Math.round(index * (uniqueXs.length - 1) / 4)]);
     xTicks.forEach(v => {
         const x = sx(v);
         ctx.beginPath();
@@ -953,6 +972,19 @@ function drawGraph(cardEl, rawValue) {
         ctx.textAlign = 'center';
         ctx.fillText(niceNumber(v), x, plotBottom + 14);
     });
+
+    ctx.fillStyle = '#4b5563';
+    ctx.textAlign = 'center';
+    if (xAxisLabel) {
+        ctx.fillText(xAxisLabel, plotLeft + plotW / 2, h - 8);
+    }
+    if (yAxisLabel) {
+        ctx.save();
+        ctx.translate(10, plotTop + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText(yAxisLabel, 0, 0);
+        ctx.restore();
+    }
 
     ctx.strokeStyle = '#9ca3af';
     ctx.beginPath();

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.6-dashboard-axes - Configurable graph axes and card height
+
+- Adds `height_multiplier=1..3`, `y_padding_percent`, `x_axis_label`, and `y_axis_label` to dashboard cards.
+- Graphs use five Y-grid lines and meaningful one-based sample numbers on the X-axis.
+- Updates the temperature dashboard example with double height, 20% Y padding, axis labels, and a discarded startup reading.
+
 ## 0.9.5-dashboard-canvas - Sharp responsive charts
 
 - Redraws graph, bar, and pie canvases at their displayed size and device pixel ratio instead of stretching a fixed bitmap.

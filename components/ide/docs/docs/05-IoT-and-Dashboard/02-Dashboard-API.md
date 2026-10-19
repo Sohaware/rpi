@@ -56,6 +56,10 @@ card = Dashboard.Card(
     horizontal_alignment=None,
     vertical_alignment=None,
     column_span=1,
+    height_multiplier=1,
+    y_padding_percent=0,
+    x_axis_label=None,
+    y_axis_label=None,
     auto_delete=True,
 )
 ```
@@ -74,6 +78,10 @@ card = Dashboard.Card(
 | `horizontal_alignment` | `left`, `center`, or `right` |
 | `vertical_alignment` | `top`, `center`, or `bottom` |
 | `column_span` | Card width from `1` to `4` dashboard columns; responsive screens reduce it automatically |
+| `height_multiplier` | Card height from `1` to `3` dashboard rows |
+| `y_padding_percent` | Graph Y-axis padding added above and below as a percentage of its data range |
+| `x_axis_label` | Optional graph X-axis title, up to 50 characters |
+| `y_axis_label` | Optional graph Y-axis title, up to 50 characters |
 | `auto_delete` | Delete the database row when the Python object is destroyed |
 
 Construction immediately inserts a database row and sets `card.id` to its integer ID.
@@ -82,7 +90,8 @@ Unknown types/colors are stored but may not render usefully.
 ## Card attributes
 
 `id`, `type`, `title`, `color`, `min_value`, `max_value`, `value`, `description`,
-`font_size`, `font_name`, `horizontal_alignment`, `vertical_alignment`, `column_span`, and
+`font_size`, `font_name`, `horizontal_alignment`, `vertical_alignment`, `column_span`,
+`height_multiplier`, `y_padding_percent`, `x_axis_label`, `y_axis_label`, and
 `auto_delete` are public. Changing an attribute only changes memory until `save()`.
 
 ## Widget typography and alignment
@@ -93,6 +102,10 @@ limited to 18 pixels so labels continue to fit inside their fixed canvas.
 
 Use `column_span=2`, `3`, or `4` for wide graphs and tables. On narrower screens,
 the dashboard automatically reduces the span so the page never needs horizontal scrolling.
+Use `height_multiplier=2` or `3` to give a graph more vertical plotting space.
+For example, values from `0` to `10` with `y_padding_percent=20` produce a
+Y-axis from `-2` to `12`. List-based graph samples are numbered from `1`, and
+graphs draw five horizontal Y-grid lines.
 
 ```python
 counter = Dashboard.Card(
