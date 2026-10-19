@@ -194,6 +194,7 @@ class AppTests(unittest.TestCase):
             {"version": "0.9.5", "stage": "ready"},
             {"version": "0.9.6", "stage": "ready"},
             {"version": "0.9.7", "stage": "ready"},
+            {"version": "0.9.8", "stage": "ready"},
         ):
             with self.subTest(previous=previous), \
                  patch.object(m.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "26.04"}), \
@@ -229,11 +230,11 @@ class AppTests(unittest.TestCase):
         self.assertEqual(saved["hotspot_ssid"], "codynick-abcdef12")
 
     def test_release_files_and_pins(self):
-        manifest = json.loads((ROOT / "releases/core-0.9.8.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.9.9.json").read_text())
         for name, checksum in m.verify_manifest(manifest).items():
             self.assertEqual(release_sha(ROOT / name), checksum, name)
         bootstrap = (ROOT / "bootstrap/codynick-apps.sh").read_text()
-        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.9.8.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py"), ("LLM", "installer/llm_setup.py")):
+        for key, name in (("HELPER", "installer/app_setup.py"), ("MANIFEST", "releases/core-0.9.9.json"), ("VERSION_STATUS", "installer/version_status.py"), ("VISION", "installer/vision_setup.py"), ("SPEECH", "installer/speech_setup.py"), ("OCR", "installer/ocr_setup.py"), ("TTS", "installer/tts_setup.py"), ("LLM", "installer/llm_setup.py")):
             pin = re.search(key + r'_SHA256="([0-9a-f]{64})"', bootstrap).group(1)
             self.assertEqual(pin, release_sha(ROOT / name))
 
@@ -269,7 +270,7 @@ class AppTests(unittest.TestCase):
         self.assertIn("TimeoutStopSec=10", text)
 
     def test_offline_docs_and_blockly_assets_are_managed(self):
-        manifest = json.loads((ROOT / "releases/core-0.9.8.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.9.9.json").read_text())
         files = manifest["files"]
         self.assertIn("components/ide/docs/docs/01-Start-Here/01-Welcome.md", files)
         self.assertIn("components/ide/docs/assets/gadgets/cjp_neo.png", files)
@@ -354,13 +355,18 @@ class AppTests(unittest.TestCase):
         self.assertIn("# CodyNick Fabric Presenter Guide: Build a CodyNick Temperature Alarm", guide)
         self.assertIn("temperature < 20", guide)
         self.assertIn("range(1, 11)", guide)
-        self.assertIn("## Step 9: Connect to AI and Take a Picture", guide)
+        self.assertIn("## Step 9: Turn the Temperature into a Live Dashboard", guide)
+        self.assertIn("dashboard -> `temperature_on_dashboard.py`", guide)
+        self.assertIn('x_axis_label="Time (s)"', guide)
+        self.assertIn("## Step 10: Connect to AI and Take a Picture", guide)
         self.assertIn('CodyNickAI(workspace="/home/client", camera_index=0)', guide)
         self.assertIn('get_ready_sound=True', guide)
         self.assertIn("Images** in the IDE", guide)
-        self.assertIn("## Step 10: Detect Objects in the Picture", guide)
+        self.assertIn("## Step 11: Detect Objects in the Picture", guide)
         self.assertIn('ai.detect_objects("camera_demo")', guide)
-        self.assertIn("## Step 11: Control the LEDs with Your Voice", guide)
+        self.assertIn("## Step 12: Control the LEDs with Your Voice", guide)
+        self.assertIn("## Step 14: Let the Audience Talk with Local AI", guide)
+        self.assertIn("local_ai_voice_conversation.py", guide)
         self.assertIn("voice_led_colors.py", guide)
         self.assertIn("navigator.clipboard.writeText", portal)
 
@@ -461,7 +467,7 @@ class AppTests(unittest.TestCase):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
         homepage = (ROOT / "components/ide/index.php").read_text(encoding="utf-8")
         self.assertIn('write(STATE, json.dumps(data, indent=2) + "\\n", 0o644)', installer)
-        self.assertIn('"software_version" => "0.9.8"', homepage)
+        self.assertIn('"software_version" => "0.9.9"', homepage)
         self.assertIn('"production_date" => "2026-10-19"', homepage)
         self.assertIn('"hotspot_ssid"', homepage)
         self.assertIn("network-public.json", homepage)
@@ -469,7 +475,7 @@ class AppTests(unittest.TestCase):
 
     def test_llm_release_is_pinned_and_installed(self):
         installer = (ROOT / "installer/app_setup.py").read_text(encoding="utf-8")
-        manifest = json.loads((ROOT / "releases/core-0.9.8.json").read_text())
+        manifest = json.loads((ROOT / "releases/core-0.9.9.json").read_text())
         self.assertIn("llm_setup.install(manifest, run)", installer)
         self.assertIn("llm_setup.health_check(run)", installer)
         assets = {item["kind"]: item for item in manifest["llm_assets"]}

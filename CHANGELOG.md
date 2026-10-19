@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.9.9-presenter-guide - Dashboard reveal and Local AI finale
+
+- Expands the presenter guide to fourteen steps with the tested temperature dashboard as Step 9.
+- Includes the complete dashboard example, elapsed-time explanation, and a live sensor demonstration sequence.
+- Expands Step 14 around `local_ai_voice_conversation.py` with model-ready messages, audience prompts, gadget feedback, and presenter recovery tips.
+- Synchronizes the offline Markdown copies with the on-device teacher guide.
+
 ## 0.9.8-temperature-time - Valid temperature readings and elapsed-time graph
 
 - Updates `dashboard/temperature_on_dashboard.py` with the device-tested example.

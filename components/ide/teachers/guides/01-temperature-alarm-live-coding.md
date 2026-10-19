@@ -2,9 +2,12 @@
 
 ## Session goal
 
-Build one program in eight small steps. The audience first sees how easily Python can
-control a physical LED, then gradually adds blinking, joystick input, a display, a
-sensor, temperature colors, an alarm melody, and joystick alarm control.
+Build a temperature alarm in eight small steps. The audience first sees how easily
+Python can control a physical LED, then gradually adds blinking, joystick input, a
+display, a sensor, temperature colors, an alarm melody, and joystick alarm control.
+Then turn the same sensor into a live browser dashboard, give the program eyes and
+voice control, and finish with an offline AI conversation. There are fourteen steps
+in the full demonstration; pause between them to let the audience predict what comes next.
 
 These first examples intentionally use the simplest possible code. They do not include
 connection checks, error handling, or cleanup structures. The goal is to make the first
@@ -20,6 +23,21 @@ audience to predict the result, and then change the existing program for the nex
 - Temperature sensor
 - Stand-alone seven-segment display
 - Python IDE at `http://10.42.0.1/code/`
+- Dashboard in a second browser tab at `http://10.42.0.1/dashboard/`
+- USB camera for the camera steps; connect it when that step begins
+- USB microphone and speaker for the voice steps
+
+## Prepare before the audience arrives
+
+- Use CodyNick 0.9.8 or later for the tested temperature dashboard example.
+- Check the temperature sensor, seven-segment display, CodyJoy Pro LEDs, microphone,
+  and speaker before the session. The hardware examples at the beginning are deliberately short.
+- Open the IDE and dashboard in separate tabs. If projecting, arrange the windows
+  side by side for the dashboard reveal so the audience can see both code and results.
+- Rehearse `local_ai_voice_conversation.py` once. At presentation time, still let
+  its three models finish loading before inviting the audience to speak.
+- Generate the prerecorded answers for the saved-answer conversation before the
+  session, as described in that step. The Local AI conversation does not use that generator.
 
 ## Presentation rhythm
 
@@ -361,7 +379,119 @@ while True:
 
 ---
 
-## Step 9: Connect to AI and Take a Picture
+## Step 9: Turn the Temperature into a Live Dashboard
+
+### Ask before starting
+
+> The sensor can change a light and sound an alarm. Could the same few lines of
+> Python also create a live measuring instrument in a browser?
+
+Keep CodyJoy Pro and the temperature sensor connected. Keep the dashboard tab hidden
+until the program runs, then reveal the gauge and graph together.
+
+In the IDE, open **CodyNick Examples -> dashboard -> `temperature_on_dashboard.py`**.
+Select **Run This File**, then open `http://10.42.0.1/dashboard/` in the second tab.
+Running this example clears existing dashboard cards and creates its own two cards.
+
+For a live coding presentation, use the complete tested example below. First draw
+attention to the two `Dashboard.Card(...)` calls, then to the two `.set(...)` updates.
+The familiar sensor-reading loop is still the center of the program.
+
+```python
+import time
+import CodyNick
+import Dashboard
+
+cody = CodyNick.CN()
+
+Dashboard.clear()
+
+temperature_card = Dashboard.Card(
+    "gauge",
+    "Temperature",
+    color="green",
+    min_value=0,
+    max_value=50,
+    value=0,
+    font_size=32,
+    font_name="Arial",
+    horizontal_alignment="center",
+    vertical_alignment="center"
+)
+
+history_card = Dashboard.Card(
+    "graph",
+    "Temperature History",
+    color="blue",
+    value=[],
+    column_span=3,
+    x_axis_label="Time (s)",
+    y_axis_label="Temperature (°C)"
+)
+
+history = []
+Cnt = 0
+started = time.monotonic()
+
+while True:
+    temperature = CodyNick.Temperature_Sensor.read(cody)
+    Cnt += 1
+
+    if temperature is not None:
+        temperature = round(temperature, 1)
+
+        if temperature != 0 and temperature < 120:
+            print(f"{Cnt} : {temperature}")
+
+            temperature_card.set(temperature)
+
+            seconds = round(time.monotonic() - started, 1)
+            history.append([seconds, temperature])
+            history = history[-20:]
+            history_card.set(history)
+
+    time.sleep(2.5)
+```
+
+### The reveal
+
+1. Let two or three valid readings arrive. The graph needs at least two points.
+2. Show the current temperature on the gauge and its history on the graph.
+3. Ask a volunteer to gently warm the sensor with their hand. Allow time for the
+   probe to respond; avoid touching or wetting exposed electronics.
+4. Point to the changing value, then follow the rising line across the graph.
+5. Ask: "If the room cools again, what should happen to this line?" Let the audience predict it.
+6. Leave the chart running briefly so the audience sees the history rather than just one number.
+
+### Point out
+
+- `import Dashboard` gives Python access to the on-device dashboard.
+- `Dashboard.Card(...)` creates a widget; `.set(...)` sends it a new value.
+- `column_span=3` gives the history graph three dashboard columns on a wide screen.
+- Each point is `[elapsed seconds, temperature]`. The X-axis is time since this run
+  began, not a sample counter or a clock time.
+- The latest 20 valid readings are retained. Their time values continue increasing
+  when earlier points leave the graph.
+- `Cnt` counts read attempts in the terminal. It is not used for the graph's X-axis.
+- Missing readings are checked before rounding. This demonstration also skips zero
+  and values at or above 120 C. This is a demo filter, not a general sensor-validity rule:
+  a genuine zero-degree reading would also be skipped, and negative readings are accepted.
+- Rejected readings leave both cards unchanged and create a time gap before the next point.
+- The gauge begins at zero until the first accepted value. Its needle is configured
+  for 0 to 50 C; use comfortable room-temperature changes for this demonstration.
+- The script attempts another reading after a 2.5-second pause; sensor and database
+  work add to that interval, so the plotted timestamps reflect actual elapsed time.
+
+### Transition to AI
+
+> We can measure and visualize something the program can sense. Now, what if its
+> next input is a picture rather than a number?
+
+Switch back to the IDE and replace the running program with the next example.
+
+---
+
+## Step 10: Connect to AI and Take a Picture
 
 ### Ask before starting
 
@@ -409,7 +539,7 @@ picture instead of filling the Images folder with many files.
 
 ---
 
-## Step 10: Detect Objects in the Picture
+## Step 11: Detect Objects in the Picture
 
 ### Ask before starting
 
@@ -461,7 +591,7 @@ recognized object.
 
 ---
 
-## Step 11: Control the LEDs with Your Voice
+## Step 12: Control the LEDs with Your Voice
 
 ### Ask before starting
 
@@ -573,7 +703,7 @@ main()
 
 ---
 
-## Step 12: Hold a Voice Conversation
+## Step 13: Hold a Voice Conversation
 
 ### Ask before starting
 
@@ -662,39 +792,98 @@ Try questions from these groups:
 - Ask one short supported question at a time and wait for the answer.
 - If a question is not recognized, repeat it clearly using one of the listed phrases.
 
-## Step 13: Talk with Local AI
+## Step 14: Let the Audience Talk with Local AI
 
 ### Ask before starting
 
-> What changes when the device creates a new answer instead of selecting a saved one?
+> Until now, we chose the commands and prepared the answers. What if someone asks
+> a simple question that we never wrote into the program?
 
 Connect CodyJoy Pro, a USB microphone, and a speaker. Open **CodyNick Examples →
 `local_ai_voice_conversation.py`** and select **Run This File**.
 
-1. Wait until TTS, speech recognition, and Local AI all report ready.
-2. Say `wake up`.
-3. Ask one short question and wait for the spoken answer.
-4. Ask more questions without repeating the wake phrase.
-5. Say `sleep`, then wake it again.
-6. Say `stop listening` to finish.
+The installed filename is `local_ai_voice_conversation.py`; there is no separate
+`local_ai_conversation.py` in the current release. Use the installed example so its
+model loading, microphone handling, and gadget feedback have already been prepared.
+No answer-generation script is needed for this version.
 
-Point out that the three models load only once, the microphone stops while CodyJoy or
-the speaker makes sound, and each generated answer is restricted to nine words. The
-program prefixes TTS text with `;;;`, overwrites `llm_answer.wav`, and uses the same
-waiting, listening, processing, answering, and goodbye effects as Step 12. Unlike the
-saved-answer demonstration, this version accepts unrestricted questions, but it does
-not remember earlier questions.
+### Set up the finale
+
+Tell the audience: "The device is loading its ears, its voice, and its language model."
+Wait for these terminal messages before speaking:
+
+```text
+Text-to-speech is ready.
+Speech recognition is ready.
+Local AI is ready. Say: Wake up
+```
+
+Loading happens once at the start of each run. Each new answer still needs time for
+language generation and speech synthesis. Let the LED states show that work to the audience.
+
+### Demonstrate, then hand over to the audience
+
+1. Say `wake up`. Wait for the rising notes, green lights, and "I am listening."
+2. Ask `What is an RGB LED?` and wait for the spoken answer.
+3. Ask `Name one use for a temperature sensor.` without saying the wake phrase again.
+   This brings the story back to the dashboard and alarm the audience just watched.
+4. Invite a volunteer to ask a different simple question, such as `What is a joystick?`
+   or `Why do plants need water?`. Explain that the answer is generated, so its wording can vary.
+5. Say `sleep` and wait for "Going to sleep." Show that ordinary questions no longer
+   start answers until `wake up` is spoken again.
+6. Wake it once more. Say `stop listening` or `goodbye` for the closing melody and cleanup.
+
+If the volunteer pauses for ten seconds while the program is waiting for a question,
+it returns to wake mode. Say `wake up` again and let the ready response finish.
+
+### Watch the conversation travel through the system
+
+| Part | What the presenter can point to |
+| --- | --- |
+| Speech-to-text (STT) | The recognized question appears after `You:` in the terminal |
+| Local language model | A generated answer appears after `AI:` |
+| Text-to-speech (TTS) | The speaker reads that answer aloud |
+| CodyJoy Pro | Blue waiting LED, green wake effect, cyan listening LEDs, yellow processing LEDs, green answering pattern, purple farewell |
+
+### Point out
+
+- STT, TTS, and the language model work locally after installation. Internet is not
+  required for the conversation itself.
+- All three models load once before the first wake phrase and are reused until the
+  script stops. They are released when it ends.
+- Answers contain at most nine space-separated words. Short answers help the pace,
+  but the language model can still make mistakes; ask the audience to judge the answer.
+- The microphone is stopped during gadget sounds, speech synthesis, and playback,
+  helping prevent the program from hearing its own answer. Wait for cyan listening LEDs.
+- The ready response includes `;;;` before its text, as do generated answers sent to
+  TTS. This is the prepared playback pause used in the tested script.
+- Each generated reply replaces `llm_answer.wav` in the device's audio folder. It does
+  not create a growing folder of answer recordings.
+- Unlike Step 13's prepared topics, this example accepts open questions. Each question
+  is independent: it does not remember earlier answers or read the temperature sensor.
+
+### Presenter recovery tips
+
+- If the recognized question after `You:` is wrong, repeat it clearly rather than
+  treating the generated reply as a model failure.
+- If no ready message appears, wait for model loading or inspect the terminal error
+  before inviting an audience question.
+- Keep the speaker away from the microphone and leave pauses between questions.
+- Use a complete question each time, such as "What is a joystick?" rather than
+  "What about that?", because this example has no conversation memory.
 
 ## Closing audience questions
 
 - Which thresholds would you use for a refrigerator, greenhouse, or classroom?
 - What other sensor could replace the temperature sensor?
 - What could the joystick control besides the alarm?
-- How could the dashboard or cloud record the temperature history?
+- What could we measure on a second dashboard card?
+- Why is elapsed time more useful than a sample counter on a temperature graph?
 - What could an AI model discover in the picture we just captured?
 - How could the program react when it recognizes a particular object?
 - What other spoken commands could control a CodyNick project?
 - What new questions and emotions would you add to the conversation?
+- How is a generated answer different from one we recorded in advance?
 
 ## Presenter reminder
 
