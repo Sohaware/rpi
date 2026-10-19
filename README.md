@@ -2,7 +2,11 @@
 
 ## Current version
 
-**Unified setup: 0.9.7; application: 0.9.5 baseline; network component: 0.2.2.**
+**Unified setup: 0.9.5; application: 0.9.5; network component: 0.2.2.**
+
+The current main branch restores the original 0.9.5 application. The rollback
+installer is pinned to `v0.9.5-rollback` and accepts devices marked 0.9.6 or 0.9.7.
+Successful setup reports `CodyNick 0.9.5: READY`.
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -63,7 +67,7 @@ Version 0.9.2 disables automatic Ubuntu package updates, repairs interrupted or
 corrupted package-manager prerequisites, adds persistent installation logs and
 status commands, synchronizes hotspot identity with the web panel, and installs
 the offline CodyJoy Pro HEX-programming guide.
-Version 0.9.7 restores the 0.9.5 application and accepts devices upgraded to 0.9.6. The 0.9.6 graph axis and height controls are removed. Version 0.9.5 redraws charts at their real responsive size for sharp, undistorted output. Version 0.9.4 added responsive dashboard card widths and a live temperature-history example. Version 0.9.3 added safe per-widget dashboard typography and alignment controls,
+Version 0.9.5 redraws charts at their real responsive size for sharp, undistorted output. Version 0.9.4 added responsive dashboard card widths and a live temperature-history example. Version 0.9.3 added safe per-widget dashboard typography and alignment controls,
 plus simple dashboard-counter and LED-matrix temperature demonstrations.
 Version 0.7.11 repaired the upgrade gate for devices coming from 0.7.9 or the failed
 0.7.10 attempt. Version 0.7.10 replaced the fixed controller startup delay with adaptive polling: fast
@@ -86,7 +90,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 It chooses the required stage and shows the installation log. It accepts core
 0.2.0, 0.2.1, 0.2.2, 0.3.0, the unpublished 0.3.1 candidate, 0.4.0, 0.5.0,
-0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, 0.7.8, 0.7.9, failed 0.7.10, 0.7.11, 0.8.1, 0.8.2, 0.9.0, 0.9.1, 0.9.2, 0.9.3, 0.9.4, 0.9.5, 0.9.6, and repeats of 0.9.7. Upstream stage scripts/assets are pinned
+0.5.1, 0.5.2, 0.5.3, 0.6.0, 0.6.1, 0.7.0, 0.7.1, 0.7.2, 0.7.3, 0.7.4, 0.7.5, 0.7.6, 0.7.7, 0.7.8, 0.7.9, failed 0.7.10, 0.7.11, 0.8.1, 0.8.2, 0.9.0, 0.9.1, 0.9.2, 0.9.3, 0.9.4, and repeats of 0.9.5. Upstream stage scripts/assets are pinned
 to immutable versions with SHA256 checks. Only the small entry point follows main;
 the application and network stages use fixed release tags.
 
@@ -156,7 +160,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.9.7** and its pinned network component reports **0.2.2**.
+The entry banner is **0.9.5** and its pinned network component reports **0.2.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -192,7 +196,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.9.7: READY`
+same entry point starts application installation. Wait for `CodyNick 0.9.5: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -245,7 +249,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.9.7: READY`**, then press
+Wait for **`CodyNick 0.9.5: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -351,7 +355,7 @@ that run's `/var/backups/codynick/core-*` folder.
 
 The application phase performs no OS-wide upgrade, reboot, root-password reset, or
 network reconfiguration. A legacy installation or a version other than
-0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8/0.7.9/0.7.10/0.7.11/0.8.1/0.8.2/0.9.0/0.9.1/0.9.2/0.9.3/0.9.4/0.9.5/0.9.6/0.9.7 is refused
+0.2.0/0.2.1/0.2.2/0.3.0/0.3.1/0.4.0/0.5.0/0.5.1/0.5.2/0.5.3/0.6.0/0.6.1/0.7.0/0.7.1/0.7.2/0.7.3/0.7.4/0.7.5/0.7.6/0.7.7/0.7.8/0.7.9/0.7.10/0.7.11/0.8.1/0.8.2/0.9.0/0.9.1/0.9.2/0.9.3/0.9.4/0.9.5 is refused
 rather than blindly overwritten. Other migrations are not yet implemented.
 Edited managed source files are backed up before replacement;
 this is not a full-system/database backup or transactional rollback. Back up important
@@ -360,7 +364,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.9.7/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.9.5/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -405,8 +409,6 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
-| **0.9.7-restore-0.9.5** | Automated tests; Raspberry Pi acceptance pending | Restores the 0.9.5 application with migration from 0.9.6 and safe restoration of the known active temperature demo. |
-| **0.9.6-dashboard-axes** | Automated tests; Raspberry Pi acceptance pending | Adds graph axis padding/labels, one-based samples, five Y-grid lines, and card height spans. |
 | **0.9.5-dashboard-canvas** | Automated tests; Raspberry Pi acceptance pending | Redraws responsive graph, bar, and pie canvases at native display resolution. |
 | **0.9.4-dashboard-layout** | Automated tests; Raspberry Pi acceptance pending | Adds responsive card widths and a live temperature plus 20-reading history example. |
 | **0.9.3-dashboard-styles** | Automated tests; Raspberry Pi acceptance pending | Adds safe dashboard typography/alignment fields and the counter and LED-matrix temperature examples. |
@@ -445,7 +447,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 | 0.1.1 | Superseded; do not install | Reuses a correct working dongle profile, targets USB preparation instead of global Netplan application, arms rollback earlier, and retries recovery. Fresh-install testing subsequently found the permissions defect fixed in 0.1.2. |
 | 0.1.0 | Superseded; do not install | Introduced adapter detection, internet checks, hotspot handover, confirmation, rollback, and version/state reporting. Global Netplan application could disconnect SSH during preparation. |
 
-The unified 0.9.7 setup updates both the core application and network component.
+The unified 0.9.5 setup updates both the core application and network component.
 See [CHANGELOG.md](CHANGELOG.md) for technical details.
 
 **For every future published version**, update this table, current-version section,
@@ -534,7 +536,7 @@ than later playback.
 - Selects only permitted non-DFS 5 GHz channels 36, 40, 44, and 48 at boot.
 - Pins a tag and verifies the helper SHA256: HTTPS/checksum integrity, not release signing.
 
-Automated tests cover the 0.9.7 rollback release and 0.2.2 network migration:
+Automated tests cover the 0.9.5 application and 0.2.2 network migration:
 
 ```bash
 python -m unittest discover -s tests -v
