@@ -1,3 +1,4 @@
+import math
 import time
 import CodyNick
 import Dashboard
@@ -40,7 +41,7 @@ while True:
     if temperature is not None:
         temperature = round(temperature, 1)
 
-        if temperature != 0 and temperature < 120:
+        if not math.isnan(temperature):
             print(f"{Cnt} : {temperature}")
 
             temperature_card.set(temperature)

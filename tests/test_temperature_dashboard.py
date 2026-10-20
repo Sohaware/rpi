@@ -44,10 +44,10 @@ class TemperatureDashboardTests(unittest.TestCase):
                 exec(compile(EXAMPLE.read_text(encoding='utf-8'), str(EXAMPLE), 'exec'), {})
         return cards
 
-    def test_missing_zero_and_high_readings_leave_cards_unchanged(self):
-        gauge, graph = self.run_example([None, 0, 120, 2395915000, -2, 20.6])
-        self.assertEqual(gauge.updates, [-2, 20.6])
-        self.assertEqual(graph.updates[-1], [[10.0, -2], [12.5, 20.6]])
+    def test_missing_and_nan_readings_leave_cards_unchanged(self):
+        gauge, graph = self.run_example([None, float('nan'), 0, 120, -2, 20.6])
+        self.assertEqual(gauge.updates, [0, 120, -2, 20.6])
+        self.assertEqual(graph.updates[-1], [[5.0, 0], [7.5, 120], [10.0, -2], [12.5, 20.6]])
         self.assertEqual(graph.options['x_axis_label'], 'Time (s)')
 
     def test_latest_twenty_samples_keep_original_elapsed_seconds(self):
@@ -56,9 +56,9 @@ class TemperatureDashboardTests(unittest.TestCase):
         self.assertEqual(graph.updates[-1][0][0], 12.5)
         self.assertEqual(graph.updates[-1][-1][0], 60.0)
 
-    def test_filter_is_applied_after_rounding_as_requested(self):
+    def test_numeric_readings_are_not_range_filtered(self):
         gauge, graph = self.run_example([0.04, 119.96, 119.94, -0.1])
-        self.assertEqual(gauge.updates, [119.9, -0.1])
+        self.assertEqual(gauge.updates, [0.0, 120.0, 119.9, -0.1])
 
 
 if __name__ == '__main__':

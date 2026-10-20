@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.10-temperature-nan - Temperature dashboard NaN check
+
+- Accepts zero and readings at or above 120 in the temperature dashboard example.
+- Skips NaN and missing readings; retains elapsed-time plotting and existing layout.
+- Supports installation, repair, and upgrade from 0.9.9 using the same setup command.
+
 ## 0.9.9-presenter-guide - Dashboard reveal and Local AI finale
 
 - Expands the presenter guide to fourteen steps with the tested temperature dashboard as Step 9.

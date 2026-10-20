@@ -2,7 +2,9 @@
 
 ## Current version
 
-**Unified setup: 0.9.9; application: 0.9.9; network component: 0.2.2.**
+**Unified setup: 0.9.10; application: 0.9.10; network component: 0.2.2.**
+
+Version 0.9.10 removes the zero/below-120 restriction from the temperature dashboard example and skips NaN and missing readings instead. Use the same setup command to upgrade from 0.9.9.
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
 have passed fresh-OS testing, IDE/run/live-output tests, and a CodyJoy RGB hardware
 test. Version 0.3.0 adds USB-camera/object detection and colored terminal output;
@@ -156,7 +158,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.9.9** and its pinned network component reports **0.2.2**.
+The entry banner is **0.9.10** and its pinned network component reports **0.2.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -192,7 +194,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.9.9: READY`
+same entry point starts application installation. Wait for `CodyNick 0.9.10: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -245,7 +247,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.9.9: READY`**, then press
+Wait for **`CodyNick 0.9.10: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -360,7 +362,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.9.9/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.9.10/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -405,6 +407,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.9.10-temperature-nan** | Automated checks; Raspberry Pi acceptance pending | Temperature dashboard accepts zero/high readings and rejects NaN/missing values. |
 | **0.9.9-presenter-guide** | Automated checks; Raspberry Pi acceptance pending | Fourteen-step presenter guide with the live temperature dashboard and Local AI conversation finale. |
 | **0.9.8-temperature-time** | Temperature example tested on device; installer acceptance pending | Filters missing/zero/high readings and plots the latest 20 valid temperatures against elapsed seconds. |
 | **0.9.6-dashboard-axes** | Automated tests; Raspberry Pi acceptance pending | Adds graph axis padding/labels, one-based samples, five Y-grid lines, and card height spans. |
@@ -446,7 +449,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 | 0.1.1 | Superseded; do not install | Reuses a correct working dongle profile, targets USB preparation instead of global Netplan application, arms rollback earlier, and retries recovery. Fresh-install testing subsequently found the permissions defect fixed in 0.1.2. |
 | 0.1.0 | Superseded; do not install | Introduced adapter detection, internet checks, hotspot handover, confirmation, rollback, and version/state reporting. Global Netplan application could disconnect SSH during preparation. |
 
-The unified 0.9.9 setup updates both the core application and network component.
+The unified 0.9.10 setup updates both the core application and network component.
 See [CHANGELOG.md](CHANGELOG.md) for technical details.
 
 **For every future published version**, update this table, current-version section,
@@ -535,7 +538,7 @@ than later playback.
 - Selects only permitted non-DFS 5 GHz channels 36, 40, 44, and 48 at boot.
 - Pins a tag and verifies the helper SHA256: HTTPS/checksum integrity, not release signing.
 
-Automated tests cover the 0.9.9 application and 0.2.2 network migration:
+Automated tests cover the 0.9.10 application and 0.2.2 network migration:
 
 ```bash
 python -m unittest discover -s tests -v
