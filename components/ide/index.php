@@ -14,8 +14,8 @@ $device = [
     "device_code" => "unknown",
     "hotspot_ssid" => "unknown",
     "production_date" => "2026-10-20",
-    "description" => "CodyNick 0.10.0",
-    "software_version" => "0.10.0",
+    "description" => "CodyNick 0.10.1",
+    "software_version" => "0.10.1",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];
@@ -265,6 +265,11 @@ function e($value) {
                 <a class="link-card" href="/code">
                     <div class="link-title">On-Device IDE</div>
                     <div class="link-desc">Open the local coding environment.</div>
+                </a>
+
+                <a class="link-card" href="/blocks/">
+                    <div class="link-title">Block Coding</div>
+                    <div class="link-desc">Blockly</div>
                 </a>
 
                 <a class="link-card" href="/dashboard">

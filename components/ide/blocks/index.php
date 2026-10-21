@@ -864,21 +864,31 @@ function buildToolbox() {
       },
       {
         kind: 'category',
-        name: 'Logic',
+        name: 'Operators',
         colour: '#59c059',
         contents: [
-          makeBlock('controls_if'),
           makeBlock('logic_compare'),
           makeBlock('logic_operation'),
           makeBlock('logic_negate'),
-          makeBlock('logic_boolean')
+          makeBlock('logic_boolean'),
+          { kind: 'block', type: 'math_number', fields: { NUM: 0 } },
+          makeBlock('math_arithmetic'),
+          makeBlock('math_single'),
+          makeBlock('math_round'),
+          makeBlock('math_random_int')
         ]
       },
       {
         kind: 'category',
-        name: 'Loops',
+        name: 'Control',
         colour: '#ffab19',
         contents: [
+          { kind: 'block', type: 'cn_wait', inputs: { SECONDS: { shadow: { type: 'math_number', fields: { NUM: 1 } } } } },
+          makeBlock('controls_if'),
+          { kind: 'block', type: 'controls_if', extraState: { hasElse: true } },
+          { kind: 'block', type: 'controls_whileUntil', fields: { MODE: 'WHILE' } },
+          { kind: 'block', type: 'controls_whileUntil', fields: { MODE: 'UNTIL' } },
+          makeBlock('cn_forever'),
           {
             kind: 'block',
             type: 'controls_repeat_ext',
@@ -886,20 +896,7 @@ function buildToolbox() {
               TIMES: { shadow: { type: 'math_number', fields: { NUM: 10 } } }
             }
           },
-          makeBlock('controls_whileUntil'),
           makeBlock('controls_flow_statements')
-        ]
-      },
-      {
-        kind: 'category',
-        name: 'Math',
-        colour: '#4c97ff',
-        contents: [
-          { kind: 'block', type: 'math_number', fields: { NUM: 0 } },
-          makeBlock('math_arithmetic'),
-          makeBlock('math_single'),
-          makeBlock('math_round'),
-          makeBlock('math_random_int')
         ]
       },
       {
@@ -974,8 +971,38 @@ async function copyPythonPreview(event) {
 
 function initBlockly() {
   ensureColourFieldSupport();
+  Blockly.defineBlocksWithJsonArray([
+    {
+      type: 'cn_wait', message0: 'wait %1 seconds',
+      args0: [{ type: 'input_value', name: 'SECONDS', check: 'Number' }],
+      previousStatement: null, nextStatement: null, colour: '#ffab19',
+      tooltip: 'Pause for the given number of seconds.'
+    },
+    {
+      type: 'cn_forever', message0: 'forever %1',
+      args0: [{ type: 'input_statement', name: 'DO' }],
+      previousStatement: null, colour: '#ffab19',
+      tooltip: 'Repeat until the program is stopped.'
+    }
+  ]);
   defineEventBlocks();
   definePackageBlocks();
+  const categoryColours = {
+    '#59c059': ['logic_compare', 'logic_operation', 'logic_negate', 'logic_boolean',
+      'math_number', 'math_arithmetic', 'math_single', 'math_round', 'math_random_int'],
+    '#ffab19': ['cn_wait', 'cn_forever', 'controls_if', 'controls_repeat_ext',
+      'controls_whileUntil', 'controls_flow_statements']
+  };
+  for (const [colour, types] of Object.entries(categoryColours)) {
+    for (const type of types) {
+      const definition = Blockly.Blocks[type];
+      const originalInit = definition.init;
+      definition.init = function() {
+        originalInit.call(this);
+        this.setColour(colour);
+      };
+    }
+  }
 
   workspace = Blockly.inject('blocklyDiv', {
     toolbox: buildToolbox(),
@@ -1141,6 +1168,12 @@ function blockToPythonStatement(block) {
     case 'text_print':
       return 'print(' + valueToCode(block, 'TEXT', "''") + ')\n';
 
+    case 'cn_wait':
+      return 'time.sleep(max(0, ' + valueToCode(block, 'SECONDS', '1') + '))\n';
+
+    case 'cn_forever':
+      return 'while True:\n' + indent(statementToCode(block, 'DO') + 'time.sleep(0.01)\n');
+
     case 'variables_set':
       return variableName(block, 'VAR') + ' = ' + valueToCode(block, 'VALUE', 'None') + '\n';
 
@@ -1170,7 +1203,7 @@ function blockToPythonStatement(block) {
       const until = block.getFieldValue('MODE') === 'UNTIL';
       const cond = valueToCode(block, 'BOOL', 'False');
       const body = statementToCode(block, 'DO') || 'pass\n';
-      return 'while ' + (until ? '(not ' + cond + ')' : cond) + ':\n' + indent(body);
+      return 'while ' + (until ? '(not ' + cond + ')' : cond) + ':\n' + indent(body + 'time.sleep(0.01)\n');
     }
 
     case 'controls_flow_statements':

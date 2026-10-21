@@ -22,6 +22,15 @@ selector = load('release_selector', 'tools/select_release.py')
 
 
 class ReleaseSelectionTests(unittest.TestCase):
+    def test_previous_simulator_release_can_be_selected(self):
+        manifest = json.loads((ROOT / 'releases/core-0.10.0.json').read_text())
+        with patch.multiple(installer, VERSION=installer.ENGINE_VERSION, TAG=installer.ENGINE_TAG,
+                            RELEASE_DATE='2026-10-20', BASE='unused'):
+            installer.select_target(manifest)
+            self.assertEqual(installer.VERSION, '0.10.0')
+            self.assertEqual(installer.TAG, 'v0.10.0-gadget-simulator')
+        self.assertEqual(selector.published_manifest('0.10.0')[0], manifest['tag'])
+
     def test_default_target_manifest_is_pinned(self):
         entry = (ROOT / 'setup.sh').read_text()
         version = re.search(r'^TARGET_VERSION="([^"]+)"', entry, re.M).group(1)
@@ -54,6 +63,7 @@ class ReleaseSelectionTests(unittest.TestCase):
 
     def test_maintainer_selector_keeps_updater_and_network_pins(self):
         original = (ROOT / 'setup.sh').read_text()
+        self.assertIn('CODYNICK_TARGET_MANIFEST_SHA256="$TARGET_MANIFEST_SHA256"', original)
         tag, checksum = selector.published_manifest('0.9.10')
         updated = selector.render_selector(original, '0.9.10', tag, checksum)
         self.assertIn('TARGET_VERSION="0.9.10"', updated)

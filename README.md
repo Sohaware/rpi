@@ -2,7 +2,20 @@
 
 ## Current version
 
-**Unified setup: 0.10.0; application: 0.10.0; network component: 0.2.2.**
+**Unified setup: 0.10.1; application: 0.10.1; network component: 0.2.2.**
+
+## 0.10.1: Blockly Control and Operators
+
+Use the same fixed setup command. Success ends with **`CodyNick 0.10.1: READY`**.
+Open Block Coding from the main-menu card or `/blocks/`. Control includes wait seconds,
+if/then, if/then/else, while, repeat-until, forever, and repeat N times. Operators
+contains arithmetic, comparisons, and boolean operations. Control blocks are orange;
+Operators are green. Existing saved workspaces are retained. Refresh with Ctrl+F5
+after upgrading if an old page remains cached.
+
+No hardware drivers, AI models, or network behavior changed. Original 0.10.0 is
+available for rollback using `python tools/select_release.py 0.10.0` followed by
+committing and pushing the selector; Pi users rerun the same fixed command.
 
 ## 0.10.0: Gadget Simulator
 

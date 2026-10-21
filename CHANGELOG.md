@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.10.1-block-controls - Blockly Control and Operators
+
+- Control category: wait seconds, if/then, if/then/else, while, repeat-until, forever, and repeat N times.
+- Operators combines arithmetic, comparisons, and boolean operations; conditionals appear only in Control.
+- Consistent green Operators and orange Control blocks, including blocks restored from saved workspaces.
+- Small automatic pause in while/forever loops to avoid busy spinning.
+- Block Coding card on the main menu.
+- No hardware driver, AI model, firmware, or network behavior changes. Original 0.10.0 remains an approved rollback target.
+
 ## 0.10.0-gadget-simulator - RPi gadget simulator and selectable release rollback
 
 - Integrates the tested stage-4 browser simulator, drag/drop toolbox, persistent layouts and simulated sensor controls.
