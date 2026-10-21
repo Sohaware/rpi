@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 umask 022
-VERSION="0.10.2"
+VERSION="0.10.3"
 VISION_SHA256="63e350ccdde8e755e194f97e2e3294ef2a90c10ca36d16fafaa78ce8c2edc1dc"
 SPEECH_SHA256="c6a365e6ff8e5cde5a44e60fdffcaec7d0466349da41b42cbada937891fd4518"
 OCR_SHA256="3524f9157a67f1196fff7a247ce2045452a58b9d9e86a70d271480eda06d2f0b"
 TTS_SHA256="3ecd2d623c50fe3cc242904c9b3f5425b4245024430a791588f13ea5c37fff0c"
 LLM_SHA256="d22acd8c728ffd5b84d9bc9d7e76f4892648e6fa057e8fb78a238dab4602d2ed"
-TAG="v0.10.2-tool-navigation"
-HELPER_SHA256="dbeecbcbcf6ec01ab79ff189e380a538f7e5acc67e00308801c564444ad4f5c7"
-MANIFEST_SHA256="3dbdb72030bd84b4d8444e7a6259b2f28822e127a873457684b061d6487f0e1c"
-VERSION_STATUS_SHA256="13955198186559ac18c51a29130948af48dab160cffdf12f7960a98bc0244089"
+TAG="v0.10.3-script-controls"
+HELPER_SHA256="903d9cfe4b6293fa1d2dd5b564d4a3c1e03d81b5313d9a0d0a668b2408db22e7"
+MANIFEST_SHA256="58ee5b2c23a49eabde25e77dd06ad5266ca0ea03595be5aa46a5e94289cc2857"
+VERSION_STATUS_SHA256="9f9d82d100143956dc4cc53fd5bd6ce3614dc5ad7b01f0dfa2d71f669e86a725"
 BASE="https://raw.githubusercontent.com/Sohaware/rpi/${TAG}"
 TARGET_VERSION="${CODYNICK_TARGET_VERSION:-$VERSION}"
 TARGET_TAG="${CODYNICK_TARGET_TAG:-$TAG}"
-TARGET_MANIFEST_SHA256="3dbdb72030bd84b4d8444e7a6259b2f28822e127a873457684b061d6487f0e1c"
+TARGET_MANIFEST_SHA256="58ee5b2c23a49eabde25e77dd06ad5266ca0ea03595be5aa46a5e94289cc2857"
 TARGET_BASE="https://raw.githubusercontent.com/Sohaware/rpi/${TARGET_TAG}"
 [[ "$TARGET_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && "$TARGET_TAG" =~ ^v[0-9A-Za-z.-]+$ && "$TARGET_MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]] || { echo 'Invalid target release selector'; exit 1; }
 echo "CodyNick core bootstrap ${VERSION} (local AI conversation and 5 GHz network)"
@@ -107,21 +107,21 @@ manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
 if manifest.get('version') != sys.argv[2] or manifest.get('tag') != sys.argv[3]:
     raise SystemExit('Incorrect release manifest')
 PY
-install -d -m 0755 /usr/local/lib/codynick/core-0.10.2
-install -m 0644 "$temp/app_setup.py" /usr/local/lib/codynick/core-0.10.2/app_setup.py
-install -m 0644 "$temp/core-manifest.json" /usr/local/lib/codynick/core-0.10.2/core-manifest.json
-install -m 0644 "$temp/version_status.py" /usr/local/lib/codynick/core-0.10.2/version_status.py
-install -m 0644 "$temp/vision_setup.py" /usr/local/lib/codynick/core-0.10.2/vision_setup.py
-install -m 0644 "$temp/speech_setup.py" /usr/local/lib/codynick/core-0.10.2/speech_setup.py
-install -m 0644 "$temp/ocr_setup.py" /usr/local/lib/codynick/core-0.10.2/ocr_setup.py
-install -m 0644 "$temp/tts_setup.py" /usr/local/lib/codynick/core-0.10.2/tts_setup.py
-install -m 0644 "$temp/llm_setup.py" /usr/local/lib/codynick/core-0.10.2/llm_setup.py
+install -d -m 0755 /usr/local/lib/codynick/core-0.10.3
+install -m 0644 "$temp/app_setup.py" /usr/local/lib/codynick/core-0.10.3/app_setup.py
+install -m 0644 "$temp/core-manifest.json" /usr/local/lib/codynick/core-0.10.3/core-manifest.json
+install -m 0644 "$temp/version_status.py" /usr/local/lib/codynick/core-0.10.3/version_status.py
+install -m 0644 "$temp/vision_setup.py" /usr/local/lib/codynick/core-0.10.3/vision_setup.py
+install -m 0644 "$temp/speech_setup.py" /usr/local/lib/codynick/core-0.10.3/speech_setup.py
+install -m 0644 "$temp/ocr_setup.py" /usr/local/lib/codynick/core-0.10.3/ocr_setup.py
+install -m 0644 "$temp/tts_setup.py" /usr/local/lib/codynick/core-0.10.3/tts_setup.py
+install -m 0644 "$temp/llm_setup.py" /usr/local/lib/codynick/core-0.10.3/llm_setup.py
 systemctl reset-failed codynick-install.service 2>/dev/null || true
 # A transient unit survives SSH disconnection, but intentionally does not survive reboot.
 flock -u 8
 systemd-run --unit=codynick-install --collect --property=Type=exec \
     --property=StandardOutput=append:${LOG} --property=StandardError=append:${LOG} \
-    /usr/bin/python3 -u /usr/local/lib/codynick/core-0.10.2/app_setup.py --worker
+    /usr/bin/python3 -u /usr/local/lib/codynick/core-0.10.3/app_setup.py --worker
 echo
 echo 'Installation is running in the background. Do not reboot until it finishes.'
 echo 'Follow progress: codynick-install-log --follow'

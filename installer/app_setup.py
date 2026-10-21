@@ -14,13 +14,14 @@ import tempfile
 import time
 import urllib.request
 
-VERSION = "0.10.2"
-TAG = "v0.10.2-tool-navigation"
+VERSION = "0.10.3"
+TAG = "v0.10.3-script-controls"
 ENGINE_VERSION = VERSION
 ENGINE_TAG = TAG
-RELEASE_DATE = "2026-10-20"
+RELEASE_DATE = "2026-10-21"
 RELEASE_DIRECTORY = Path(__file__).resolve().parent
 TARGET_RELEASES = {
+    "0.10.3": ("v0.10.3-script-controls", "2026-10-21"),
     "0.10.2": ("v0.10.2-tool-navigation", "2026-10-20"),
     "0.10.0": ("v0.10.0-gadget-simulator", "2026-10-20"),
     "0.10.1": ("v0.10.1-block-controls", "2026-10-20"),
@@ -240,7 +241,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.6", "0.9.7", "0.9.8", "0.9.9", "0.9.10", "0.10.0", "0.10.1", ENGINE_VERSION, VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.6", "0.9.7", "0.9.8", "0.9.9", "0.9.10", "0.10.0", "0.10.1", "0.10.2", ENGINE_VERSION, VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -336,6 +337,27 @@ CREATE USER IF NOT EXISTS 'codynick'@'localhost' IDENTIFIED BY 'codynick';
 GRANT ALL PRIVILEGES ON codynick.* TO 'codynick'@'localhost';
 """
     run("mariadb", input=sql, text=True)
+
+
+def configure_script_control(manifest, backup):
+    names = ['codynick-script-control.socket', 'codynick-script-control.service']
+    run('systemctl', 'stop', *names, check=False)
+    marker = Path('/run/codynick-script-stopped')
+    marker.unlink(missing_ok=True)
+    if 'script-control' not in manifest['components']:
+        run('systemctl', 'disable', names[0], check=False)
+        return
+    for name in names:
+        deploy(Path('/root/codynick') / name, Path('/etc/systemd/system') / name, backup)
+    old_rule = Path('/etc/sudoers.d/codynick-script-control')
+    if old_rule.exists():
+        saved = backup / 'etc/sudoers.d/codynick-script-control'
+        saved.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(old_rule, saved)
+        old_rule.unlink()
+    run('systemctl', 'daemon-reload')
+    run('systemctl', 'enable', '--now', names[0])
+    run('systemctl', 'is-active', '--quiet', names[0])
 
 
 def install_units():
@@ -598,6 +620,8 @@ def install():
     llm_setup.install(manifest, run)
     reset_examples(EXAMPLES_ROOT, backup)
     reset_examples(GADGET_TESTS_ROOT, backup)
+    run('systemctl', 'stop', 'codynick', check=False)
+    run('systemctl', 'stop', 'codynick-script-control.socket', 'codynick-script-control.service', check=False)
     if Path('/etc/systemd/system/codynick-simulator.service').exists():
         run('systemctl', 'stop', 'codynick-simulator')
     for name in verify_manifest(manifest):
@@ -623,6 +647,7 @@ def install():
     sync_device_info()
     configure_teacher_access()
     configure_simulator(manifest, backup)
+    configure_script_control(manifest, backup)
     install_units()
     set_operation("Running final CodyNick health checks")
     health_check()

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.10.3-script-controls - Tested Start/Stop and platform polish
+
+- IDE and Blockly Stop buttons use a restricted Unix socket, not sudo under Apache.
+- Run explicitly starts the student script even after Stop or with unchanged code. Save alone does not resume it.
+- A root fixed-action controller honors systemd cleanup; watchdog respects Stop. Apache sandbox remains unchanged.
+- Curved hats on both Events blocks. Graphical Main Panel navigation and supplied CodyNick favicon across tools.
+- Main panel shows last-detected CJP firmware and UTC timestamp from the existing physical handshake; no new serial probe.
+- Updated on-device documentation and immutable release pins. Original 0.10.2/0.10.1/0.10.0 remain rollback targets.
+- No serial timing, firmware, AI model, or network behavior changes.
+
 ## 0.10.2-tool-navigation - Tool navigation and soil moisture
 
 - Simulator launcher preserves the browser hostname rather than forcing an IP address; port 8091 remains.

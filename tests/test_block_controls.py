@@ -6,6 +6,23 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class BlockControlsTests(unittest.TestCase):
+    def test_blockly_run_explicitly_starts_after_stop(self):
+        source = (ROOT / 'components/ide/blocks/index.php').read_text(encoding='utf-8')
+        self.assertIn('unix:///run/codynick-script-control.sock', source)
+        self.assertIn("control_script('start');", source)
+        self.assertLess(source.index('file_put_contents($PYTHON_OUTPUT_FILE'), source.index("control_script('start');"))
+        self.assertIn('Python saved and script started.', source)
+
+    def test_blockly_stop_does_not_write_source(self):
+        source = (ROOT / 'components/ide/blocks/index.php').read_text(encoding='utf-8')
+        handler = source.split("if ($api === 'stop')", 1)[1].split("if ($api === 'run')", 1)[0]
+        self.assertIn("control_script('stop');", handler)
+        self.assertIn("'POST'", handler)
+        self.assertNotIn('file_put_contents', handler)
+        self.assertIn('id="blockStopBtn"', source)
+        self.assertIn("postJson('?api=stop', {})", source)
+        self.assertIn(':not(.stop-btn)', source)
+
     def test_tools_return_to_main_panel(self):
         for tool in ['code', 'blocks', 'dashboard', 'docs', 'teachers', 'gadget-tests']:
             source = (ROOT / f'components/ide/{tool}/index.php').read_text(encoding='utf-8')

@@ -413,10 +413,10 @@ $logoUrl = logoUrl($config);
             .doc-content h1 { font-size: 30px; }
         }
     </style>
-</head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
 <body>
     <header class="topbar">
-        <a href="/" style="padding:8px 12px;color:inherit;white-space:nowrap">Main Panel</a>
+        <a class="codynick-home-button" href="/">Main Panel</a>
         <button class="mobile-menu" type="button" onclick="document.body.classList.toggle('nav-open')">Menu</button>
         <a class="brand" href="?p=<?= rawurlencode($config['default_page']) ?>">
             <?php if ($logoUrl !== ''): ?>

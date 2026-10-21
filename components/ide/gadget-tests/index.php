@@ -54,9 +54,9 @@ $title = $selected ? testTitle($selected) : 'Gadget Tests';
         .copy-code { position:absolute; top:9px; right:9px; border:1px solid #475569; background:#1f2937; color:#fff; border-radius:5px; padding:6px 10px; cursor:pointer; }
         @media(max-width:760px){ .layout{grid-template-columns:1fr} nav{border-right:0;border-bottom:1px solid var(--line)} article{padding:24px 20px} header span{display:none} }
     </style>
-</head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
 <body>
-<header><strong>CodyNick Gadget Tests</strong><span>Public hardware checks</span><a href="/">Main panel</a></header>
+<header><strong>CodyNick Gadget Tests</strong><span>Public hardware checks</span><a class="codynick-home-button" href="/">Main Panel</a></header>
 <div class="layout">
     <nav><h2>Gadgets</h2><?php foreach ($files as $file): $slug = basename($file, '.md'); ?>
         <a class="<?= $selected === $file ? 'active' : '' ?>" href="?test=<?= rawurlencode($slug) ?>"><?= e(testTitle($file)) ?></a>

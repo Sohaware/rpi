@@ -2,7 +2,26 @@
 
 ## Current version
 
-**Unified setup: 0.10.2; application: 0.10.2; network component: 0.2.2.**
+**Unified setup: 0.10.3; application: 0.10.3; network component: 0.2.2.**
+
+## 0.10.3: Start/Stop and Platform Polish
+
+Use the same fixed setup command. Success ends with **`CodyNick 0.10.3: READY`**.
+IDE and Blockly now have Stop. Run explicitly restarts the student script even if
+unchanged; Save after Stop does not resume it. A restricted Unix socket handles only
+Start/Stop outside Apache's unchanged sandbox; the old local-test sudo rule is removed.
+The watchdog remains running. Camera/microphone child processes receive the existing
+graceful stop, with forced cleanup after the existing 10-second timeout if needed.
+Physical LEDs can retain their last state. Simulator editing unlocks after its lease expires.
+
+Both Events blocks have curved hats. All tools have graphical Main Panel buttons and
+the supplied CodyNick favicon. Refresh with Ctrl+F5; reopen tabs if the browser retains
+an old favicon. The main panel shows CJP firmware and last-detected UTC time after a
+physical script handshake. Old firmware without a version shows Unknown; before the
+first detection it shows Not detected yet. This is historical status, not a live probe.
+
+Original 0.10.2 remains selectable for rollback via `python tools/select_release.py 0.10.2`
+and committing/pushing the selector. Pi users keep the same fixed command.
 
 ## 0.10.2: Tool Navigation and Soil Moisture
 

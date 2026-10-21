@@ -14,8 +14,8 @@ $device = [
     "device_code" => "unknown",
     "hotspot_ssid" => "unknown",
     "production_date" => "2026-10-20",
-    "description" => "CodyNick 0.10.2",
-    "software_version" => "0.10.2",
+    "description" => "CodyNick 0.10.3",
+    "software_version" => "0.10.3",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];
@@ -41,6 +41,8 @@ if (file_exists($networkFile)) {
 }
 
 // Escape output safely
+$cjp = json_decode(@file_get_contents('/home/client/.codynick-cjp-status.json'), true);
+if (!is_array($cjp)) $cjp = [];
 function e($value) {
     return htmlspecialchars($value ?? "", ENT_QUOTES, "UTF-8");
 }
@@ -244,7 +246,7 @@ function e($value) {
             }
         }
     </style>
-</head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"></head>
 
 <body>
 
@@ -324,6 +326,14 @@ function e($value) {
                     <div class="value"><?php echo e($device["software_version"]); ?></div>
                 </div>
 
+                <div class="info-box">
+                    <div class="label">CJP Firmware (Last Detected)</div>
+                    <div class="value"><?php echo e($cjp['firmware'] ?? 'Not detected yet'); ?></div>
+                </div>
+                <div class="info-box">
+                    <div class="label">CJP Last Detected (UTC)</div>
+                    <div class="value"><?php echo e($cjp['detected_at'] ?? 'Not detected yet'); ?></div>
+                </div>
                 <div class="info-box">
                     <div class="label">Device Description</div>
                     <div class="value"><?php echo e($device["description"]); ?></div>

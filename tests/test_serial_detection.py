@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import sys
 import types
@@ -44,6 +45,23 @@ def port(device, description="test", vid=None, pid=None):
 
 
 class SerialDetectionTests(unittest.TestCase):
+    def test_detection_status_is_atomic_and_version_is_optional(self):
+        for response, expected in [('CN@@CJP-Neo|1.19.6', '1.19.6'), ('CN@@CJP-Neo', 'Unknown')]:
+            output = MagicMock()
+            output.name = '/tmp/status-test'
+            with patch.object(m.tempfile, 'NamedTemporaryFile') as temporary, \
+                 patch.object(m.os, 'chmod'), patch.object(m.os, 'replace') as replace:
+                temporary.return_value.__enter__.return_value = output
+                m.record_cjp_detection(response, '/dev/ttyUSB0')
+                saved = json.loads(''.join(call.args[0] for call in output.write.call_args_list))
+                self.assertEqual(saved['firmware'], expected)
+                self.assertTrue(saved['detected_at'].endswith('+00:00'))
+                replace.assert_called_once_with('/tmp/status-test', '/home/client/.codynick-cjp-status.json')
+
+    def test_status_write_failure_does_not_break_connection(self):
+        with patch.object(m.tempfile, 'NamedTemporaryFile', side_effect=PermissionError):
+            m.record_cjp_detection('CN@@CJP-Neo|1.19.6', '/dev/ttyUSB0')
+
     def detector(self):
         return object.__new__(m.CN)
 

@@ -62,9 +62,9 @@ $title = $selected ? guideTitle($selected) : 'Teacher Guides';
         blockquote { margin-left:0; padding-left:16px; border-left:4px solid var(--accent); color:#405065; }
         @media(max-width:760px){ .layout{grid-template-columns:1fr} nav{border-right:0;border-bottom:1px solid var(--line)} article{padding:24px 20px} }
     </style>
-</head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
 <body>
-<header><strong>CodyNick Teacher Guides</strong><span>Protected presenter material</span><a href="/">Main panel</a></header>
+<header><strong>CodyNick Teacher Guides</strong><span>Protected presenter material</span><a class="codynick-home-button" href="/">Main Panel</a></header>
 <div class="layout">
     <nav><h2>Guides</h2><?php foreach ($files as $file): $slug = basename($file, '.md'); ?>
         <a class="<?= $selected === $file ? 'active' : '' ?>" href="?guide=<?= rawurlencode($slug) ?>"><?= e(guideTitle($file)) ?></a>

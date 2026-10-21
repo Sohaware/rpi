@@ -1,0 +1,15 @@
+[Unit]
+Description=CodyNick fixed-action student script controller
+Requires=codynick-script-control.socket
+After=codynick-script-control.socket
+
+[Service]
+ExecStart=/usr/bin/python3 -u /root/codynick/script_control.py --serve
+User=root
+Group=root
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+UMask=0027
+Restart=on-failure
+RestartSec=1

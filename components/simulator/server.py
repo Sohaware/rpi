@@ -270,6 +270,9 @@ def handler(token, state):
                 return self.reply(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8', entry)
             if url.path == '/state':
                 return self.reply(200, state.snapshot())
+            if url.path in ['/favicon.ico', '/tool-navigation.css']:
+                kind = 'image/x-icon' if url.path.endswith('.ico') else 'text/css'
+                return self.reply(200, (ROOT / url.path[1:]).read_bytes(), kind)
             if url.path in ['/app.js', '/font5x7.js', '/style.css', '/gadget.svg', '/seven-segment.svg', '/sensor.svg', '/sensor.png', '/matrix.svg', '/joystick.png', '/ultrasonic.png', '/soil.png', '/wifi.png']:
                 kind = {'/app.js': 'text/javascript', '/font5x7.js': 'text/javascript', '/style.css': 'text/css', **{p: 'image/png' for p in ['/sensor.png', '/joystick.png', '/ultrasonic.png', '/soil.png', '/wifi.png']}}
                 return self.reply(200, (ROOT / url.path[1:]).read_bytes(), kind.get(url.path, 'image/svg+xml'))

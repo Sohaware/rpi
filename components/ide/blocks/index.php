@@ -51,6 +51,24 @@ function read_json_body(): array {
     return $data;
 }
 
+function control_script(string $action): void {
+    if (!in_array($action, ['start', 'stop'], true)) {
+        json_response(['ok' => false, 'error' => 'Invalid control action.'], 400);
+    }
+    $control = @stream_socket_client('unix:///run/codynick-script-control.sock', $errno, $error, 3);
+    if ($control === false) {
+        json_response(['ok' => false, 'error' => 'Script control is unavailable. Check the local socket test installation.'], 503);
+    }
+    stream_set_timeout($control, 25);
+    $sent = fwrite($control, $action . "\n");
+    $reply = $sent === false ? false : fgets($control, 4096);
+    fclose($control);
+    $result = is_string($reply) ? json_decode($reply, true) : null;
+    if (!is_array($result) || empty($result['ok'])) {
+        json_response(['ok' => false, 'error' => 'Script control failed: ' . ($result['error'] ?? 'No response from control service.')], 500);
+    }
+}
+
 function safe_write_file(string $path, string $content, ?string &$error = null): bool {
     $error = null;
     $dir = dirname($path);
@@ -162,7 +180,18 @@ if ($api === 'save') {
     json_response(['ok' => true]);
 }
 
+if ($api === 'stop') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        json_response(['ok' => false, 'error' => 'POST required.'], 405);
+    }
+    control_script('stop');
+    json_response(['ok' => true, 'message' => 'Script stopped.']);
+}
+
 if ($api === 'run') {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        json_response(['ok' => false, 'error' => 'POST required.'], 405);
+    }
     $data = read_json_body();
 
     if (!isset($data['python']) || !is_string($data['python'])) {
@@ -196,9 +225,11 @@ if ($api === 'run') {
         ], 500);
     }
 
+    control_script('start');
+
     json_response([
         'ok' => true,
-        'message' => 'Python generated and saved.',
+        'message' => 'Python saved and script started.',
         'bytes' => strlen($python),
         'outputFile' => basename($PYTHON_OUTPUT_FILE)
     ]);
@@ -351,6 +382,9 @@ if ($api === 'run') {
     .danger-btn {
       color: #be123c;
     }
+    .stop-btn { min-width: 90px; color: #fff; background: #b42335; }
+    .stop-btn:hover { background: #921c2b; }
+    .toolbar button:disabled { opacity: .5; cursor: wait; }
 
     .run-btn:hover {
       background: #2c974b;
@@ -581,13 +615,13 @@ if ($api === 'run') {
         display: none;
       }
 
-      .toolbar button:not(.run-btn),
+      .toolbar button:not(.run-btn):not(.stop-btn),
       .file-button {
         padding: 0 11px;
       }
     }
   </style>
-</head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
 <body>
 <div class="app">
   <header class="topbar">
@@ -600,14 +634,15 @@ if ($api === 'run') {
     </div>
 
     <nav class="toolbar">
-      <a href="/" style="padding:8px 12px;color:inherit;white-space:nowrap">Main Panel</a>
+      <a class="codynick-home-button" href="/">Main Panel</a>
       <button onclick="newWorkspace()" title="Clear the workspace">New</button>
       <label class="file-button" for="importFile" title="Upload a workspace JSON file">Upload</label>
       <input id="importFile" type="file" accept="application/json,.json" />
       <button onclick="downloadWorkspace()" title="Download the current workspace JSON">Download</button>
       <button onclick="saveWorkspaceNow()" title="Save block arrangement on server">Save</button>
       <button onclick="viewPython()" title="Preview generated Python in a pop-up">View Python</button>
-      <button class="run-btn" onclick="runProgram()" title="Generate Python and replace the configured file">▶ Run</button>
+      <button id="blockRunBtn" class="run-btn" onclick="runProgram()" title="Generate Python and start script">▶ Run</button>
+      <button id="blockStopBtn" class="stop-btn" onclick="stopProgram()" title="Stop running script">&#9632; Stop</button>
     </nav>
   </header>
 
@@ -789,6 +824,7 @@ function defineEventBlocks() {
   Blockly.Blocks['cn_event_start'] = {
     init: function() {
       this.appendDummyInput().appendField('when CodyNick starts');
+      this.hat = 'cap';
       this.appendStatementInput('DO');
       this.setColour('#ffbf00');
       this.setTooltip('Runs once when the generated Python program starts.');
@@ -799,6 +835,7 @@ function defineEventBlocks() {
   Blockly.Blocks['cn_event_loop'] = {
     init: function() {
       this.appendDummyInput().appendField('main loop');
+      this.hat = 'cap';
       this.appendStatementInput('DO');
       this.setColour('#ffab19');
       this.setTooltip('Blocks here are generated inside while True.');
@@ -1317,6 +1354,7 @@ async function saveWorkspaceNow(silent = false) {
 }
 
 async function runProgram() {
+  setControlBusy(true);
   try {
     const python = updatePythonPreview(true);
     const data = await postJson('?api=run', {
@@ -1327,6 +1365,25 @@ async function runProgram() {
     toast(data.message || 'Python generated and saved.');
   } catch (err) {
     toast(err.message, true);
+  } finally {
+    setControlBusy(false);
+  }
+}
+
+function setControlBusy(busy) {
+  document.getElementById('blockRunBtn').disabled = busy;
+  document.getElementById('blockStopBtn').disabled = busy;
+}
+
+async function stopProgram() {
+  setControlBusy(true);
+  try {
+    const data = await postJson('?api=stop', {});
+    toast(data.message);
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    setControlBusy(false);
   }
 }
 

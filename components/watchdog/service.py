@@ -7,7 +7,7 @@ import time
 from pathlib import Path
 from security import block_python_file_if_intrusion_detected
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 # =========================
 # Hardcoded configuration
@@ -70,10 +70,15 @@ def write_log_output(content: str) -> None:
 
 
 def restart_service() -> None:
-    subprocess.run(
-        ["systemctl", "restart", SERVICE_NAME],
-        check=True
-    )
+    import fcntl
+    with open('/run/lock/codynick-script-control.lock', 'a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if Path('/run/codynick-script-stopped').exists():
+            return
+        # Explicit Run may already have restarted this exact script.
+        if calculate_sha256(PYTHON_FILE_PATH) == read_previous_hash():
+            return
+        subprocess.run(["systemctl", "restart", SERVICE_NAME], check=True)
 
 
 # =========================

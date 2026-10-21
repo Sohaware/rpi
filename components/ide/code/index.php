@@ -16,6 +16,20 @@ function j($data, int $status = 200): void {
 }
 function fail(string $msg, int $status = 400): void { j(['ok'=>false, 'error'=>$msg], $status); }
 function csrf(): void { return; }
+function control_script(string $action): void {
+    if (!in_array($action, ['start', 'stop'], true)) fail('Invalid script action.');
+    $socket = @stream_socket_client('unix:///run/codynick-script-control.sock', $errno, $error, 3);
+    if ($socket === false) fail('Script control service is unavailable. Check the local socket test installation.', 503);
+    stream_set_timeout($socket, 25);
+    if (fwrite($socket, $action . "\n") === false) {
+        fclose($socket);
+        fail('Could not send script control request.', 503);
+    }
+    $reply = fgets($socket, 4096);
+    fclose($socket);
+    $result = is_string($reply) ? json_decode($reply, true) : null;
+    if (!is_array($result) || empty($result['ok'])) fail('Script control failed: ' . ($result['error'] ?? 'No response from control service.'), 500);
+}
 function ensure_paths(): void {
     if (!is_dir(WORKING_DIR)) @mkdir(WORKING_DIR, 0775, true);
     if (!is_dir(WORKING_DIR)) fail('WORKING_DIR could not be created or is not a directory.', 500);
@@ -172,6 +186,11 @@ if ($action !== '') {
             if (file_put_contents($full, $_POST['content'] ?? '', LOCK_EX) === false) fail('Could not save file.', 500);
             clearstatcache(true, $full);
             j(['ok'=>true,'modified'=>filemtime($full)]);
+        case 'stop':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('POST required.', 405);
+            csrf();
+            control_script('stop');
+            j(['ok'=>true, 'state'=>'stopped']);
         case 'run':
             csrf();
             $active = ACTIVE_SCRIPT_FILE;
@@ -190,6 +209,7 @@ if ($action !== '') {
             if (file_put_contents($active, $activeContent, LOCK_EX) === false) {
                 fail('Could not write to active script. Check permissions.', 500);
             }
+            control_script('start');
             j(['ok'=>true, 'runId'=>$runId]);
         case 'create':
             csrf();
@@ -290,12 +310,12 @@ if ($action !== '') {
 </style>
 <link rel="stylesheet" href="ansi-terminal.css?v=0.3.0">
 <script src="ansi-terminal.js?v=0.3.0"></script>
-</head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
 <body>
 <header>
   <div class="logo"><?php if (defined('IDE_LOGO_URL') && IDE_LOGO_URL): ?><img src="<?= htmlspecialchars(IDE_LOGO_URL) ?>" alt="Logo"><?php else: ?>IDE<?php endif; ?></div>
   <div class="title"><?= htmlspecialchars(IDE_TITLE) ?></div>
-  <a href="/" style="margin-left:auto;padding:8px 12px;color:inherit;white-space:nowrap">Main Panel</a>
+  <a class="codynick-home-button" href="/">Main Panel</a>
 </header>
 <div class="app">
   <aside class="sidebar">
@@ -318,6 +338,7 @@ if ($action !== '') {
       <button id="saveBtn" title="Save" aria-label="Save"></button>
       <button id="downloadBtn" title="Download" aria-label="Download"></button>
       <button id="runBtn" class="run" title="Run this file" aria-label="Run this file"></button>
+      <button id="stopBtn" class="danger" title="Stop running script" aria-label="Stop running script">&#9632; Stop</button>
       <button id="logsBtn" class="logs" title="Terminal" aria-label="Terminal"></button>
     </div>
     <div class="editor-wrap"><div id="editor"></div><textarea id="fallback"></textarea></div>
@@ -429,6 +450,16 @@ openMedia=async function(node){await openMediaBase(node);let modified=node.modif
 const saveHandlerBase=document.getElementById('saveBtn').onclick;
 document.getElementById('saveBtn').onclick=async function(){await saveHandlerBase();const t=active();if(!t||t.dirty)return;try{const out=await api('read',{path:t.path},'GET');t.modified=out.modified;updateCurrentLabel();}catch(_error){}};
 const runHandlerBase=document.getElementById('runBtn').onclick;
+document.getElementById('stopBtn').onclick=async()=>{
+  const button=document.getElementById('stopBtn');
+  const runButton=document.getElementById('runBtn');
+  button.disabled=true;
+  runButton.disabled=true;
+  status('Stopping script...');
+  try { await api('stop',{}); toast('Script stopped.'); status('Stopped. Use Run This File to start again.'); }
+  catch(error) { toast(error.message,false); status('Stop failed: '+error.message); }
+  finally { button.disabled=false; updateButtons(); }
+};
 document.getElementById('runBtn').onclick=async function(){await runHandlerBase();const t=active();if(!t||t.readOnly||t.dirty)return;try{const out=await api('read',{path:t.path},'GET');t.modified=out.modified;updateCurrentLabel();}catch(_error){}};
 window.addEventListener('beforeunload',e=>{if(anyDirty()){e.preventDefault();e.returnValue='';}});
 editor.setReadOnly(true);updateButtons();renderTabs();loadTree();startTerminal();

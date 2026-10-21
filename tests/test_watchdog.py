@@ -11,6 +11,14 @@ with patch.dict(sys.modules, {"security": MagicMock()}):
 
 
 class WatchdogTests(unittest.TestCase):
+    def test_stop_marker_prevents_watchdog_restart(self):
+        with patch.dict(sys.modules, {'fcntl': MagicMock()}), \
+             patch('builtins.open', MagicMock()), \
+             patch.object(Path, 'exists', return_value=True), \
+             patch.object(m.subprocess, 'run') as run:
+            m.restart_service()
+            run.assert_not_called()
+
     def cycle(self, old, new, failure=False):
         with patch.object(m, "block_python_file_if_intrusion_detected", return_value=True), \
              patch.object(Path, "exists", return_value=True), \

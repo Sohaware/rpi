@@ -1,0 +1,18 @@
+a.codynick-home-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 7px 12px;
+  box-sizing: border-box;
+  border: 1px solid #27664e;
+  border-radius: 6px;
+  background: #27664e;
+  color: #fff;
+  font: 600 14px Arial, sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.codynick-home-button:hover { background: #1e513e; color: #fff; }
+a.codynick-home-button:focus-visible { outline: 3px solid #edb94e; outline-offset: 2px; }

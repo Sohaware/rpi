@@ -402,11 +402,11 @@ body {
     .card-span-2, .card-span-3, .card-span-4 { grid-column: span 1; }
 }
 </style>
-</head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
 <body>
 
 <header class="header">
-    <a href="/" style="margin-left:auto;padding:8px 12px;color:inherit;white-space:nowrap;order:1">Main Panel</a>
+    <a class="codynick-home-button" href="/">Main Panel</a>
     <div class="logo-box">
         <img src="<?= htmlspecialchars($logo_path, ENT_QUOTES, 'UTF-8') ?>" alt="Logo" onerror="this.style.display='none'; this.parentNode.querySelector('.logo-placeholder').style.display='block';">
         <div class="logo-placeholder" style="display:none;">IoT</div>

@@ -7,9 +7,36 @@ import serial.tools.list_ports
 import time
 from typing import Optional
 import requests, shutil
-from datetime import datetime
+from datetime import datetime, timezone
+import tempfile
 
-__version__ = "1.23.0"
+__version__ = "1.23.1"
+
+
+def record_cjp_detection(response, port):
+    """Best-effort public status; never delay or fail a physical connection."""
+    path = '/home/client/.codynick-cjp-status.json'
+    temporary = None
+    try:
+        identity = response.rstrip('\x00').strip()
+        version = identity.partition('|')[2].strip() or 'Unknown'
+        status = {'firmware': version, 'port': port,
+                  'detected_at': datetime.now(timezone.utc).isoformat()}
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir=os.path.dirname(path),
+                                         prefix='.cjp-status-', delete=False) as output:
+            temporary = output.name
+            json.dump(status, output)
+        os.chmod(temporary, 0o644)
+        os.replace(temporary, path)
+        temporary = None
+    except OSError:
+        pass
+    finally:
+        if temporary:
+            try:
+                os.unlink(temporary)
+            except OSError:
+                pass
 
 # An explicit Simulator connection never opens the physical serial ports.
 from CodyNickSimulator import Simulator
@@ -206,6 +233,7 @@ class CN:
                 # Check if it looks like a CodyNick device
                 if response and response.startswith(self.IDENTIFY_RESPONSE_PREFIX):
                     elapsed = time.monotonic() - started
+                    record_cjp_detection(response, port_name)
                     print(
                         f"\033[92m[auto_detect_serial] Found CodyJoy Pro on {port_name} "
                         f"in {elapsed:.2f}s: {response.rstrip(chr(0))}\033[0m"
