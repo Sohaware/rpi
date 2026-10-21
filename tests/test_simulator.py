@@ -22,6 +22,19 @@ TOKEN = 'a' * 64
 
 
 class SimulatorTests(unittest.TestCase):
+    def test_soil_percentage_bounds_and_legacy_scene(self):
+        scene = {'gadgets': {'cjp': {'x': 40, 'y': 40}}, 'soil': 100}
+        self.assertEqual(State.validate_scene(scene)['soil'], 100)
+        for value in [-1, 101]:
+            with self.assertRaises(ValueError):
+                State.validate_scene({**scene, 'soil': value})
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'scene.json'
+            path.write_text(json.dumps({**scene, 'soil': 500}))
+            restored = State(path)
+            self.assertEqual(restored.scene['soil'], 100)
+            self.assertEqual(restored.scene['gadgets'], scene['gadgets'])
+
     @classmethod
     def setUpClass(cls):
         cls.state = State()
@@ -115,10 +128,10 @@ class SimulatorTests(unittest.TestCase):
             self.assertEqual(api.Joystick.states(cody, 'Stand-Alone'), ['DOWN', 'CLICK'])
             self.assertEqual(api.Joystick.states(cody, 'CJP'), ['UP', 'CLICK'])
             self.assertEqual(api.Ultrasonic_Sensor.read(cody, 'Stand-Alone'), 50)
-            self.assertEqual(api.Soil_Moisture_Sensor.read(cody), 500)
-            self.state.scene.update(distance=12.3, soil=1234)
+            self.assertEqual(api.Soil_Moisture_Sensor.read(cody), 50)
+            self.state.scene.update(distance=12.3, soil=73)
             self.assertEqual(api.Ultrasonic_Sensor.read(cody, 0), 12.3)
-            self.assertEqual(api.Soil_Moisture_Sensor.read(cody), 1234)
+            self.assertEqual(api.Soil_Moisture_Sensor.read(cody), 73)
             api.WiFi_IoT.IOT_WRITE_DELAY_SECONDS = 0
             self.assertEqual(api.WiFi_IoT.status(cody), {'wifi': 0, 'iot': 0})
             self.assertTrue(api.WiFi_IoT.set_wifi(cody, 'demo-network', 'demo-only'))

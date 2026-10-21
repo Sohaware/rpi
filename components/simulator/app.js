@@ -1,10 +1,16 @@
 'use strict';
 history.replaceState(null, '', '/');
 const $ = id => document.getElementById(id);
+const mainPanelUrl = new URL(window.location.href);
+mainPanelUrl.port = '';
+mainPanelUrl.pathname = '/';
+mainPanelUrl.search = '';
+mainPanelUrl.hash = '';
+$('mainPanel').href = mainPanelUrl.href;
 const newGadgets={
   joystick:{title:'Stand-Alone joystick',body:'<div class="photo-device"><img class="joystick-photo" src="/joystick.png" alt="Stand-Alone joystick"><div class="standalone-stick"></div><output id="standaloneState">Neutral</output></div>'},
   ultrasonic:{title:'Ultrasonic sensor',body:'<div class="photo-device"><img src="/ultrasonic.png" alt="Stand-Alone ultrasonic sensor"><div class="sensor-controls"><label for="distanceValue">Distance (cm)</label><input id="distanceValue" type="number" min="2" max="400" step="0.1" value="50"><input id="distanceSlider" type="range" min="2" max="400" step="0.1" value="50" aria-label="Simulated distance"></div></div>'},
-  soil:{title:'Soil-moisture sensor',body:'<div class="photo-device"><img class="soil-photo" src="/soil.png" alt="Soil-moisture sensor"><div class="sensor-controls"><label for="soilValue">Soil reading (raw)</label><input id="soilValue" type="number" min="0" max="4095" step="1" value="500"><input id="soilSlider" type="range" min="0" max="4095" step="1" value="500" aria-label="Simulated soil reading"></div></div>'},
+  soil:{title:'Soil-moisture sensor',body:'<div class="photo-device"><img class="soil-photo" src="/soil.png" alt="Soil-moisture sensor"><div class="sensor-controls"><label for="soilValue">Soil moisture (%)</label><input id="soilValue" type="number" min="0" max="100" step="1" value="50"><input id="soilSlider" type="range" min="0" max="100" step="1" value="50" aria-label="Simulated soil reading"></div></div>'},
   wifi:{title:'Wi-Fi / IoT',body:'<div class="photo-device wifi-device"><img src="/wifi.png" alt="Wi-Fi and IoT gadget"><p class="sim-label">SIMULATED NETWORK</p><div class="network-controls"><label><input id="wifiLink" type="checkbox" checked> Wi-Fi available</label><label><input id="cloudLink" type="checkbox" checked> Cloud available</label></div><dl class="wifi-status"><dt>Wi-Fi</dt><dd id="wifiState">Disconnected</dd><dt>IoT</dt><dd id="iotState">Disconnected</dd><dt>SSID</dt><dd id="wifiSSID">Not configured</dd></dl><div class="cloud-editor"><label>Type<select id="cloudType"><option value="0">Int</option><option value="1">Float</option><option value="2">Bool</option><option value="3">String</option></select></label><label>Index<input id="cloudIndex" type="number" min="0" max="3" value="0"></label><label class="cloud-value">Value<input id="cloudValue" maxlength="40" value="0"></label><button id="cloudApply">Set value</button></div><pre id="cloudValues" aria-label="Simulated cloud variables"></pre></div>'}
 };
 for(const [kind,data] of Object.entries(newGadgets)) {
@@ -191,7 +197,7 @@ function setTemperature(event) {
   clearTimeout(temperatureTimer); temperatureTimer=setTimeout(()=>{temperatureTimer=null;saveScene();},150);
 }
 $('temperatureValue').oninput=$('temperatureSlider').oninput=setTemperature;
-for(const [prefix,key,min,max] of [['distance','distance',2,400],['soil','soil',0,4095]]) {
+for(const [prefix,key,min,max] of [['distance','distance',2,400],['soil','soil',0,100]]) {
   const update=event=>{
     const value=Number(event.target.value);
     if(!scene||event.target.value===''||!Number.isFinite(value)||value<min||value>max)return;

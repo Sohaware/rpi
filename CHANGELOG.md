@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.2-tool-navigation - Tool navigation and soil moisture
+
+- Simulator launcher preserves the browser hostname rather than forcing an IP address; port 8091 remains.
+- Main Panel navigation added to IDE, Blockly, dashboard, documentation, and simulator; existing teacher/test links retained.
+- Simulated soil moisture uses 0 to 100 percent, default 50. Old raw-value scenes retain their layout and clamp values above 100.
+- No physical gadget driver, AI model, or network changes. Original 0.10.1 and 0.10.0 remain rollback targets.
+
 ## 0.10.1-block-controls - Blockly Control and Operators
 
 - Control category: wait seconds, if/then, if/then/else, while, repeat-until, forever, and repeat N times.

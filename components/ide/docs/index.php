@@ -416,6 +416,7 @@ $logoUrl = logoUrl($config);
 </head>
 <body>
     <header class="topbar">
+        <a href="/" style="padding:8px 12px;color:inherit;white-space:nowrap">Main Panel</a>
         <button class="mobile-menu" type="button" onclick="document.body.classList.toggle('nav-open')">Menu</button>
         <a class="brand" href="?p=<?= rawurlencode($config['default_page']) ?>">
             <?php if ($logoUrl !== ''): ?>

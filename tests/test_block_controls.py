@@ -6,6 +6,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class BlockControlsTests(unittest.TestCase):
+    def test_tools_return_to_main_panel(self):
+        for tool in ['code', 'blocks', 'dashboard', 'docs', 'teachers', 'gadget-tests']:
+            source = (ROOT / f'components/ide/{tool}/index.php').read_text(encoding='utf-8')
+            self.assertIn('href="/"', source, tool)
+        source = (ROOT / 'components/simulator/app.js').read_text(encoding='utf-8')
+        self.assertIn("mainPanelUrl.port = ''", source)
+        launcher = (ROOT / 'components/ide/simulator/index.php').read_text(encoding='utf-8')
+        self.assertIn("$_SERVER['HTTP_HOST']", launcher)
+        self.assertNotIn("$_SERVER['SERVER_ADDR']", launcher)
+
     def test_categories(self):
         source = (ROOT / 'components/ide/blocks/index.php').read_text(encoding='utf-8')
         operators = source.split("name: 'Operators'", 1)[1].split("name: 'Control'", 1)[0]

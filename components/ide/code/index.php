@@ -295,6 +295,7 @@ if ($action !== '') {
 <header>
   <div class="logo"><?php if (defined('IDE_LOGO_URL') && IDE_LOGO_URL): ?><img src="<?= htmlspecialchars(IDE_LOGO_URL) ?>" alt="Logo"><?php else: ?>IDE<?php endif; ?></div>
   <div class="title"><?= htmlspecialchars(IDE_TITLE) ?></div>
+  <a href="/" style="margin-left:auto;padding:8px 12px;color:inherit;white-space:nowrap">Main Panel</a>
 </header>
 <div class="app">
   <aside class="sidebar">

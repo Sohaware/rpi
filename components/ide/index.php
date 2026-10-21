@@ -14,8 +14,8 @@ $device = [
     "device_code" => "unknown",
     "hotspot_ssid" => "unknown",
     "production_date" => "2026-10-20",
-    "description" => "CodyNick 0.10.1",
-    "software_version" => "0.10.1",
+    "description" => "CodyNick 0.10.2",
+    "software_version" => "0.10.2",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];

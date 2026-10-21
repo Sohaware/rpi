@@ -2,7 +2,19 @@
 
 ## Current version
 
-**Unified setup: 0.10.1; application: 0.10.1; network component: 0.2.2.**
+**Unified setup: 0.10.2; application: 0.10.2; network component: 0.2.2.**
+
+## 0.10.2: Tool Navigation and Soil Moisture
+
+Use the same fixed setup command. Success ends with **`CodyNick 0.10.2: READY`**.
+All tools have Main Panel navigation. The simulator retains your browser hostname
+(for example `http://start.codynick:8091/`) instead of redirecting to a numeric IP.
+Accessing the panel by IP still retains that IP. Simulated soil moisture is 0 to
+100 percent, default 50. Old scene layouts are retained; old readings above 100
+are clamped to 100. Refresh tool pages with Ctrl+F5 after upgrading.
+Hardware drivers, AI models, and network behavior are unchanged. Maintainers can
+select original 0.10.1 with `python tools/select_release.py 0.10.1`, commit and
+push the selector, and users rerun the same fixed command to downgrade.
 
 ## 0.10.1: Blockly Control and Operators
 

@@ -49,7 +49,7 @@ Within about three seconds, Python shows Waiting. Add/remove gadgets, then choos
 - LEDs have the same serpentine numbering as the physical CJP.
 - The seven-segment display fits four digits, including the minus sign; decimal points do not consume a digit. Overflow shows dashes.
 - The 8x8 matrix uses a crisp 5x7 bitmap font. Text scrolls one column at a time at three speeds. `LED_Matrix.on/off/set_pixel/clear` support individual pixels, with (0,0) at the top left.
-- Temperature is adjustable from -55 to 125 C, ultrasonic distance from 2 to 400 cm, and soil reading from 0 to 4095 raw units (not a calibrated percentage).
+- Temperature is adjustable from -55 to 125 C, ultrasonic distance from 2 to 400 cm, and soil moisture from 0 to 100 percent.
 - Stand-Alone and CJP joysticks are independent. Hold arrows/center for input. Inputs release after focus loss or a stale connection.
 - Enable sound with a browser click. Audio comes from that browser's speakers, not the physical buzzer.
 

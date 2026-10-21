@@ -51,7 +51,11 @@ class State:
         self.error = ''
         self.wifi = WiFiModel()
         if scene_file and scene_file.exists():
-            self.scene = self.validate_scene(json.loads(scene_file.read_text()))
+            saved = json.loads(scene_file.read_text())
+            # Older prototypes stored raw soil readings; retain their layout.
+            if isinstance(saved, dict) and isinstance(saved.get('soil'), (int, float)) and saved['soil'] > 100:
+                saved['soil'] = 100
+            self.scene = self.validate_scene(saved)
 
     @staticmethod
     def validate_scene(scene):
@@ -70,7 +74,7 @@ class State:
         if not math.isfinite(temperature) or not -55 <= temperature <= 125:
             raise ValueError('Temperature must be between -55 and 125 C.')
         result = {'gadgets': clean, 'temperature': round(temperature, 1)}
-        for key, default, low, high in [('distance', 50, 2, 400), ('soil', 500, 0, 4095)]:
+        for key, default, low, high in [('distance', 50, 2, 400), ('soil', 50, 0, 100)]:
             number = float(scene.get(key, default))
             if not math.isfinite(number) or not low <= number <= high:
                 raise ValueError(f'{key} must be between {low} and {high}.')
@@ -183,7 +187,7 @@ class State:
                 return {'value': self.scene.get('distance', 50)}
             elif action == 'soil':
                 self.require('soil')
-                return {'value': self.scene.get('soil', 500)}
+                return {'value': self.scene.get('soil', 50)}
             elif action == 'wifi_packet':
                 self.require('wifi')
                 return {'response': self.wifi.packet(data['packet'], self.scene)}

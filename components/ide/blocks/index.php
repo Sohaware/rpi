@@ -600,6 +600,7 @@ if ($api === 'run') {
     </div>
 
     <nav class="toolbar">
+      <a href="/" style="padding:8px 12px;color:inherit;white-space:nowrap">Main Panel</a>
       <button onclick="newWorkspace()" title="Clear the workspace">New</button>
       <label class="file-button" for="importFile" title="Upload a workspace JSON file">Upload</label>
       <input id="importFile" type="file" accept="application/json,.json" />

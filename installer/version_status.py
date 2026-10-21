@@ -7,7 +7,7 @@ from pathlib import Path, PurePosixPath
 import sys
 
 
-VERSION = "0.10.1"
+VERSION = "0.10.2"
 STATE = Path("/var/lib/codynick/application-state.json")
 EXAMPLES = Path("/home/client/userfiles/CodyNick examples")
 GADGET_TESTS = Path("/home/client/CodyNick Gadget Tests")

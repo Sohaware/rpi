@@ -27,8 +27,8 @@ def main():
             if path.is_file() and "__pycache__" not in path.parts:
                 files[path.relative_to(ROOT).as_posix()] = sha(path)
     data = {
-        "version": "0.10.1", "tag": "v0.10.1-block-controls", "status": "hardware-trial",
-        "components": {"ide": "0.10.1-block-controls", "CodyNick.py": "1.23.0", "Dashboard.py": "0.9.6-chart-controls", "watchdog": "0.2.0", "vision": "0.7.0-camera-cleanup", "examples": "0.10.1", "gadget-tests": "0.7.8", "speech": "0.9.0-local-ai-voice", "ocr": "0.5.0-image-baseline", "tts": "0.6.1-permissions", "llm": "gemma-3-1b-it-q4_k_m", "network": "0.2.2-public-identity", "simulator": "stage-4"},
+        "version": "0.10.2", "tag": "v0.10.2-tool-navigation", "status": "hardware-trial",
+        "components": {"ide": "0.10.2-tool-navigation", "CodyNick.py": "1.23.0", "Dashboard.py": "0.9.6-chart-controls", "watchdog": "0.2.0", "vision": "0.7.0-camera-cleanup", "examples": "0.10.2", "gadget-tests": "0.7.8", "speech": "0.9.0-local-ai-voice", "ocr": "0.5.0-image-baseline", "tts": "0.6.1-permissions", "llm": "gemma-3-1b-it-q4_k_m", "network": "0.2.2-public-identity", "simulator": "stage-4"},
         "ai_installed": True, "ai_scope": ["usb-camera", "yolo", "speech-to-text", "voice-commands", "ocr-en", "tts-en", "saved-audio-playback", "offline-voice-conversation", "local-llm", "local-ai-voice-conversation"], "files": files,
         "vision_assets": json.loads((ROOT / "releases/vision-0.3.0.json").read_text())["assets"],
         "speech_assets": json.loads((ROOT / "releases/speech-0.4.0.json").read_text())["assets"],
@@ -51,7 +51,7 @@ def main():
             },
         ],
     }
-    manifest = ROOT / "releases/core-0.10.1.json"
+    manifest = ROOT / "releases/core-0.10.2.json"
     manifest.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8", newline="\n")
     bootstrap = ROOT / "bootstrap/codynick-apps.sh"
     text = bootstrap.read_text(encoding="utf-8")
