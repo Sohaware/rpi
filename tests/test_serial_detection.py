@@ -19,7 +19,7 @@ def load_library():
     serial.Serial = MagicMock()
     keyboard = types.ModuleType("keyboard")
     requests = types.ModuleType("requests")
-    with patch.dict(sys.modules, {
+    with patch.object(sys, 'path', [str(ROOT / 'components/client'), *sys.path]), patch.dict(sys.modules, {
         "serial": serial,
         "serial.tools": tools,
         "serial.tools.list_ports": list_ports,

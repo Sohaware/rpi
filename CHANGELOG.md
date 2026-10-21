@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.10.0-gadget-simulator - RPi gadget simulator and selectable release rollback
+
+- Integrates the tested stage-4 browser simulator, drag/drop toolbox, persistent layouts and simulated sensor controls.
+- Includes CJP, independent Stand-Alone joystick, temperature, ultrasonic, soil moisture, seven-segment, 8x8 LED matrix and offline Wi-Fi/IoT protocol model.
+- Adds six managed simulator examples, on-device reference and a main-panel launcher at `/simulator/`.
+- CodyNick.py 1.23.0 adds only the explicit Simulator connection; physical serial/gadget methods are unchanged.
+- Preserves prototype tokens/layouts, verifies actual web-user file I/O and starts the backend after deployment.
+- Adds a stable updater/target selector: authentic 0.9.10, 0.9.9 and 0.9.8 payloads can be selected on GitHub and installed with the same fixed user command.
+- Downgrade disables the simulator, retains its saved layout and preserves student files/configuration/database. It does not downgrade Ubuntu packages, AI runtimes or firmware.
+- Raspberry Pi Ubuntu ARM64 only. No PC support, network changes or new AI models in this release.
+
 ## 0.9.10-temperature-nan - Temperature dashboard NaN check
 
 - Accepts zero and readings at or above 120 in the temperature dashboard example.

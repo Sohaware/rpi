@@ -9,7 +9,10 @@ from typing import Optional
 import requests, shutil
 from datetime import datetime
 
-__version__ = "1.22.0"
+__version__ = "1.23.0"
+
+# An explicit Simulator connection never opens the physical serial ports.
+from CodyNickSimulator import Simulator
 
 # update 18-11-2025 03
 

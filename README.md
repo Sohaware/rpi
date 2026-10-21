@@ -2,7 +2,37 @@
 
 ## Current version
 
-**Unified setup: 0.9.10; application: 0.9.10; network component: 0.2.2.**
+**Unified setup: 0.10.0; application: 0.10.0; network component: 0.2.2.**
+
+## 0.10.0: Gadget Simulator
+
+Use the same fixed install/repair/upgrade command. Success ends with **`CodyNick 0.10.0: READY`**. No PC version is included; Ubuntu 26.04 ARM64 on Raspberry Pi remains required.
+
+Open **Gadget Simulator** in the main panel, or `http://10.42.0.1/simulator/`. It includes the tested drag-and-drop stage, saved layouts, CJP, Stand-Alone joystick, temperature, ultrasonic, soil moisture, seven-segment, scrolling/pixel LED matrix and an offline Wi-Fi/IoT model. Existing prototype layouts and tokens are retained. Browser audio requires clicking Enable sound.
+
+Examples are under **CodyNick examples/simulator**. Add their required gadgets before running them. The on-device documentation has a Gadget Simulator reference under Start Here. No physical hardware is used by `CodyNick.Simulator()`; hardware programs keep `CodyNick.CN()` unchanged.
+
+To change the stage's hardware set while a program is running, stop it in SSH with `sudo systemctl stop script.service`. Add/remove gadgets, then choose Run This File again. A dedicated Stop button is not included in this release.
+
+### Easy Downgrade With the Same User Command
+
+The updater engine is now separate from its selected application target. If this release has a problem, the maintainer can point GitHub back to the **original immutable** 0.9.10, 0.9.9 or 0.9.8 release. You then run the SAME fixed setup command. No special rollback command, SD rewrite or renamed/re-created old release is needed on the Pi.
+
+The selected older release's original manifest and checksums determine the deployed application files and displayed version. The current compatible updater handles the migration. The simulator service is disabled on an older release and simulator-only web pages are archived; its layout/token are retained for reuse. Student files, database, Wi-Fi configuration and existing credentials are preserved. System-owned examples are replaced as usual and backed up first.
+
+This is an **application rollback**, not an Ubuntu package, AI runtime, firmware or database snapshot rollback. Backups are stored under `/var/backups/codynick/core-*`. Verify `codynick-version` shows the selected version and `Stage: ready` afterward.
+
+Maintainer workflow (not commands for the Pi user):
+
+```bash
+python tools/select_release.py 0.9.10
+git diff -- setup.sh
+git add setup.sh
+git commit -m "Select original CodyNick 0.9.10 for rollback"
+git push origin HEAD:main
+```
+
+Select 0.9.9 or 0.9.8 the same way; select 0.10.0 to move forward again. This changes only the active target and its immutable tag/checksum; it does not rewrite Git history or move published tags. Do not revert the entire updater to an older incompatible script: retain the current stable engine and roll back the target selector instead. Do not run `seal_core_release.py` after selecting a rollback target, because that build tool selects the new release again.
 
 Version 0.9.10 removes the zero/below-120 restriction from the temperature dashboard example and skips NaN and missing readings instead. Use the same setup command to upgrade from 0.9.9.
 Targets Ubuntu Server 26.04 ARM64 on Raspberry Pi 5. Network setup and core 0.2.2
@@ -158,7 +188,7 @@ This initial DHCP address can change. Do not assume it matches a previous SD car
 wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rpi/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-setup.sh
 ```
 
-The entry banner is **0.9.10** and its pinned network component reports **0.2.2**.
+The entry banner is **0.10.0** and its pinned network component reports **0.2.2**.
 On first installation, answer `y` to
 `Prepare this network handover? [y/N]`.
 
@@ -194,7 +224,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 ```
 
 Answer `y`. Success reports `Stage: network-ready` and disables rollback, then the
-same entry point starts application installation. Wait for `CodyNick 0.9.10: READY`
+same entry point starts application installation. Wait for `CodyNick 0.10.0: READY`
 before rebooting. No root password is set. The older internal network helper may
 still mention `--confirm`; the unified entry point invokes it for you.
 
@@ -247,7 +277,7 @@ wget -4 -O /tmp/codynick-setup.sh "https://raw.githubusercontent.com/Sohaware/rp
 
 Installation runs in the background, so closing SSH does not stop it. Do not reboot
 or power off until it finishes. The command automatically follows its log.
-Wait for **`CodyNick 0.9.10: READY`**, then press
+Wait for **`CodyNick 0.10.0: READY`**, then press
 `Ctrl+C` to leave the log display. If you see `INSTALLATION FAILED`, send the last
 30-50 log lines for diagnosis; do not continue as though installation succeeded.
 
@@ -362,7 +392,7 @@ student data separately before any deployment.
 To view the installed component versions and run health checks:
 
 ```bash
-sudo python3 /usr/local/lib/codynick/core-0.9.10/app_setup.py --check
+sudo python3 /usr/local/lib/codynick/core-0.10.0/app_setup.py --check
 ```
 
 For a compact version report and checksum status for every system example:
@@ -407,6 +437,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 
 | Version | Status | What is new |
 | --- | --- | --- |
+| **0.10.0-gadget-simulator** | Automated integration checks; full RPi upgrade acceptance pending | Tested simulator, managed examples and same-command release rollback. |
 | **0.9.10-temperature-nan** | Automated checks; Raspberry Pi acceptance pending | Temperature dashboard accepts zero/high readings and rejects NaN/missing values. |
 | **0.9.9-presenter-guide** | Automated checks; Raspberry Pi acceptance pending | Fourteen-step presenter guide with the live temperature dashboard and Local AI conversation finale. |
 | **0.9.8-temperature-time** | Temperature example tested on device; installer acceptance pending | Filters missing/zero/high readings and plots the latest 20 valid temperatures against elapsed seconds. |
@@ -449,7 +480,7 @@ SD-card/OS damage. Keep an SD backup and do not downgrade by rerunning an old in
 | 0.1.1 | Superseded; do not install | Reuses a correct working dongle profile, targets USB preparation instead of global Netplan application, arms rollback earlier, and retries recovery. Fresh-install testing subsequently found the permissions defect fixed in 0.1.2. |
 | 0.1.0 | Superseded; do not install | Introduced adapter detection, internet checks, hotspot handover, confirmation, rollback, and version/state reporting. Global Netplan application could disconnect SSH during preparation. |
 
-The unified 0.9.10 setup updates both the core application and network component.
+The unified 0.10.0 setup updates both the core application and network component.
 See [CHANGELOG.md](CHANGELOG.md) for technical details.
 
 **For every future published version**, update this table, current-version section,
@@ -538,7 +569,7 @@ than later playback.
 - Selects only permitted non-DFS 5 GHz channels 36, 40, 44, and 48 at boot.
 - Pins a tag and verifies the helper SHA256: HTTPS/checksum integrity, not release signing.
 
-Automated tests cover the 0.9.10 application and 0.2.2 network migration:
+Automated tests cover the 0.10.0 application and 0.2.2 network migration:
 
 ```bash
 python -m unittest discover -s tests -v

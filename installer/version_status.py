@@ -7,7 +7,7 @@ from pathlib import Path, PurePosixPath
 import sys
 
 
-VERSION = "0.9.10"
+VERSION = "0.10.0"
 STATE = Path("/var/lib/codynick/application-state.json")
 EXAMPLES = Path("/home/client/userfiles/CodyNick examples")
 GADGET_TESTS = Path("/home/client/CodyNick Gadget Tests")
@@ -79,8 +79,8 @@ def main():
         for item in result["gadget_tests"]:
             print(f"  [{item['status']}] {item['name']}")
     healthy = (
-        result["installed_version"] == VERSION
-        and result["completed_version"] == VERSION
+        result["installed_version"] == manifest.get('version', VERSION)
+        and result["completed_version"] == manifest.get('version', VERSION)
         and result["stage"] == "ready"
         and result["examples"]
         and all(item["status"] == "current" for item in result["examples"])

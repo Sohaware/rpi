@@ -13,9 +13,9 @@ $device = [
     "serial_number" => "unknown",
     "device_code" => "unknown",
     "hotspot_ssid" => "unknown",
-    "production_date" => "2026-10-19",
-    "description" => "CodyNick 0.9.10",
-    "software_version" => "0.9.10",
+    "production_date" => "2026-10-20",
+    "description" => "CodyNick 0.10.0",
+    "software_version" => "0.10.0",
     "support_link" => "https://support.codynick.com",
     "logo_path" => "/assets/logo.png"
 ];
@@ -270,6 +270,11 @@ function e($value) {
                 <a class="link-card" href="/dashboard">
                     <div class="link-title">On-Device Dashboard</div>
                     <div class="link-desc">View live controls and device data.</div>
+                </a>
+
+                <a class="link-card" href="/simulator/">
+                    <div class="link-title">Gadget Simulator</div>
+                    <div class="link-desc">Open the virtual gadget stage.</div>
                 </a>
 
                 <a class="link-card" href="/docs">

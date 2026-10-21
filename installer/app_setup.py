@@ -14,9 +14,18 @@ import tempfile
 import time
 import urllib.request
 
-VERSION = "0.9.10"
-TAG = "v0.9.10-temperature-nan"
-RELEASE_DATE = "2026-10-19"
+VERSION = "0.10.0"
+TAG = "v0.10.0-gadget-simulator"
+ENGINE_VERSION = VERSION
+ENGINE_TAG = TAG
+RELEASE_DATE = "2026-10-20"
+RELEASE_DIRECTORY = Path(__file__).resolve().parent
+TARGET_RELEASES = {
+    "0.10.0": ("v0.10.0-gadget-simulator", "2026-10-20"),
+    "0.9.10": ("v0.9.10-temperature-nan", "2026-10-19"),
+    "0.9.9": ("v0.9.9-presenter-guide", "2026-10-19"),
+    "0.9.8": ("v0.9.8-temperature-time", "2026-10-19"),
+}
 BASE = f"https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/"
 STATE = Path("/var/lib/codynick/application-state.json")
 NETWORK = Path("/var/lib/codynick/network-setup.json")
@@ -27,6 +36,16 @@ SERVICES = ("ssh", "codynick-ap", "codynick-dhcp", "codynick-nat")
 PRESERVE = {"code/config.php", "dashboard/config.php", "docs/config.php", "blocks/data/main.json"}
 EXAMPLES_ROOT = Path("/home/client/userfiles/CodyNick examples")
 GADGET_TESTS_ROOT = Path("/home/client/CodyNick Gadget Tests")
+
+
+def select_target(manifest):
+    global VERSION, TAG, RELEASE_DATE, BASE
+    target = TARGET_RELEASES.get(manifest.get('version'))
+    if not target or manifest.get('tag') != target[0]:
+        raise RuntimeError('Unsupported upgrade/downgrade target; no application files were changed.')
+    VERSION = manifest['version']
+    TAG, RELEASE_DATE = target
+    BASE = f'https://raw.githubusercontent.com/Sohaware/rpi/{TAG}/'
 
 
 def run(*args, **kwargs):
@@ -152,7 +171,7 @@ def verify_manifest(manifest):
             raise RuntimeError(f"Invalid release path: {name}")
         if len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
             raise RuntimeError("Invalid release checksum")
-        if path.parts[1] not in ("ide", "client", "watchdog", "ai", "examples", "gadget-tests"):
+        if path.parts[1] not in ("ide", "client", "watchdog", "ai", "examples", "gadget-tests", "simulator"):
             raise RuntimeError("Unsupported component")
     return files
 
@@ -219,7 +238,7 @@ def check_platform():
     for service in SERVICES:
         run("systemctl", "is-active", "--quiet", service)
     previous = read_json(STATE)
-    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.6", "0.9.7", "0.9.8", "0.9.9", VERSION):
+    if previous and previous.get("version") not in ("0.2.0", "0.2.1", "0.2.2", "0.3.0", "0.3.1", "0.4.0", "0.5.0", "0.5.1", "0.5.2", "0.5.3", "0.6.0", "0.6.1", "0.7.0", "0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8", "0.7.9", "0.7.10", "0.7.11", "0.8.1", "0.8.2", "0.9.0", "0.9.1", "0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.6", "0.9.7", "0.9.8", "0.9.9", "0.9.10", ENGINE_VERSION, VERSION):
         raise RuntimeError("This version cannot migrate that application release")
     if not previous and (Path("/root/codynick/service.py").exists() or Path("/home/client/CodyNick.py").exists()):
         raise RuntimeError("Existing legacy installation: migration must be reviewed before deployment")
@@ -319,7 +338,7 @@ GRANT ALL PRIVILEGES ON codynick.* TO 'codynick'@'localhost';
 
 def install_units():
     write("/usr/local/bin/codynick-version", f"""#!/usr/bin/env bash
-exec /usr/bin/python3 /usr/local/lib/codynick/core-{VERSION}/version_status.py "$@"
+exec /usr/bin/python3 {RELEASE_DIRECTORY}/version_status.py "$@"
 """, 0o755)
     write("/usr/local/bin/codynick-teacher-password", """#!/usr/bin/env bash
 set -euo pipefail
@@ -395,6 +414,87 @@ def configure_teacher_access():
     password_file.chmod(0o640)
 
 
+def configure_simulator(manifest, backup=None):
+    unit = Path('/etc/systemd/system/codynick-simulator.service')
+    if 'simulator' not in manifest['components']:
+        if unit.exists():
+            run('systemctl', 'disable', '--now', 'codynick-simulator')
+        for path, marker in [
+            (Path('/var/www/html/simulator/index.php'), 'CODY NICK MANAGED SIMULATOR LAUNCHER'),
+            (Path('/var/www/html/docs/docs/01-Start-Here/03-Gadget-Simulator.md'), '# Gadget Simulator'),
+        ]:
+            path = safe_destination(path)
+            if backup and path.exists() and marker in path.read_text():
+                saved = backup / str(path).lstrip('/')
+                saved.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(path, saved)
+                path.unlink()
+        print('Simulator disabled for the selected older release. Saved layout retained.', flush=True)
+        return
+    import secrets
+    folder = safe_destination(Path('/var/lib/codynick-simulator'))
+    folder.mkdir(parents=True, exist_ok=True)
+    folder.chmod(0o750)
+    run('chown', 'client:client', folder)
+    token = safe_destination(Path('/opt/codynick-simulator/token'))
+    if not token.exists():
+        write(token, secrets.token_hex(32) + '\n', 0o640)
+    run('chown', 'root:client', token)
+    token.chmod(0o640)
+    run('setfacl', '-m', 'u:client:r,u:www-data:r', token)
+    write(unit, '''[Unit]
+Description=CodyNick gadget simulator
+After=network.target
+[Service]
+User=client
+Group=client
+ExecStart=/usr/bin/python3 -u /opt/codynick-simulator/server.py --host 0.0.0.0 --port 8091 --token-file /opt/codynick-simulator/token --scene-file /var/lib/codynick-simulator/scene.json
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/codynick-simulator
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+[Install]
+WantedBy=multi-user.target
+''')
+    run('systemctl', 'daemon-reload')
+    run('systemctl', 'enable', 'codynick-simulator')
+    run('systemctl', 'restart', 'codynick-simulator')
+    examples = EXAMPLES_ROOT / 'simulator'
+    run('setfacl', '-R', '-m', 'u:www-data:rwX', examples)
+    run('setfacl', '-m', 'd:u:www-data:rwx', examples)
+
+
+def simulator_health_check():
+    run('systemctl', 'is-active', '--quiet', 'codynick-simulator')
+    # Test using the student's real service identity; never print the private token.
+    run('runuser', '-u', 'client', '-g', 'codynick-media', '--', '/usr/bin/python3', '-c', '''
+import json,time,urllib.request
+from pathlib import Path
+token=Path('/opt/codynick-simulator/token').read_text().strip()
+for attempt in range(30):
+    try:
+        request=urllib.request.Request('http://127.0.0.1:8091/state',headers={'Authorization':'Bearer '+token})
+        with urllib.request.urlopen(request,timeout=2) as response:
+            assert json.load(response)['prototype']=='stage-4'
+        break
+    except Exception:
+        if attempt==29: raise
+        time.sleep(.2)
+print('Simulator service and student token access OK')
+''')
+    run('runuser', '-u', 'www-data', '--', '/usr/bin/python3', '-c', '''
+from pathlib import Path
+assert len(Path('/opt/codynick-simulator/token').read_text().strip())>=32
+for path in Path('/home/client/userfiles/CodyNick examples/simulator').glob('*.py'):
+    with path.open('r+'): pass
+print('Simulator launcher and IDE example access OK')
+''')
+
+
 def sync_device_info():
     info = Path("/device_info.json")
     device = read_json(info)
@@ -463,13 +563,21 @@ def install():
     import speech_setup
     import tts_setup
     import llm_setup
-    check_platform()
     release = Path(__file__).resolve().parent
     manifest = read_json(release / "core-manifest.json")
+    select_target(manifest)
+    print(f'Application target: {VERSION} from {TAG}; updater engine: {ENGINE_VERSION}', flush=True)
+    check_platform()
     source = release / "payload"
     download_sources(manifest, source)
     backup = Path("/var/backups/codynick") / ("core-" + datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ"))
     backup.mkdir(parents=True, mode=0o700)
+    for path in (STATE, Path('/device_info.json'), Path('/etc/systemd/system/codynick-simulator.service'),
+                 Path('/var/lib/codynick-simulator/scene.json')):
+        if path.exists():
+            target = backup / str(path).lstrip('/')
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(path, target)
     save_state("installing", backup=str(backup), components=manifest["components"])
     package_preflight()
     install_packages(("apache2", "apache2-utils", "libapache2-mod-php", "php-mysql", "php-mbstring",
@@ -488,13 +596,15 @@ def install():
     llm_setup.install(manifest, run)
     reset_examples(EXAMPLES_ROOT, backup)
     reset_examples(GADGET_TESTS_ROOT, backup)
+    if Path('/etc/systemd/system/codynick-simulator.service').exists():
+        run('systemctl', 'stop', 'codynick-simulator')
     for name in verify_manifest(manifest):
         relative = PurePosixPath(name)
         component = relative.parts[1]
         suffix = PurePosixPath(*relative.parts[2:])
         root = {"ide": Path("/var/www/html"), "client": Path("/home/client"), "watchdog": Path("/root/codynick"),
                 "ai": Path("/home/client/vhl_object_detection"), "examples": EXAMPLES_ROOT,
-                "gadget-tests": GADGET_TESTS_ROOT}[component]
+                "gadget-tests": GADGET_TESTS_ROOT, "simulator": Path('/opt/codynick-simulator')}[component]
         preserve = component == "ide" and (str(suffix) in PRESERVE or str(suffix).startswith("blocks/blocks/"))
         deploy(source / name, root / str(suffix), backup, preserve)
         if component in ("examples", "gadget-tests"):
@@ -510,15 +620,20 @@ def install():
     network = read_json(NETWORK)
     sync_device_info()
     configure_teacher_access()
+    configure_simulator(manifest, backup)
     install_units()
     set_operation("Running final CodyNick health checks")
     health_check()
+    if 'simulator' in manifest['components']:
+        simulator_health_check()
     save_state("ready", completed_version=VERSION, ai_installed=True,
                ai_scope=["usb-camera", "yolo", "speech-to-text", "voice-commands",
                          "ocr-en", "tts-en", "saved-audio-playback",
                          "offline-voice-conversation", "local-llm",
                          "local-ai-voice-conversation"], operation="Complete", reboot_required=bool(network.get("reboot_required")))
     run("/usr/local/bin/codynick-version")
+    if 'simulator' in manifest['components']:
+        print('Gadget Simulator: http://10.42.0.1/simulator/', flush=True)
     print(f"\nCodyNick {VERSION}: READY\nIDE: http://10.42.0.1/code/"
           "\nUSB vision, English STT/OCR/TTS, local Gemma LLM: runtime/model checks passed"
           "\nMicrophone capture: test with voice_led_colors.py"
@@ -544,6 +659,7 @@ def main():
     if os.geteuid() != 0:
         raise SystemExit("Run with sudo")
     if args.check:
+        select_target(read_json(RELEASE_DIRECTORY / 'core-manifest.json'))
         state = read_json(STATE)
         print(json.dumps(state, indent=2))
         if state.get("stage") != "ready":
