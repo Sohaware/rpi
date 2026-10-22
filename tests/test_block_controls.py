@@ -6,6 +6,15 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class BlockControlsTests(unittest.TestCase):
+    def test_monotonic_timer_blocks(self):
+        source = (ROOT / 'components/ide/blocks/index.php').read_text(encoding='utf-8')
+        self.assertIn("name: 'Timer'", source)
+        self.assertIn("makeBlock('cn_timer_value')", source)
+        self.assertIn("makeBlock('cn_timer_reset')", source)
+        self.assertIn('(time.monotonic() - _codynick_timer_start)', source)
+        self.assertIn("'_codynick_timer_start = time.monotonic()',", source)
+        self.assertIn("defineTimerBlocks();", source)
+
     def test_blockly_run_explicitly_starts_after_stop(self):
         source = (ROOT / 'components/ide/blocks/index.php').read_text(encoding='utf-8')
         self.assertIn('unix:///run/codynick-script-control.sock', source)

@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.11.0-sprite-designs - Integrated sprite stage and named designs
+
+- Integrated, collapsible sprite stage with one rocket and three backdrops; sprite-only programs do not open CJP.
+- General, Sprites and Hardware toolbox tabs; Motion/Looks/Sensing use distinct category and block colors.
+- Monotonic Timer/reset blocks. Sprite movement, direction, size, glide, edge bounce, speech, visibility and keyboard/mouse sensing.
+- Named design Save/Load/Delete, confirmations, recovery autosave, and .codynick transfer files named from Design Name.
+- New unprivileged loopback stage service, readiness wait and real Apache design-operation health checks.
+- Existing workspaces and named designs retained. Demo design and offline guide included.
+- Original 0.10.3/0.10.2/0.10.1/0.10.0 remain rollback targets; stage service is disabled on downgrade. Current workspace is backed up; older Blockly cannot edit sprite programs.
+- No remote hosting, PC runtime, firmware, AI-model or Wi-Fi changes.
+
 ## 0.10.3-script-controls - Tested Start/Stop and platform polish
 
 - IDE and Blockly Stop buttons use a restricted Unix socket, not sudo under Apache.

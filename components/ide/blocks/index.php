@@ -621,7 +621,7 @@ if ($api === 'run') {
       }
     }
   </style>
-<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
+<link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"><link rel="stylesheet" href="/blocks/stage.css"></head>
 <body>
 <div class="app">
   <header class="topbar">
@@ -634,27 +634,48 @@ if ($api === 'run') {
     </div>
 
     <nav class="toolbar">
+      <button id="stageToggle" aria-expanded="true" title="Show or hide sprite stage">Stage</button>
       <a class="codynick-home-button" href="/">Main Panel</a>
       <button onclick="newWorkspace()" title="Clear the workspace">New</button>
-      <label class="file-button" for="importFile" title="Upload a workspace JSON file">Upload</label>
-      <input id="importFile" type="file" accept="application/json,.json" />
-      <button onclick="downloadWorkspace()" title="Download the current workspace JSON">Download</button>
-      <button onclick="saveWorkspaceNow()" title="Save block arrangement on server">Save</button>
+      <label class="file-button" for="importFile" title="Upload a CodyNick design">Upload</label>
+      <input id="importFile" type="file" accept=".codynick" />
+      <button onclick="downloadWorkspace()" title="Download the current CodyNick design">Download</button>
+      <button onclick="NamedDesigns.save()" title="Save named design on this device">Save</button>
+      <button onclick="NamedDesigns.open()" title="Load a design saved on this device">Load</button>
       <button onclick="viewPython()" title="Preview generated Python in a pop-up">View Python</button>
       <button id="blockRunBtn" class="run-btn" onclick="runProgram()" title="Generate Python and start script">▶ Run</button>
       <button id="blockStopBtn" class="stop-btn" onclick="stopProgram()" title="Stop running script">&#9632; Stop</button>
     </nav>
   </header>
 
-  <main class="main">
+  <main class="main stage-layout">
     <section class="workspace-shell">
+      <div class="design-bar"><label for="designName">Design</label><input id="designName" type="text" maxlength="120" placeholder="Untitled" autocomplete="off"></div>
       <div class="panel-head">
-        <span>Blocks</span>
+        <nav class="toolbox-modes" role="tablist" aria-label="Block categories" aria-orientation="horizontal">
+          <button id="generalToolboxTab" role="tab" aria-selected="true" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('general')">General</button>
+          <button id="spriteToolboxTab" role="tab" aria-selected="false" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('sprites')">Sprites</button>
+          <button id="hardwareToolboxTab" role="tab" aria-selected="false" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('hardware')">Hardware</button>
+        </nav>
         <span id="workspaceStatus" class="status">Loading…</span>
       </div>
-      <div id="blocklyDiv"></div>
+      <div class="workspace-coding">
+        <div id="toolboxWorkspace" role="tabpanel" aria-labelledby="generalToolboxTab"><div id="blocklyDiv"></div></div>
+      </div>
     </section>
 
+    <aside class="sprite-panel" aria-label="Sprite stage">
+      <div class="sprite-toolbar"><h2>Stage</h2><button id="spriteReset" title="Reset sprite to saved starting position">Reset</button></div>
+      <canvas id="spriteCanvas" class="sprite-canvas" width="480" height="360" tabindex="0" aria-label="Sprite stage; arrow keys and space" title="Click to focus keyboard input"></canvas>
+      <div class="sprite-readout"><span id="spriteXReadout">x: 0</span><span id="spriteYReadout">y: 0</span><span id="spriteStatus">Connecting</span></div>
+      <div class="sprite-controls">
+        <label>Start x<input id="sprite_x" type="number" min="-240" max="240" step="1" value="0"></label>
+        <label>Start y<input id="sprite_y" type="number" min="-180" max="180" step="1" value="0"></label>
+        <label>Direction<input id="sprite_direction" type="number" min="-36000" max="36000" step="1" value="90"></label>
+        <label>Start size (%)<input id="sprite_size" type="number" min="10" max="300" step="1" value="100"></label>
+        <label class="wide">Backdrop<select id="sprite_backdrop"><option value="white">White</option><option value="sky">Sky</option><option value="field">Field</option></select></label>
+      </div>
+    </aside>
   </main>
 </div>
 
@@ -672,7 +693,16 @@ if ($api === 'run') {
 </div>
 
 <div id="toast" class="toast"></div>
+<dialog id="designDialog" class="design-dialog" aria-labelledby="designDialogTitle">
+  <h2 id="designDialogTitle">Load Design</h2>
+  <label for="designList">Saved on this device</label>
+  <select id="designList" size="8" ondblclick="NamedDesigns.load()"></select>
+  <p id="designListStatus" role="status"></p>
+  <div class="design-actions"><button id="designDelete" class="design-delete" onclick="NamedDesigns.remove()" disabled>Delete</button><button onclick="document.getElementById('designDialog').close()">Cancel</button><button id="designLoadConfirm" onclick="NamedDesigns.load()">Load</button></div>
+</dialog>
 
+<script src="/blocks/stage.js"></script>
+<script src="/blocks/designs.js"></script>
 <script>
 const BLOCK_PACKAGES = <?= json_encode($BLOCK_PACKAGES, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 const BLOCK_WARNINGS = <?= json_encode($BLOCK_WARNINGS, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
@@ -820,6 +850,15 @@ function buildDynamicBlockJson(spec) {
   return json;
 }
 
+function defineTimerBlocks() {
+  Blockly.defineBlocksWithJsonArray([
+    { type: 'cn_timer_value', message0: 'timer (seconds)', output: 'Number',
+      colour: '#00838f', tooltip: 'Seconds since the program started or the last timer reset.' },
+    { type: 'cn_timer_reset', message0: 'reset timer', previousStatement: null,
+      nextStatement: null, colour: '#00838f', tooltip: 'Reset the elapsed timer to zero.' }
+  ]);
+}
+
 function defineEventBlocks() {
   Blockly.Blocks['cn_event_start'] = {
     init: function() {
@@ -863,6 +902,20 @@ function makeBlock(type) {
   return { kind: 'block', type };
 }
 
+let toolboxMode = 'general';
+
+function selectToolboxMode(mode) {
+  if (!['general', 'sprites', 'hardware'].includes(mode)) return;
+  toolboxMode = mode;
+  workspace.updateToolbox(buildToolbox());
+  for (const name of ['general', 'sprites', 'hardware']) {
+    const id = name === 'sprites' ? 'spriteToolboxTab' : name + 'ToolboxTab';
+    document.getElementById(id).setAttribute('aria-selected', String(name === mode));
+  }
+  document.getElementById('toolboxWorkspace').setAttribute('aria-labelledby', mode === 'sprites' ? 'spriteToolboxTab' : mode + 'ToolboxTab');
+  Blockly.svgResize(workspace);
+}
+
 function buildToolbox() {
   const dynamicCategories = new Map();
 
@@ -891,9 +944,7 @@ function buildToolbox() {
     }
   }
 
-  return {
-    kind: 'categoryToolbox',
-    contents: [
+  const general = [
       {
         kind: 'category',
         name: 'Events',
@@ -949,13 +1000,19 @@ function buildToolbox() {
       },
       {
         kind: 'category',
+        name: 'Timer',
+        colour: '#00838f',
+        contents: [makeBlock('cn_timer_value'), makeBlock('cn_timer_reset')]
+      },
+      {
+        kind: 'category',
         name: 'Variables',
         colour: '#ff8c1a',
         custom: 'VARIABLE'
-      },
-      ...Array.from(dynamicCategories.values())
-    ]
-  };
+      }
+  ];
+  return {kind: 'categoryToolbox', contents: toolboxMode === 'general' ? general
+    : toolboxMode === 'sprites' ? SpritePrototype.categories() : Array.from(dynamicCategories.values())};
 }
 
 const CodyNickTheme = Blockly.Theme.defineTheme('codynickScratchLike', {
@@ -1009,6 +1066,8 @@ async function copyPythonPreview(event) {
 
 function initBlockly() {
   ensureColourFieldSupport();
+  SpritePrototype.definitions();
+  defineTimerBlocks();
   Blockly.defineBlocksWithJsonArray([
     {
       type: 'cn_wait', message0: 'wait %1 seconds',
@@ -1117,6 +1176,9 @@ function stackToCode(block) {
 
 function blockToPythonValue(block) {
   if (!block) return 'None';
+  const spriteValue = SpritePrototype.value(block);
+  if (spriteValue !== null) return spriteValue;
+  if (block.type === 'cn_timer_value') return '(time.monotonic() - _codynick_timer_start)';
 
   if (dynamicBlockSpecs.has(block.type)) {
     return renderDynamicBlock(block);
@@ -1192,6 +1254,9 @@ function blockToPythonValue(block) {
 
 function blockToPythonStatement(block) {
   if (!block) return '';
+  const spriteStatement = SpritePrototype.statement(block, valueToCode);
+  if (spriteStatement !== null) return spriteStatement;
+  if (block.type === 'cn_timer_reset') return '_codynick_timer_start = time.monotonic()\n';
 
   if (dynamicBlockSpecs.has(block.type)) {
     const spec = dynamicBlockSpecs.get(block.type);
@@ -1270,6 +1335,9 @@ function renderDynamicBlock(block) {
 }
 
 function generatePython() {
+  const allBlocks = workspace.getAllBlocks(false);
+  const usesStage = allBlocks.some(block => block.type.startsWith('sprite_'));
+  const usesHardware = allBlocks.some(block => dynamicBlockSpecs.has(block.type));
   const topBlocks = workspace.getTopBlocks(true);
   const startBlocks = topBlocks.filter(b => b.type === 'cn_event_start');
   const loopBlocks = topBlocks.filter(b => b.type === 'cn_event_loop');
@@ -1294,8 +1362,11 @@ function generatePython() {
     '',
     'import time',
     'from CodyNick import *',
+    usesStage ? 'from SpriteStage import SpriteStage' : '',
     '',
-    'cody = CN()',
+    '_codynick_timer_start = time.monotonic()',
+    usesStage ? SpritePrototype.initialization() : '',
+    usesHardware ? 'cody = CN()' : 'cody = None',
     '',
     'try:',
     indent('# When CodyNick starts'),
@@ -1389,12 +1460,13 @@ async function stopProgram() {
 
 function downloadWorkspace() {
   const json = JSON.stringify(currentWorkspaceJson(), null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
+  const blob = new Blob([json], { type: 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
   a.href = url;
-  a.download = 'codynick-workspace-' + timestamp + '.json';
+  const designName = document.getElementById('designName').value.trim();
+  const filename = designName.replace(/[<>:"/\\|?*\x00-\x1f\x7f]/g, '_').replace(/[. ]+$/g, '') || 'Untitled';
+  a.download = (filename.replace(/\.(?:json|codynick)$/i, '') || 'Untitled') + '.codynick';
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1406,23 +1478,26 @@ document.getElementById('importFile').addEventListener('change', async (ev) => {
   const file = ev.target.files[0];
   ev.target.value = '';
   if (!file) return;
+  if (!NamedDesigns.confirmReplace()) return;
 
   try {
     const text = await file.text();
     const json = JSON.parse(text);
-    workspace.clear();
-    Blockly.serialization.workspaces.load(json, workspace);
+    const previous = currentWorkspaceJson();
+    try { Blockly.serialization.workspaces.load(json, workspace); }
+    catch(error) { Blockly.serialization.workspaces.load(previous, workspace); throw error; }
     updatePythonPreview(true);
     await saveWorkspaceNow(true);
     toast('Workspace uploaded and saved.');
   } catch (err) {
-    toast('Could not upload JSON: ' + err.message, true);
+    toast('Could not upload design. Check that it is a valid CodyNick design file.', true);
   }
 });
 
 function newWorkspace() {
   if (!confirm('Clear the current workspace?')) return;
   workspace.clear();
+  document.getElementById('designName').value = '';
   addDefaultWorkspace();
   updatePythonPreview(true);
   saveWorkspaceNow(true);
@@ -1478,6 +1553,8 @@ async function loadServerWorkspace() {
 }
 
 initBlockly();
+SpritePrototype.initialize();
+NamedDesigns.initialize();
 loadServerWorkspace();
 </script>
 </body>

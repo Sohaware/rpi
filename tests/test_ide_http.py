@@ -6,6 +6,7 @@ import socket
 import subprocess
 import tempfile
 import time
+import threading
 import unittest
 import urllib.parse
 import urllib.request
@@ -28,6 +29,18 @@ class IdeHttpTests(unittest.TestCase):
         for relative in ("code/config.php", "blocks/index.php"):
             path = self.web / relative
             path.write_text(path.read_text(encoding="utf-8").replace("/home/client", self.home.as_posix()), encoding="utf-8")
+        self.control_path = str(self.base / 'control.sock')
+        for relative in ('code/index.php', 'blocks/index.php'):
+            path = self.web / relative
+            path.write_text(path.read_text(encoding='utf-8').replace('/run/codynick-script-control.sock', self.control_path), encoding='utf-8')
+        self.control = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.control.bind(self.control_path)
+        self.control.listen()
+        self.control.settimeout(.1)
+        self.control_done = threading.Event()
+        self.control_thread = threading.Thread(target=self.serve_control, daemon=True)
+        self.control_thread.start()
+        self.addCleanup(self.stop_control)
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             port = sock.getsockname()[1]
@@ -46,6 +59,22 @@ class IdeHttpTests(unittest.TestCase):
     def stop_server(self):
         self.server.terminate()
         self.server.wait(timeout=10)
+
+    def serve_control(self):
+        while not self.control_done.is_set():
+            try:
+                client, _ = self.control.accept()
+            except socket.timeout:
+                continue
+            with client:
+                client.settimeout(2)
+                command = client.recv(16)
+                client.sendall(json.dumps({'ok': command in (b'start\n', b'stop\n')}).encode() + b'\n')
+
+    def stop_control(self):
+        self.control_done.set()
+        self.control_thread.join(timeout=3)
+        self.control.close()
 
     def request(self, path, data=None, json_body=False):
         headers = {}
@@ -76,6 +105,25 @@ class IdeHttpTests(unittest.TestCase):
         second = self.request("/code/?action=logs&offset=" + str(first["offset"]))
         self.assertEqual(first["content"], "first\n")
         self.assertEqual(second["content"], "second\n")
+
+    def test_named_designs_roundtrip_and_confirmed_delete(self):
+        design = {'name': 'Temperature Demo', 'workspace': {'blocks': {}}}
+        self.assertTrue(self.request('/blocks/designs.php?action=save', design, True)['ok'])
+        loaded = self.request('/blocks/designs.php?action=load&name=Temperature%20Demo')
+        self.assertEqual(loaded['workspace'], design['workspace'])
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            self.request('/blocks/designs.php?action=save', design, True)
+        self.assertEqual(error.exception.code, 409)
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            self.request('/blocks/designs.php?action=delete', {'name': design['name']}, True)
+        self.assertEqual(error.exception.code, 400)
+        self.assertTrue(self.request('/blocks/designs.php?action=delete', {'name': design['name'], 'confirmed': True}, True)['ok'])
+        self.assertEqual(self.request('/blocks/designs.php?action=list')['designs'], [])
+
+    def test_design_paths_are_not_user_controlled(self):
+        with self.assertRaises(urllib.error.HTTPError) as error:
+            self.request('/blocks/designs.php?action=save', {'name': '../escape', 'workspace': {}}, True)
+        self.assertEqual(error.exception.code, 400)
 
     def test_log_rotation_resets_offset(self):
         log = self.home / "log.log"

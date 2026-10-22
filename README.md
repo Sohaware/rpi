@@ -2,7 +2,34 @@
 
 ## Current version
 
-**Unified setup: 0.10.3; application: 0.10.3; network component: 0.2.2.**
+**Unified setup: 0.11.0; application: 0.11.0; network component: 0.2.2.**
+
+## 0.11.0: Integrated Sprite Stage and Named Designs
+
+Use the same fixed setup command. Success ends with **`CodyNick 0.11.0: READY`**.
+Open Block Coding and refresh with Ctrl+F5. General contains Events, Operators,
+Control, Text, Timer and Variables. Sprites contains Motion, Looks and Sensing;
+Hardware contains gadget blocks. All tabs share one program and workspace.
+
+The collapsible stage supports one rocket, movement/direction/size, glide, edge
+bounce, speech, keyboard and mouse input. Sprite-only programs do not open CJP.
+Gadget blocks still connect to real hardware. Click the stage to focus keyboard input.
+The stage service runs unprivileged on loopback; no new packages or models are needed.
+
+Enter a Design Name and use Save/Load for designs stored on this Pi. Overwriting,
+deletion and replacing unsaved work require confirmation. Loading never runs code;
+deleting a saved design leaves the open workspace and running script unchanged.
+Upload/Download use `.codynick`; downloaded files use the entered name. Recovery
+autosave remains separate. Existing local-prototype designs and workspaces are retained.
+The demo is available at `/blocks/examples/sprite_demo.codynick` and under CodyNick
+examples/blockly. The offline guide is in Start Here / Blockly Sprite Stage and Designs.
+
+Original 0.10.3 remains selectable using `python tools/select_release.py 0.10.3`
+followed by committing/pushing the selector. Users rerun the same fixed command.
+Downgrade stops the sprite service but retains named designs. Older Blockly cannot
+edit sprite/Timer workspaces; the current workspace is copied into the install backup
+under `var/www/html/blocks/data/main.json`. Download important projects before downgrading.
+Remote-server UI and Windows/Ubuntu laptop runtimes are not included.
 
 ## 0.10.3: Start/Stop and Platform Polish
 

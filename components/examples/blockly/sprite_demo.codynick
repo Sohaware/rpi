@@ -1,0 +1,22 @@
+{
+  "codynick_stage": {"x": 0, "y": 0, "direction": 90, "backdrop": "sky"},
+  "blocks": {
+    "languageVersion": 0,
+    "blocks": [
+      {"type": "cn_event_start", "x": 30, "y": 30,
+       "inputs": {"DO": {"block": {"type": "sprite_say", "inputs": {"TEXT": {"shadow": {"type": "text", "fields": {"TEXT": "Hello!"}}}}}}}},
+      {"type": "cn_event_loop", "x": 30, "y": 200,
+       "inputs": {"DO": {"block": {
+         "type": "controls_if",
+         "inputs": {
+           "IF0": {"block": {"type": "sprite_key", "fields": {"KEY": "right"}}},
+           "DO0": {"block": {"type": "sprite_move", "inputs": {"STEPS": {"shadow": {"type": "math_number", "fields": {"NUM": 5}}}}}}
+         },
+         "next": {"block": {"type": "controls_if", "inputs": {
+           "IF0": {"block": {"type": "sprite_key", "fields": {"KEY": "left"}}},
+           "DO0": {"block": {"type": "sprite_move", "inputs": {"STEPS": {"shadow": {"type": "math_number", "fields": {"NUM": -5}}}}}}
+         }}}
+       }}}}
+    ]
+  }
+}

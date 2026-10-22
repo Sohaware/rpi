@@ -1,0 +1,18 @@
+[Unit]
+Description=CodyNick local sprite-stage prototype
+After=network.target
+
+[Service]
+User=client
+Group=codynick-media
+ExecStart=/usr/bin/python3 -u /opt/codynick-sprite-stage/server.py
+Restart=on-failure
+RestartSec=1
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictAddressFamilies=AF_INET AF_UNIX
+
+[Install]
+WantedBy=multi-user.target
